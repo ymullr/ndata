@@ -35,27 +35,6 @@ NumT clamp(NumT x, NumT min, NumT max)
 }
 
 
-void incrementMultidimensionalIndex(vector<size_t> shape, vector<size_t> & iNdim){
-
-    assert(shape.size() == iNdim.size());
-
-    //would also be doable with a bunch of modulo (%) ops but that might be slower/less explicit
-    for (long idim = iNdim.size()-1; idim >= 0; --idim) {
-        //update.back-most dimensional index unless its maxxed
-        if (iNdim[idim] < shape[idim]-1) {
-            iNdim[idim]++;
-            return;  //were done
-        } else if (iNdim[idim] == shape[idim]-1) { //if maxxed
-            iNdim[idim]=0; //reset this dimensional index to 0 
-            //continue loop, skip to next outer dimension
-            //if this is already the outermost dimension then the index is simply reset
-            //no error since this is probably going to happen during the
-            //last iteration of an eventual for loop
-        }
-    }
-
-};
-
 //-----------------------------------------------------------------------------
 //	CONSTANTS
 //-----------------------------------------------------------------------------
@@ -70,6 +49,7 @@ enum OverflowBehaviour {
 //triangular kernel reproducing linear interpolation
 struct KernLinear {
     float kern(float x) {
+        assert(fabs(x)<=ONESIDEDWIDTH);
         return float(1)-fabs(x);
     };
 
@@ -80,6 +60,7 @@ struct KernLinear {
 struct KernNearestNeighbor {
 
     float kern(float x) {
+        assert(fabs(x)<=ONESIDEDWIDTH);
         return (x >= -0.5 and x < 0.5)? 1 : 0;
     };
 
@@ -92,6 +73,8 @@ struct KernNearestNeighbor {
 //R. Keys, (1981). "Cubic convolution interpolation for digital image processing". IEEE Transactions on Acoustics, Speech, and Signal Processing 29 (6): 1153–1160.
 struct KernCubic {
     float kern(float x) {
+
+        assert(fabs(x)<=ONESIDEDWIDTH);
 
         float dx = fabs(x);
         float dx2 = dx*dx;
@@ -127,6 +110,7 @@ struct InterpolateInner {
             )
     {
         assert(ndims > 1);
+        assert(shape.size() == ndims);
         
         //uNew loses the.back dimension compared to u
         //the.back dimension is the one on which the interpolation is performed
@@ -135,29 +119,28 @@ struct InterpolateInner {
         auto unewShape = shape;
         unewShape.pop_back();
 
-        size_t unew_nvecs = 1;
-        for (size_t idim = 0; idim < ndims-1; ++idim) {
-            unew_nvecs *= unewShape[idim];
-        }
+        ndindexer<ndims-1> unewIndexer (unewShape);
+
+        size_t unew_nvecs = unewIndexer.size();
 
         auto uNew = vector<array<float, vectorSize>>(unew_nvecs, {0});
 
         //multidimensional index (VectorT stride ignored) in uNew
-        auto iUnew = vector<size_t>(ndims-1,0);
+        auto ndindex_unew = vector<size_t>(unewShape.size(),0);
 
         //
         //iterating on all the vectors values of the new array uNew
         //also means iterating on all dimensions (but the last) of the old array
         //that is we iterate on all the 1D columns of the old array
         //
-        //iUnewFlat is the flattened multidimensional index (with VectorT stride)
-        for (size_t iUnewFlat = 0; iUnewFlat < unew_nvecs; ++iUnewFlat) {
+        //iunew_flat is the flattened multidimensional index (with VectorT stride)
+        for (size_t iunew_flat = 0; iunew_flat < unew_nvecs; ++iunew_flat) {
 
             //compute the matching flatened multidimensional index from the
             //start of the current column in the old u array
             size_t iu0 = 0;
             for (size_t idim = 0; idim < ndims-1; ++idim) {
-                iu0 += iUnew[idim]*shape.back();
+                iu0 += ndindex_unew[idim]*shape.back();
             }
 
             vector<array<float, vectorSize>> uCol (
@@ -171,13 +154,13 @@ struct InterpolateInner {
 
             //update uNew
             //recursive call, this one doesn't have subrecursion since ndims == 1
-            uNew[iUnewFlat] = InterpolateInner<KernT, 1, vectorSize>::interpolateInner(
+            uNew[iunew_flat] = InterpolateInner<KernT, 1, vectorSize>::interpolateInner(
                 vector<size_t>(1, shape.back()),
                 uCol,
                 vector<float>(1, indexFrac.back())
             );
 
-            incrementMultidimensionalIndex(unewShape, iUnew);
+            unewIndexer.increment_ndindex(ndindex_unew);
         }
 
         //recurse with one less dimension
@@ -222,15 +205,13 @@ struct InterpolateInner<KernT, 1, vectorSize> {
     }
 };
 
-
-
 template<class KernT, size_t ndims, size_t vectorSize>
 array<float, vectorSize> interpolate (
         //lists the size of each dimension of the array of VectorT
         //(the size of VectorT must not included)
         //[ndims]
         vector<size_t> shape,
-        //flattened vector of VectorT
+        //flattened array of VectorT
         //TODO Note on VectorT packing/padding/casting
         float * u, 
         //sampling is "normalized" by delta so it is expressed in terms of a fraction of
@@ -259,7 +240,7 @@ array<float, vectorSize> interpolate (
 
     shapeWithVectorSize[ndims]=vectorSize;
 
-    ndindexer<ndims+1> uShape (shapeWithVectorSize);
+    ndindexer<ndims+1> uIndexer (shapeWithVectorSize);
 
     for (size_t i = 0; i < ndims; ++i) {
         if (i >= overflowBehaviours.size()) {
@@ -271,13 +252,13 @@ array<float, vectorSize> interpolate (
 
         OverflowBehaviour ob = overflowBehaviours[i];
 
-        long kernWidth = KernT::ONESIDEDWIDTH*2+1;
-
         if (ob == OverflowBehaviour::STRETCH) {
             indexFrac[i] = clamp(indexFrac[i], float(0), float(shape[i])-1);
         }
 
-        iStarts[i] = floor(indexFrac[i])-1;
+        long kernWidth = KernT::ONESIDEDWIDTH*2;
+
+        iStarts[i] = floor(indexFrac[i])-KernT::ONESIDEDWIDTH+1;
         iStops[i] = iStarts[i] + kernWidth;
 
         switch (ob) {
@@ -301,13 +282,13 @@ array<float, vectorSize> interpolate (
 
     //extract the hypercube for u where the kernel is non-zero
     //the overflowBehaviour logic comes here in play
-    vector<size_t> unewShape (ndims);
+    array<size_t, ndims> unewShape;
 
-    size_t unewSize = 1;
     for (size_t idim = 0; idim < ndims; ++idim) {
         unewShape[idim] = iStops[idim] - iStarts[idim];
-        unewSize *= unewShape[idim];
     }
+
+    ndindexer<ndims> unewIndexer (unewShape);
 
     //unlike the field u passed as argument, we keep each vector in a distinct
     //fixed size array (safer). The packed representation of u is only better for
@@ -317,24 +298,24 @@ array<float, vectorSize> interpolate (
     //allocated), but may or may not be binary compatible with the packed
     //storage format depending on the presence or not of extra padding of the
     //std::array, which is compiler/architecture dependent.
-    vector<array<float, vectorSize> > unew (unewSize, array<float, vectorSize>());
+    vector<array<float, vectorSize> > unew (unewIndexer.size(), array<float, vectorSize>());
 
     //multidimensional index (VectorT dimension ignored) in uNew
-    auto iUnew = vector<size_t>(ndims,0);
+    auto ndindex_unew = vector<size_t>(ndims,0);
 
     //iterating on all the vectors values of the new array uNew
     //also means iterating on all dimensions (but the.back) of the old array
     //that is we iterate on all the 1D columns of the old array
     //
-    //iUnewFlat is the flattened multidimensional index (with VectorT stride)
-    for (size_t iUnewFlat = 0; iUnewFlat < unewSize; ++iUnewFlat) {
+    //iunew_flat is the flattened multidimensional index (with VectorT stride)
+    for (size_t iunew_flat = 0; iunew_flat < unew.size(); ++iunew_flat) {
 
 
         //compute the matching flatened multidimensional index from the
         //start of the current column in the old u array
         size_t iu0 = 0;
         for (size_t idim = 0; idim < ndims; ++idim) {
-            size_t iUThisDim=(iStarts[idim]+iUnew[idim]);
+            size_t iUThisDim=(iStarts[idim]+ndindex_unew[idim]);
 
             switch (overflowBehaviours[idim]) {
                 case CYCLIC:
@@ -351,18 +332,18 @@ array<float, vectorSize> interpolate (
                     break;
             }
 
-            assert(iUThisDim < shape[idim] and iUThisDim >= 0);
+            assert(iUThisDim < shape[idim]);
 
-            iu0 += iUThisDim*uShape.stride(idim);
+            iu0 += iUThisDim*uIndexer.stride(idim);
         }
 
         for (size_t iScalar = 0; iScalar < vectorSize; ++iScalar) {
-            unew[iUnewFlat][iScalar] = u[iu0+iScalar]; //no stride in uOld either since we grab the last dimension
+            unew[iunew_flat][iScalar] = u[iu0+iScalar]; //no stride in uOld either since we grab the last dimension
         }
 
         //update the multidimensional index to match the flat one for the next iteration
         //needed to locate matching values in the old u array
-        incrementMultidimensionalIndex(unewShape, iUnew);
+        unewIndexer.increment_ndindex(ndindex_unew);
     }
 
     //adjust indexfrac for new reduced array size
@@ -373,7 +354,11 @@ array<float, vectorSize> interpolate (
 
     assert( newIndexFrac.size() == unewShape.size() );
 
-    auto retArray = InterpolateInner<KernT, ndims, vectorSize>::interpolateInner(unewShape, unew, newIndexFrac);
+    auto retArray = InterpolateInner<KernT, ndims, vectorSize>::interpolateInner(
+            vector<size_t>(unewShape.begin(), unewShape.end()),
+            unew,
+            newIndexFrac
+            );
 
     array<float, vectorSize> retVec;
     //convert from array to VectorT
@@ -384,14 +369,17 @@ array<float, vectorSize> interpolate (
     return retVec;
 }
 
+//-----------------------------------------------------------------------------
+//	NOW A BUNCH OF OVERLOADS FOR DEALING WITH SIMPLER CASES
+//-----------------------------------------------------------------------------
+
 template<class KernT, size_t ndims, size_t vectorSize>
 array<float, vectorSize> interpolate (
         //lists the size of each dimension of the array of VectorT
         //(the size of VectorT must not included)
         //[ndims]
         vector<size_t> shape,
-        //flattened vector of VectorT
-        //TODO Note on VectorT packing/padding/casting
+        //flattened array of VectorT
         float * u, 
         //sampling is "normalized" by delta so it is expressed in terms of a fraction of
         //the sourceField indices instead of a real position
@@ -401,12 +389,93 @@ array<float, vectorSize> interpolate (
         OverflowBehaviour overflowBehaviour = OverflowBehaviour::STRETCH
         ) {
     return interpolate<KernT, ndims, vectorSize>(
-            shape,
-            u,
-            indexFrac,
-            vector<OverflowBehaviour>(1, overflowBehaviour)
-            );
+        shape,
+        u,
+        indexFrac,
+        vector<OverflowBehaviour>(1, overflowBehaviour)
+        );
 }
+
+template<class KernT, size_t ndims>
+float interpolate (
+        //[ndims]
+        vector<size_t> shape,
+        //vector of float
+        float * u, 
+        //sampling is "normalized" by delta so it is expressed in terms of a fraction of
+        //the sourceField indices instead of a real position
+        //[ndims]
+        vector<float> indexFrac,
+        //[from 1 to ndims]
+        OverflowBehaviour overflowBehaviour = OverflowBehaviour::STRETCH
+        ) {
+    return interpolate<KernT, ndims, 1>(
+        shape,
+        u,
+        indexFrac,
+        {overflowBehaviour}
+        )[0];
+}
+
+template<class KernT, size_t ndims>
+float interpolate (
+        //[ndims]
+        vector<size_t> shape,
+        //vector of float
+        float * u, 
+        //sampling is "normalized" by delta so it is expressed in terms of a fraction of
+        //the sourceField indices instead of a real position
+        //[ndims]
+        vector<float> indexFrac,
+        //[from 1 to ndims]
+        vector<OverflowBehaviour> overflowBehaviours
+        ) {
+    return interpolate<KernT, ndims, 1>(
+        shape,
+        u,
+        indexFrac,
+        overflowBehaviours
+        )[0];
+}
+
+template<class KernT>
+float interpolate (
+        size_t shape,
+        //array of VectorT
+        float * u, 
+        //sampling is "normalized" by delta so it is expressed in terms of a fraction of
+        //the sourceField indices instead of a real position
+        float indexFrac,
+        //[from 1 to ndims]
+        OverflowBehaviour overflowBehaviour = OverflowBehaviour::STRETCH
+        ) {
+    return interpolate<KernT, 1, 1>(
+        {shape},
+        u,
+        {indexFrac},
+        {overflowBehaviour}
+        )[0];
+}
+
+template<class KernT, size_t vectorSize>
+array<float, vectorSize> interpolate (
+        size_t shape,
+        //array of VectorT
+        float * u, 
+        //sampling is "normalized" by delta so it is expressed in terms of a fraction of
+        //the sourceField indices instead of a real position
+        float indexFrac,
+        //[from 1 to ndims]
+        OverflowBehaviour overflowBehaviour = OverflowBehaviour::STRETCH
+        ) {
+    return interpolate<KernT, 1, vectorSize>(
+        {shape},
+        u,
+        {indexFrac},
+        {overflowBehaviour}
+        );
+}
+
 
 vector<float> positionToIfrac(
         vector<float> position,

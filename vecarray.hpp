@@ -49,14 +49,16 @@ struct vecarray {
     };
 
     vecarray(vector<T> ini) {
-        static_assert(static_size == 0, "This constructor always produce a dynamic vecarray");
-        heapStorage=ini;
+        //static_assert(static_size == 0, "This constructor always produce a dynamic vecarray");
+        assert(ini.size() == static_size or static_size == 0);
+        if (static_size == 0) {
+            heapStorage=ini;
+        } else {
+            for (size_t i = 0; i < ini.size(); ++i) {
+                stackStorage[i]=ini[i];
+            }
+        }
     };
-
-    //vecarray(initializer_list<T> init):
-    //    stackStorage(init) {
-    //    assert(static_size == init.size());//, "initializer list size doesn't match staticSize template argument");
-    //};
 
     vecarray(array<T, static_size> iniArr):
         stackStorage(iniArr) {
@@ -71,8 +73,11 @@ struct vecarray {
             i++;
         }
 
-        assert(iniArr.size() == static_size);//, "Size of initializer list doesn't match");
+        static_assert(iniArr.size() == static_size, "Size of initializer list doesn't match");
     };
+
+    //empty initializer for later assignment
+    vecarray() {};
 
     size_t size() {
         if (static_size == 0) {
@@ -92,6 +97,12 @@ struct vecarray {
         }
         abort();
         return stackStorage[index];
+    }
+
+    void fill(T val) {
+        for (size_t i = 0; i < size(); ++i) {
+            this[i] = val;
+        }
     }
 
 };
