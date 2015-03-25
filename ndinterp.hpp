@@ -1,4 +1,3 @@
-
 #ifndef NDINTERP_HPP_CUZ3R9SV
 #define NDINTERP_HPP_CUZ3R9SV
 
@@ -258,7 +257,7 @@ array<float, vectorSize> interpolate (
 
         long kernWidth = KernT::ONESIDEDWIDTH*2;
 
-        iStarts[i] = floor(indexFrac[i])-KernT::ONESIDEDWIDTH+1;
+        iStarts[i] = floor(indexFrac[i])-long(KernT::ONESIDEDWIDTH)+1;
         iStops[i] = iStarts[i] + kernWidth;
 
         switch (ob) {
@@ -311,15 +310,19 @@ array<float, vectorSize> interpolate (
     for (size_t iunew_flat = 0; iunew_flat < unew.size(); ++iunew_flat) {
 
 
-        //compute the matching flatened multidimensional index from the
+        //compute the multidimensional index from the
         //start of the current column in the old u array
-        size_t iu0 = 0;
+        array<size_t, ndims+1> ndi_uold;
+
         for (size_t idim = 0; idim < ndims; ++idim) {
-            size_t iUThisDim=(iStarts[idim]+ndindex_unew[idim]);
+            long iUThisDim=(iStarts[idim]+ndindex_unew[idim]);
 
             switch (overflowBehaviours[idim]) {
                 case CYCLIC:
                     iUThisDim = iUThisDim%shape[idim];
+                    if(iUThisDim < 0) {
+                        iUThisDim += shape[idim];
+                    }
                     break;
                 case STRETCH:
                     iUThisDim = clamp(long(iUThisDim), 0l, long(shape[idim])-1l);
@@ -333,10 +336,12 @@ array<float, vectorSize> interpolate (
             }
 
             assert(iUThisDim < shape[idim]);
-
-            iu0 += iUThisDim*uIndexer.stride(idim);
+            assert(iUThisDim >= 0);
+            ndi_uold[idim] = iUThisDim;
         }
 
+        ndi_uold[ndims] = 0; //first element of the vector
+        size_t iu0 = uIndexer.index(ndi_uold);
         for (size_t iScalar = 0; iScalar < vectorSize; ++iScalar) {
             unew[iunew_flat][iScalar] = u[iu0+iScalar]; //no stride in uOld either since we grab the last dimension
         }
@@ -347,17 +352,16 @@ array<float, vectorSize> interpolate (
     }
 
     //adjust indexfrac for new reduced array size
-    vector<float> newIndexFrac (indexFrac.size());
-    for (size_t i = 0; i < newIndexFrac.size(); ++i) {
-        newIndexFrac[i] = indexFrac[i] - iStarts[i];
+    for (size_t i = 0; i < indexFrac.size(); ++i) {
+        indexFrac[i] = indexFrac[i] - iStarts[i];
     }
 
-    assert( newIndexFrac.size() == unewShape.size() );
+    assert(indexFrac.size() == unewShape.size() );
 
     auto retArray = InterpolateInner<KernT, ndims, vectorSize>::interpolateInner(
             vector<size_t>(unewShape.begin(), unewShape.end()),
             unew,
-            newIndexFrac
+            indexFrac
             );
 
     array<float, vectorSize> retVec;
@@ -373,6 +377,9 @@ array<float, vectorSize> interpolate (
 //	NOW A BUNCH OF OVERLOADS FOR DEALING WITH SIMPLER CASES
 //-----------------------------------------------------------------------------
 
+/**
+ * The main function to perform interpolation
+ */
 template<class KernT, size_t ndims, size_t vectorSize>
 array<float, vectorSize> interpolate (
         //lists the size of each dimension of the array of VectorT
