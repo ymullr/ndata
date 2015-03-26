@@ -1,5 +1,5 @@
-#include "ndinterp.hpp"
-#include "ndindexer.hpp"
+#include "interp.hpp"
+#include "indexer.hpp"
 
 #include <iostream>
 #include <string>
@@ -7,7 +7,7 @@
 #include <tuple>
 
 #include <debug_helpers.hpp>
-#include "ndinterp.hpp"
+#include "interp.hpp"
 
 using namespace ndata;
 

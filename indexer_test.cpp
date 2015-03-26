@@ -1,5 +1,5 @@
 #include "debug_helpers.hpp"
-#include "ndindexer.hpp"
+#include "indexer.hpp"
 
 using namespace std;
 using namespace ndata;

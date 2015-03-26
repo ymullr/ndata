@@ -40,11 +40,11 @@ add_executable(
 	)
 
 add_executable(
-	ndindexer_test
-	./ndindexer_test.cpp
+        indexer_test
+        ./indexer_test.cpp
 	)
 
 add_executable(
-	ndinterp_test
-	./ndinterp_test.cpp
+        interp_test
+        ./interp_test.cpp
 	)
