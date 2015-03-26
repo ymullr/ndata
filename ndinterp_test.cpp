@@ -1,73 +1,16 @@
 #include "ndinterp.hpp"
 #include "ndindexer.hpp"
 
-
-#include <sstream>
 #include <iostream>
 #include <string>
-#include <istream>
 #include <array>
 #include <tuple>
 
-using namespace ndinterp;
+#include <debug_helpers.hpp>
+#include "ndinterp.hpp"
 
-using namespace std;
+using namespace ndata;
 
-#define DECLARE_TESTRESULT(acc_success_status, acc_message) \
-    bool acc_success_status=true; \
-    string acc_message (""); \
-    bool success_status_TMP (true); \
-    acc_success_status = success_status_TMP; /*disable warning when not using TEST macro*/ \
-    string messages_TMP (""); \
-    acc_message = messages_TMP; \
-    \
-
-#define TEST(test_func, acc_success_status, acc_message) \
-    acc_message.append(#test_func "\t"); \
-    tie(success_status_TMP, messages_TMP) = test_func; \
-    acc_success_status = acc_success_status and success_status_TMP; \
-    if (success_status_TMP==true) { \
-        acc_message.append("success\n"); \
-    } else { \
-        acc_message.append("FAILURE"); \
-    } \
-        acc_message.append(MakeString() << "\n" << messages_TMP); \
-    acc_message.append("\n"); \
-     \
-
-/**
- * nicely indents the result to reflect test function structure
- */
-#define RETURN_TESTRESULT(acc_success_status, acc_message) \
-    string ret_message (""); \
-    istringstream acc_message_istream (acc_message); \
-    for(string line; getline(acc_message_istream, line); ) { \
-        ret_message.append(MakeString() << "\t" << line << "\n"); \
-    } \
-    return make_pair(acc_success_status, ret_message); \
-    \
-
-/**
- *
- * Use like that
- *
- * #include <string>
- * #include <sstream>
- * #include <iostream>
- *
- * MakeString() << val << "stuff " << endl
- */
-class MakeString
-{
-    public:
-        std::stringstream stream;
-        operator std::string() const { return stream.str(); }
-
-        template<class T>
-        MakeString& operator<<(T const& VAR) { stream << VAR; return *this; }
-};
-
-typedef pair<bool, string> TestResult;
 
 float linerp(float a, float b, float x) {
     assert(x>=0 and x<=1);
@@ -85,7 +28,7 @@ struct TestSuite {
     static
     TestResult constant_field_3D1C() {
  
-        ndindexer<3> uind (Nn, Nn, Nn);
+        indexer<3> uind (Nn, Nn, Nn);
         const float initVal = 1;
         vector<float> u (uind.size(), initVal);
         float start_ifrac = -1.9;
@@ -205,7 +148,7 @@ struct TestSuite {
                     Nn,
                     &u[0],
                     i_frac,
-                    OverflowBehaviour::STRETCH
+                    ob
                     //OverflowBehaviourT
                     );
 
@@ -223,7 +166,7 @@ struct TestSuite {
     static
     TestResult increasing_field_3D1C() {
   
-        ndindexer<3> uind (Nn, Nn, Nn);
+        indexer<3> uind (Nn, Nn, Nn);
 
         vector<float> u (uind.size());
 
@@ -323,7 +266,7 @@ struct TestSuite {
   
         size_t Nn = 10;
 
-        ndindexer<4> uind (Nn, Nn, Nn, 3) ;
+        indexer<4> uind (Nn, Nn, Nn, 3) ;
 
         vector<float> u (uind.size());
 
@@ -338,7 +281,7 @@ struct TestSuite {
             uind.increment_ndindex(ndind);
         }
 
-        ndindexer<2> valuesInd (Nn*4, 3);
+        indexer<2> valuesInd (Nn*4, 3);
 
         vector<float> values (valuesInd.size());
 
@@ -414,9 +357,10 @@ struct TestSuite {
         vector<OverflowBehaviour> ovfl (ndims-1, OverflowBehaviour::CYCLIC);
         ovfl.push_back(OverflowBehaviour::STRETCH);
 
-        ndindexer<ndims+1> uind (fullshape) ;
+        indexer<ndims+1> uind (fullshape) ;
 
-        vector<float> u (uind.size());
+        size_t u_size = uind.size();
+        vector<float> u (u_size);
 
         vector<size_t> ndind (uind.get_shape().size(), 0);
 
@@ -430,7 +374,7 @@ struct TestSuite {
             uind.increment_ndindex(ndind);
         }
 
-        ndindexer<2> valuesInd (Nn*4, ncpt);
+        indexer<2> valuesInd (Nn*4, ncpt);
 
         vector<float> values (0);
 

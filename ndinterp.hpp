@@ -13,7 +13,7 @@
 
 using namespace std;
 
-namespace ndinterp {
+namespace ndata {
 
 //-----------------------------------------------------------------------------
 //	HELPERS
@@ -118,7 +118,7 @@ struct InterpolateInner {
         auto unewShape = shape;
         unewShape.pop_back();
 
-        ndindexer<ndims-1> unewIndexer (unewShape);
+        indexer<ndims-1> unewIndexer (unewShape);
 
         size_t unew_nvecs = unewIndexer.size();
 
@@ -235,11 +235,11 @@ array<float, vectorSize> interpolate (
     array<float, vectorSize> zeroVec;
     zeroVec.fill(0);
 
-    vecarray<size_t, ndims+1> shapeWithVectorSize (0, shape);
+    vecarray<size_t, ndims+1> shapeWithVectorSize (-1, shape);
 
     shapeWithVectorSize[ndims]=vectorSize;
 
-    ndindexer<ndims+1> uIndexer (shapeWithVectorSize);
+    indexer<ndims+1> uIndexer (shapeWithVectorSize);
 
     for (size_t i = 0; i < ndims; ++i) {
         if (i >= overflowBehaviours.size()) {
@@ -268,7 +268,7 @@ array<float, vectorSize> interpolate (
                 //early return in case the intersect btw the kernel and the field is empty
                 if(iStarts[i] >= iStops[i]) return zeroVec;
 
-                assert(iStarts[i] >= 0 and iStops[i] <= shape[i]); //this is not true for other overflow behaviours
+                assert(iStarts[i] >= 0 and iStops[i] <= long(shape[i])); //this is not true for other overflow behaviours
                 break;
             default:
                 //nothing
@@ -287,7 +287,7 @@ array<float, vectorSize> interpolate (
         unewShape[idim] = iStops[idim] - iStarts[idim];
     }
 
-    ndindexer<ndims> unewIndexer (unewShape);
+    indexer<ndims> unewIndexer (unewShape);
 
     //unlike the field u passed as argument, we keep each vector in a distinct
     //fixed size array (safer). The packed representation of u is only better for
@@ -335,7 +335,7 @@ array<float, vectorSize> interpolate (
                     break;
             }
 
-            assert(iUThisDim < shape[idim]);
+            assert(iUThisDim < long(shape[idim]));
             assert(iUThisDim >= 0);
             ndi_uold[idim] = iUThisDim;
         }
