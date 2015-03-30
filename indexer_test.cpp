@@ -1,5 +1,5 @@
 #include "debug_helpers.hpp"
-#include "indexer.hpp"
+#include "ndata.hpp"
 
 using namespace std;
 using namespace ndata;
@@ -12,9 +12,9 @@ struct TestSuite {
 
         DECLARE_TESTRESULT(success_bool, ret_msg);
 
-        size_t N0=2, N1=5;
+        size_t Nx=2, Ny=5;
 
-        indexer<2> ndi_u (N0, N1);
+        indexer<2> ndi_u ({Nx, Ny});
 
         //vector<float> u (ndi_u.size());
 
@@ -23,11 +23,11 @@ struct TestSuite {
         //}
         string ref_array, ndindexer_array;
 
-        for (size_t i0 = 0; i0 < N0; ++i0) {
-            for (size_t i1 = 0; i1 < N1; ++i1) {
+        for (size_t ix = 0; ix < Nx; ++ix) {
+            for (size_t iy = 0; iy < Ny; ++iy) {
                 // manual 2D indexing
-                size_t indval = i0*N1+i1;
-                size_t ndi_val = ndi_u.index(i0, i1);
+                size_t indval = ix*Ny+iy;
+                size_t ndi_val = ndi_u.index(ix, iy);
 
                 ref_array.append(MakeString() << indval << ", ");
 
@@ -56,7 +56,7 @@ struct TestSuite {
 
         size_t N0=2, N1=5;
 
-        indexer<2> ndi_u (N0, N1);
+        indexer<2> ndi_u ({N0, N1});
 
         vector<float> u (ndi_u.size());
 
@@ -131,8 +131,34 @@ struct TestSuite {
 
         for (size_t i = 0; i < 2; ++i) {
             for (size_t i1 = 0; i1 < 3; ++i1) {
-                msg.append(MakeString() << ndsli.index(i, i1));
+                size_t idx = ndsli.index(i, i1);
+                msg.append(MakeString() << idx);
             }
+        }
+
+        RETURN_TESTRESULT(success, msg);
+    }
+
+    static
+    TestResult view_test() {
+        DECLARE_TESTRESULT(success, msg);
+
+        size_t Nx=3, Ny=15;
+
+        nvector<2, float> u ({Nx, Ny});
+
+        for (size_t i = 0; i < u.size(); ++i) {
+            u[i] = i;
+        }
+
+        nvector<2, float> usli = u.slice(Rng(), Rng(1, 4));
+
+        for (size_t ix = 0; ix < usli.get_shape()[0]; ++ix) {
+            for (size_t iy = 0; iy < usli.get_shape()[1]; ++iy) {
+                success = usli.val(ix, iy) == ix*Ny+iy;
+                msg.append(MakeString() << usli.val(ix, iy) << ", ");
+            }
+            msg.append("\n");
         }
 
         RETURN_TESTRESULT(success, msg);
@@ -141,9 +167,10 @@ struct TestSuite {
     static
     TestResult run_all_tests () {
         DECLARE_TESTRESULT(b, s);
-        TEST(sequential_indexing(), b, s);
-        TEST(slice_test(), b, s);
+        //TEST(sequential_indexing(), b, s);
+        //TEST(slice_test(), b, s);
         TEST(extended_slices(), b, s);
+        TEST(view_test(), b, s);
         RETURN_TESTRESULT(b, s);
     }
 };

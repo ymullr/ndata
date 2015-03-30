@@ -9,7 +9,7 @@
 #include <array>
 #include <math.h>
 #include <cassert>
-#include "indexer.hpp"
+#include "ndata.hpp"
 
 using namespace std;
 

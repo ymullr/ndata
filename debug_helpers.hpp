@@ -24,9 +24,10 @@ using namespace std;
     } else { \
         acc_message.append("FAILURE"); \
     } \
-        acc_message.append(MakeString() << "\n" << messages_TMP); \
     acc_message.append("\n"); \
-     \
+    acc_message.append(messages_TMP); \
+    acc_message.append("\n"); \
+    \
 
 /**
  * nicely indents the result to reflect test function structure

@@ -4,8 +4,11 @@
 #include <vector>
 
 #include <initializer_list>
-#include <cstdlib> //math stuff
+#include <cstdlib>
+
 #include "vecarray.hpp"
+#include "ndata.hpp"
+#include "helpers.hpp"
 
 
 namespace ndata {
@@ -17,26 +20,6 @@ namespace ndata {
  * This is a convenience alias
  */
 static const long END = -1;
-
-
-// ( shape[i], strides[i] )
-template<size_t N> using SlicesT = vecarray<pair<size_t, long>, N>;
-
-
-//some forward declarations
-
-template<size_t ndims>
-struct indexer;
-
-
-//please ignore
-namespace helpers {
-
-template <long ndimslices>
-indexer<ndimslices>
-make_indexer_helper(pair<size_t, SlicesT<ndimslices>> pr);
-
-}
 
 
 /**
@@ -75,7 +58,7 @@ struct Rng {
 };
 
 /**
- * Helper function allowing the user to create an indexer, dimensionalty is infered
+ * Helper function allowing the user to create an indexer, dimensionality is infered
  * from the number of arguments.
  */
 template <typename... Shape>
@@ -86,7 +69,6 @@ make_indexer(Shape... shape) {
 
 template<size_t ndims>
 struct indexer {
-
 
     template<typename... SizeT>
     indexer(size_t shape0, SizeT... shape):
@@ -120,20 +102,6 @@ struct indexer {
         shape_(shape),
         strides_(strides) { };
 
-    //ndindexer(vector<size_t> shape):
-    //    shape_(shape)
-    //{ 
-    //    strides_=calc_strides_from_shape(shape);
-    //    //static_assert(ndims == 0, 
-    //    //   "This constructor always produce a dynamic vecarray,"
-    //    //   " please set ndims template argument to 0 to use this constructor."
-    //    //);
-    //    assert(shape.size() == ndims or ndims == 0);
-    //}
-
-    //ndindexer(array<size_t, ndims> shape):
-    //    shape_(shape),
-    //    strides_(calc_strides_from_shape(shape)) { }
 
     //empty constructor for later assignment
     indexer() { };
@@ -164,7 +132,7 @@ struct indexer {
     template<typename... SizeT >
     size_t index(size_t i0, SizeT... in){
         static_assert(
-            ndims != 0,
+            ndims != DYNAMIC_SIZE,
             "This overload is only available when the number of dimensions"
             " is known at compile time"
             );
@@ -290,31 +258,13 @@ struct indexer {
      * Returns a new ndindexer with eventually a smaller number of dimensions,
      * The new ndindexer computes indices matching the requested slice of the array.
      */
-    //template <typename... RngOrIndexT>
-    //auto
-    //slice(RngOrIndexT ... slice_or_index) 
-    //{
-    //    return make_ndindexer(
-    //            slice_rec<0, 0>(
-    //                start_index_,
-    //                SlicesT<0>(),
-    //                slice_or_index...
-    //                )
-    //            );
-    //}
-
-    /**
-     * Returns a new ndindexer with eventually a smaller number of dimensions,
-     * The new ndindexer computes indices matching the requested slice of the array.
-     */
     template <typename... DimSliceT>
     auto
-    slice(long index, DimSliceT ... slice_or_index) 
-    {
-        return indexer(
+    slice(long index, DimSliceT ... slice_or_index) {
+        return helpers::make_indexer_helper(
                 slice_rec<0, 0>(
                     start_index_,
-                    SlicesT<0>(),
+                    helpers::SliceAcc<0>(),
                     index,
                     slice_or_index...
                     )
@@ -333,38 +283,14 @@ struct indexer {
         return helpers::make_indexer_helper(
                 slice_rec<0, 0>(
                     start_index_,
-                    SlicesT<0>(),
+                    helpers::SliceAcc<0>(),
                     index_range,
                     slice_or_index...
                     )
                 );
     }
 
-    ///**
-    // * Returns a new ndindexer with eventually a smaller number of dimensions,
-    // * The new ndindexer computes indices matching the requested slice of the array.
-    // *
-    // * array size max 3
-    // *
-    // */
-    //template <typename... DimSliceT>
-    //auto
-    //slice(array<long, 2> arrslice,  DimSliceT ... slice_or_index) 
-    //{
-    //    return make_ndindexer(
-    //            slice_rec<0, 0>(
-    //                start_index_,
-    //                SlicesT<0>(),
-    //                arrslice,
-    //                std::forward<DimSliceT...>(slice_or_index)...
-    //                )
-    //            );
-    //}
-
-
     //fortran_order
-
-    //broadcast
 
     /**
      * produces a ndview. see ndview.
@@ -382,13 +308,29 @@ struct indexer {
      *     do_stuff(my_vector[ind_it]);
      * }
      *
-     * Also good for reshaping
      */
-    //view
+    template<typename ContainerT, typename T>
+    ndview<ndims, ContainerT, T>
+    view(ContainerT data) {
+        return ndview<ndims, ContainerT, T>(data, *this);
+    }
 
-    //own
+    template<size_t ndims_broad>
+    indexer<ndims_broad>
+    broadcast(indexer<ndims_broad> target) {
+        return helpers::broadcast_helper(this, target);
+    }
 
-    private:
+    /**
+     * used by broadcast
+     */
+    template<size_t new_ndims>
+    indexer<new_ndims>
+    reshape(vecarray<size_t, ndims> new_shape, vecarray<long, ndims> new_strides) {
+        return indexer<new_ndims>(start_index_, new_shape, new_strides);
+    }
+
+    protected:
 
     size_t start_index_;
 
@@ -445,23 +387,23 @@ struct indexer {
         return acc;
     }
 
-
     template<size_t idim, typename... SizeT>
     size_t index_rec(size_t acc, long i_idim, SizeT... in){
-        assert(acc<size());
+        //wrong, can be larger size. is the number of elts in the indexer.
+        //only strictly < if the indexer wasnt created from a slice
+        //The starting index can be anything depending on the supporting datatype
+        //assert(acc<size());
         long i_idim_rev = reverse_negative_index(idim, i_idim);
         assert(i_idim_rev < long(shape_[idim]));
 
         size_t new_acc = acc+strides_[idim]*i_idim_rev;
 
-        assert(new_acc < size());
         return index_rec<idim+1>(new_acc, in...);
     }
 
     template<size_t idim>
     size_t index_rec(size_t acc){
         static_assert(idim == ndims, "");
-        assert(acc<size());
         return acc;
     }
 
@@ -481,10 +423,10 @@ struct indexer {
     auto
     slice_rec(
             size_t start_ind,
-            SlicesT<ndimslices> slices,
+            helpers::SliceAcc<ndimslices> slices,
             long index,
             SliceIndex... slice_or_index
-            ) //-> decltype(slice_rec<idim+1, ndimslices>(size_t, SlicesT<ndimslices>, SliceIndex...))
+            )
     {
         start_ind += strides_[idim]*reverse_negative_index(idim, index);
 
@@ -496,7 +438,7 @@ struct indexer {
     auto
     slice_rec(
             size_t start_ind,
-            SlicesT<ndimslices> slices,
+            helpers::SliceAcc<ndimslices> slices,
             Rng range,
             SliceIndex... slice_or_index
             ) //-> decltype(slice_rec<idim+1, ndimsslices>(size_t, SlicesT<ndimslices>, SliceIndex...))
@@ -509,11 +451,11 @@ struct indexer {
 
         long new_stride = strides_[idim]*range.step;
 
-        array<long, 2> full_slice = {
+        helpers::ShapeStridePair full_slice = make_pair(
             labs(reverse_negative_index(idim, range.stop) - reverse_negative_index(idim, range.start))
                 /labs(range.step),
             new_stride
-        };
+        );
 
         //DOES increment dimension
         return slice_rec<idim+1, ndimslices+1>(start_ind, slices.append(full_slice), slice_or_index...); 
@@ -521,8 +463,8 @@ struct indexer {
 
     //termination
     template <size_t idim, size_t ndimslices>
-    pair<size_t, SlicesT<ndimslices>>
-    slice_rec(size_t start_ind, SlicesT<ndimslices> slices) {
+    pair<size_t, helpers::SliceAcc<ndimslices>>
+    slice_rec(size_t start_ind, helpers::SliceAcc<ndimslices> slices) {
 
         static_assert(
             idim == ndims,
@@ -542,32 +484,6 @@ struct indexer {
 
 
 };
-
-namespace helpers {
-
-/**
- *
- *
- * tuple : size_t start_index, vecarray<array<long, 2>, ndims_slice> slices):
- *
- */
-    template <long ndimslices>
-    indexer<ndimslices> make_indexer_helper(pair<size_t, SlicesT<ndimslices>> pr) {
-
-        vecarray<size_t, ndimslices> shape (pr.second.dynsize());
-        vecarray<long, ndimslices> strides (pr.second.dynsize());
-
-        for (size_t i = 0; i < pr.second.size(); ++i) {
-            shape[i] = pr.second[i].first;
-            strides[i] = pr.second[i].second;
-        }
-
-        return indexer<ndimslices>(pr.first, shape, strides);
-
-    }
-
-}
-
 
 }
 #endif /* end of include guard: NDINDEXER_HPP_9FICI4GD */

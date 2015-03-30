@@ -1,3 +1,6 @@
+#ifndef VECARRAY_HPP_EPBF1RNR
+#define VECARRAY_HPP_EPBF1RNR
+
 #include <array>
 #include <vector>
 #include <cassert>
@@ -5,10 +8,7 @@
 
 #include <type_traits>
 
-using namespace std;
-
-#ifndef VECARRAY_HPP_EPBF1RNR
-#define VECARRAY_HPP_EPBF1RNR
+namespace ndata {
 
 
 template <long T> using IsMinusOne = is_same<integral_constant<long, T>, integral_constant<long, -1>>;
@@ -17,7 +17,7 @@ template <long T> using IsNotMinusOne = Negate<IsMinusOne<T>>;
 template <long T> using MinusOne = std::enable_if<IsMinusOne<T>::value, integral_constant<long, T>>;
 template <long T> using NotMinusOne = enable_if<IsNotMinusOne<T>::value, integral_constant<long, T>>;
 
-const long DYNAMIC = -1;
+const long DYNAMIC_SIZE = -1;
 
 //base template
 template<class T, long static_size, class Enable=void>
@@ -28,6 +28,7 @@ struct vecarray {
 //specialization static vecarray
 template<class T, long static_size>
 struct vecarray<T, static_size, typename enable_if<(static_size >= 0)>::type> {
+
 
     array<T, static_size> stackStorage;
 
@@ -60,9 +61,10 @@ struct vecarray<T, static_size, typename enable_if<(static_size >= 0)>::type> {
     }
 
     //overloaded to avoid ambiguity btw vector and array
-    vecarray(initializer_list<T> iniArr)
+    vecarray(std::initializer_list<T> iniArr)
     {
-        static_assert(iniArr.size() == static_size, "Size of initializer list doesn't match");
+        assert(iniArr.size() == static_size);// "Size of initializer list doesn't match");
+        //static_assert(iniArr.size() == static_size, "");// "Size of initializer list doesn't match");
 
         size_t i = 0;
         for (T val: iniArr) {
@@ -224,5 +226,7 @@ struct vecarray<T, static_size, typename enable_if<(static_size == -1)>::type > 
 
 
 };
+
+} //end namespace
 
 #endif /* end of include guard: VECARRAY_HPP_EPBF1RNR */
