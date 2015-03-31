@@ -16,11 +16,6 @@ struct TestSuite {
 
         indexer<2> ndi_u ({Nx, Ny});
 
-        //vector<float> u (ndi_u.size());
-
-        //for (size_t i = 0; i < u.size(); ++i) {
-        //    u[i] = i;
-        //}
         string ref_array, ndindexer_array;
 
         for (size_t ix = 0; ix < Nx; ++ix) {
@@ -140,22 +135,24 @@ struct TestSuite {
     }
 
     static
-    TestResult view_test() {
+    TestResult nvector_test() {
         DECLARE_TESTRESULT(success, msg);
 
-        size_t Nx=3, Ny=15;
+        size_t Nx=3, Ny=5;
 
-        nvector<2, float> u ({Nx, Ny});
+        nvector<2, long> u ({Nx, Ny});
 
         for (size_t i = 0; i < u.size(); ++i) {
             u[i] = i;
         }
 
-        nvector<2, float> usli = u.slice(Rng(), Rng(1, 4));
+        long iy_start = 1;
+        nvector<2, long> usli = u.slice(Rng(), Rng(iy_start, 4));
 
         for (size_t ix = 0; ix < usli.get_shape()[0]; ++ix) {
             for (size_t iy = 0; iy < usli.get_shape()[1]; ++iy) {
-                success = usli.val(ix, iy) == ix*Ny+iy;
+                long indval = usli.val(ix, iy);
+                success = indval == long(ix*Ny+(iy+iy_start));
                 msg.append(MakeString() << usli.val(ix, iy) << ", ");
             }
             msg.append("\n");
@@ -170,7 +167,7 @@ struct TestSuite {
         //TEST(sequential_indexing(), b, s);
         //TEST(slice_test(), b, s);
         TEST(extended_slices(), b, s);
-        TEST(view_test(), b, s);
+        TEST(nvector_test(), b, s);
         RETURN_TESTRESULT(b, s);
     }
 };

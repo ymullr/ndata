@@ -23,10 +23,10 @@ struct ndview: indexer<ndims> {
 
     ContainerT data_;
 
-    ndview(ContainerT data, vecarray<size_t, ndims> shape):
-        indexer<ndims>(shape),
-        data_(data)
-    { }
+    //ndview(ContainerT data, vecarray<size_t, ndims> shape):
+    //    indexer<ndims>(shape),
+    //    data_(data)
+    //{ }
 
     ndview(ContainerT data, indexer<ndims> idxr):
         indexer<ndims>(idxr),
@@ -34,11 +34,11 @@ struct ndview: indexer<ndims> {
     { }
 
 
-    //template<typename... SizeT>
-    //ndview(ContainerT data, size_t shape0, SizeT... shape):
-    //    indexer<ndims>(shape0, shape...),
-    //    data_(data)
-    //{  }
+    template<typename... SizeT>
+    ndview(ContainerT data, size_t shape0, SizeT... shape):
+        indexer<ndims>(shape0, shape...),
+        data_(data)
+    {  }
 
     T&
     operator[](size_t i) {
@@ -48,7 +48,12 @@ struct ndview: indexer<ndims> {
     template <typename... SizeT>
     T&
     val(SizeT... indices) {
-        return &data_[indexer<ndims>::index(indices...)];
+        return data_[indexer<ndims>::index(indices...)];
+    }
+
+    T&
+    val(vecarray<size_t, ndims> indices) {
+        return data_[indexer<ndims>::index(indices)];
     }
 
     template <size_t ndims_broad>
@@ -59,7 +64,7 @@ struct ndview: indexer<ndims> {
 
     template <typename... NdViews, typename ReturnT, typename... Ts>
     ndview<ndims, ContainerT, T>
-    transform(NdViews... ndv, function<ReturnT(Ts... args)> func) {
+    transform(NdViews... ndv, std::function<ReturnT(Ts... args)> func) {
         ndview<ndims, ContainerT, T> retdat = this;
         for (size_t ielt = 0; ielt < indexer<ndims>::size(); ++ielt) {
             retdat[ielt] = func(ndv[ielt]...);

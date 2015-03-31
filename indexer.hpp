@@ -86,14 +86,21 @@ struct indexer {
         assert(shape0>=0);
 
         //vecarray size 0 for dynamic version is going to be a problem
-        shape_=array_from_argpack<size_t, 0>(vecarray<size_t, 0> (), shape0, shape...);
+        shape_=helpers::array_from_argpack<size_t, 0>(vecarray<size_t, 0> (), shape0, shape...);
         strides_ = calc_strides_from_shape(shape_);
     }
 
     indexer(vecarray<size_t, ndims> shape):
         start_index_(0),
         shape_(shape),
-        strides_(calc_strides_from_shape(shape)) { 
+        strides_(calc_strides_from_shape(shape)) {
+    }
+
+    //made explicit to avoid ambiguous calls
+    indexer(std::initializer_list<size_t> shape):
+        start_index_(0),
+        shape_(shape),
+        strides_(calc_strides_from_shape(shape)) {
     }
 
     //construct from members
@@ -315,12 +322,6 @@ struct indexer {
         return ndview<ndims, ContainerT, T>(data, *this);
     }
 
-    template<size_t ndims_broad>
-    indexer<ndims_broad>
-    broadcast(indexer<ndims_broad> target) {
-        return helpers::broadcast_helper(this, target);
-    }
-
     /**
      * used by broadcast
      */
@@ -359,33 +360,6 @@ struct indexer {
         return ret;
     }
 
-    /**
-     * Accumulates the ndimensional indices passed as argument in an array
-     * */
-    template<typename ContentT, size_t idim, typename... ContentTPackT>
-    auto
-    array_from_argpack(
-            vecarray<ContentT, idim> acc,
-            ContentT i,
-            ContentTPackT... rest
-            ) {
-
-        //static_assert(
-        //    sizeof...(rest) == ndims-idim-1,
-        //    ""
-        //);
-        vecarray<ContentT, idim+1> new_acc = acc.append(i);
-        return array_from_argpack<ContentT, idim+1>(new_acc, rest...);
-    }
-
-    template<typename ContentT, size_t idim>
-    vecarray<ContentT, idim> array_from_argpack(vecarray<ContentT, idim> acc) {
-        static_assert(
-                idim == ndims,
-                ""
-                );
-        return acc;
-    }
 
     template<size_t idim, typename... SizeT>
     size_t index_rec(size_t acc, long i_idim, SizeT... in){
@@ -463,7 +437,7 @@ struct indexer {
 
     //termination
     template <size_t idim, size_t ndimslices>
-    pair<size_t, helpers::SliceAcc<ndimslices>>
+    std::pair<size_t, helpers::SliceAcc<ndimslices>>
     slice_rec(size_t start_ind, helpers::SliceAcc<ndimslices> slices) {
 
         static_assert(

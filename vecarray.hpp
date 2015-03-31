@@ -11,11 +11,11 @@
 namespace ndata {
 
 
-template <long T> using IsMinusOne = is_same<integral_constant<long, T>, integral_constant<long, -1>>;
-template <typename T> using Negate = integral_constant<bool, !T::value>;
+template <long T> using IsMinusOne = std::is_same<std::integral_constant<long, T>, std::integral_constant<long, -1>>;
+template <typename T> using Negate = std::integral_constant<bool, !T::value>;
 template <long T> using IsNotMinusOne = Negate<IsMinusOne<T>>;
-template <long T> using MinusOne = std::enable_if<IsMinusOne<T>::value, integral_constant<long, T>>;
-template <long T> using NotMinusOne = enable_if<IsNotMinusOne<T>::value, integral_constant<long, T>>;
+template <long T> using MinusOne = std::enable_if<IsMinusOne<T>::value, std::integral_constant<long, T>>;
+template <long T> using NotMinusOne = std::enable_if<IsNotMinusOne<T>::value, std::integral_constant<long, T>>;
 
 const long DYNAMIC_SIZE = -1;
 
@@ -27,17 +27,17 @@ struct vecarray {
 
 //specialization static vecarray
 template<class T, long static_size>
-struct vecarray<T, static_size, typename enable_if<(static_size >= 0)>::type> {
+struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::type> {
 
 
-    array<T, static_size> stackStorage;
+    std::array<T, static_size> stackStorage;
 
     //provided for compatibility with dynamic version
     vecarray(long dynamic_size) {
         assert(dynamic_size == -1);
     }
 
-    vecarray(long dynamic_size, vector<T> init) {
+    vecarray(long dynamic_size, std::vector<T> init) {
         assert(dynamic_size == -1);
         assert(init.size() <= static_size);
 
@@ -48,11 +48,11 @@ struct vecarray<T, static_size, typename enable_if<(static_size >= 0)>::type> {
         }
     }
 
-    vecarray(array<T, static_size> iniArr):
+    vecarray(std::array<T, static_size> iniArr):
         stackStorage(iniArr) {
     }
 
-    vecarray(vector<T> ini) {
+    vecarray(std::vector<T> ini) {
         //static_assert(static_size == 0, "This constructor always produce a dynamic vecarray");
         assert(ini.size() <= static_size);
         for (size_t i = 0; i < ini.size(); ++i) {
@@ -134,18 +134,18 @@ struct vecarray<T, static_size, typename enable_if<(static_size >= 0)>::type> {
  * Specialization for a dynamic vecarray
  */
 template<class T, long static_size>
-struct vecarray<T, static_size, typename enable_if<(static_size == -1)>::type > {
+struct vecarray<T, static_size, typename std::enable_if<(static_size == -1)>::type > {
 
-    vector<T> heapStorage;
+    std::vector<T> heapStorage;
 
     vecarray(long dynamic_size) {
-        heapStorage = vector<T>(dynamic_size); 
+        heapStorage = std::vector<T>(dynamic_size);
         assert(dynamic_size>=0);
     }
 
-    vecarray(long dynamic_size, vector<T> init) {
+    vecarray(long dynamic_size, std::vector<T> init) {
 
-        heapStorage = vector<T>(dynamic_size);
+        heapStorage = std::vector<T>(dynamic_size);
         assert(init.size() <= dynamic_size);
 
         assert(dynamic_size>=0);
@@ -157,14 +157,14 @@ struct vecarray<T, static_size, typename enable_if<(static_size == -1)>::type > 
         }
     }
 
-    vecarray(vector<T> ini) {
+    vecarray(std::vector<T> ini) {
         heapStorage=ini;
     }
 
-    vecarray(array<T, static_size> iniArr): heapStorage(iniArr.begin(), iniArr.end()) { }
+    vecarray(std::array<T, static_size> iniArr): heapStorage(iniArr.begin(), iniArr.end()) { }
 
     //overloaded to avoid ambiguity btw vector and array
-    vecarray(initializer_list<T> iniArr) {
+    vecarray(std::initializer_list<T> iniArr) {
         size_t i = 0;
         for (T val: iniArr) {
             heapStorage[i] = val;
@@ -222,7 +222,7 @@ struct vecarray<T, static_size, typename enable_if<(static_size == -1)>::type > 
         new_vecarray[size()] = val;
 
         return new_vecarray;
-    } 
+    }
 
 
 };
