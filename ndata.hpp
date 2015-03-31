@@ -14,19 +14,17 @@ namespace ndata {
     struct indexer;
 
     template<typename ContainerT, typename T, size_t ndims>
-    struct ndview;
+    struct ndatacontainer;
 
     template<typename T, size_t ndims>
     struct nvector;
 
 }
 
-
 #include "indexer.hpp"
-#include "ndview.hpp"
+#include "ndatacontainer.hpp"
 #include "nvector.hpp"
 #include "ndata_functions.hpp"
-//#include "ndview_impl.hpp"
 
 
 #endif /* end of include guard: NDATA_HPP_VFUXJBDN */ 

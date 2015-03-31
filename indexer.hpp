@@ -301,7 +301,7 @@ struct indexer {
     //fortran_order
 
     /**
-     * produces a ndview. see ndview.
+     * produces a ndatacontainer. see ndatacontainer.
      * To use in for loops
      *
      * auto ind_it = my_ndindexes.slice(3, {2, 6}, {}); //{} is equivalent to {0:-1}
@@ -318,9 +318,9 @@ struct indexer {
      *
      */
     template<typename ContainerT, typename T>
-    ndview<ContainerT, T, ndims>
+    ndatacontainer<ContainerT, T, ndims>
     view(ContainerT data) {
-        return ndview<ContainerT, T, ndims>(data, *this);
+        return ndatacontainer<ContainerT, T, ndims>(data, *this);
     }
 
     /**
