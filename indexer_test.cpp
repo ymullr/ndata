@@ -1,4 +1,5 @@
 #include "debug_helpers.hpp"
+
 #include "ndata.hpp"
 
 using namespace std;
@@ -14,7 +15,7 @@ struct TestSuite {
 
         size_t Nx=2, Ny=5;
 
-        indexer<2> ndi_u ({Nx, Ny});
+        indexer<2> ndi_u (Nx, Ny);
 
         string ref_array, ndindexer_array;
 
@@ -51,7 +52,7 @@ struct TestSuite {
 
         size_t N0=2, N1=5;
 
-        indexer<2> ndi_u ({N0, N1});
+        indexer<2> ndi_u (N0, N1);
 
         vector<float> u (ndi_u.size());
 
@@ -140,14 +141,14 @@ struct TestSuite {
 
         size_t Nx=3, Ny=5;
 
-        nvector<2, long> u ({Nx, Ny});
+        nvector<long, 2> u (Nx, Ny);
 
         for (size_t i = 0; i < u.size(); ++i) {
             u[i] = i;
         }
 
         long iy_start = 1;
-        nvector<2, long> usli = u.slice(Rng(), Rng(iy_start, 4));
+        nvector<long, 2> usli = u.slice(Rng(), Rng(iy_start, 4));
 
         for (size_t ix = 0; ix < usli.get_shape()[0]; ++ix) {
             for (size_t iy = 0; iy < usli.get_shape()[1]; ++iy) {
@@ -160,6 +161,45 @@ struct TestSuite {
 
         RETURN_TESTRESULT(success, msg);
     }
+
+    static
+    TestResult transform_test () {
+
+        DECLARE_TESTRESULT(sb, msg);
+
+        size_t Nx = 5, Ny = 2;
+        auto u1 = make_nvector<long>(Nx, Ny);
+        auto u2 = make_nvector<long>(Nx, Ny);
+
+        for (size_t ix = 0; ix < Nx ; ++ix) {
+            for (size_t iy = 0; iy < Ny ; ++iy) {
+                u1.val(ix ,iy) = ix*Ny + iy;
+                u2.val(ix ,iy) = ix*Ny + iy;
+                //msg.append(MakeString() << u1.val(ix, iy) << ", ");
+            }
+            msg.append("\n");
+        }
+
+        nvector<long, 2> u_sum = ntransform_helper<long>(make_tuple(u1, u2), [] (long v1, long v2) {
+            return v1+v2;
+        });
+
+        for (size_t ix = 0; ix < Nx ; ++ix) {
+            for (size_t iy = 0; iy < Ny ; ++iy) {
+                if (
+                        not (u1.val(ix ,iy)*2 == u_sum.val(ix, iy))
+                        )
+                {
+                    sb = false;
+                }
+                msg.append(MakeString() << u_sum.val(ix, iy) << ", ");
+            }
+            msg.append("\n");
+        }
+
+        RETURN_TESTRESULT(sb, msg)
+
+    }
  
     static
     TestResult run_all_tests () {
@@ -168,6 +208,7 @@ struct TestSuite {
         //TEST(slice_test(), b, s);
         TEST(extended_slices(), b, s);
         TEST(nvector_test(), b, s);
+        TEST(transform_test(), b, s);
         RETURN_TESTRESULT(b, s);
     }
 };

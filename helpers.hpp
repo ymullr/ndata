@@ -1,9 +1,13 @@
 #ifndef HELPERS_HPP_YIOQCJSG
 #define HELPERS_HPP_YIOQCJSG
 
-#include "ndata.hpp"
 #include <cstdlib>
+#include <utility>
+#include "tuple_utility.hpp"
 #include <exception>
+#include <type_traits>
+
+#include "vecarray.hpp"
 
 namespace ndata {
 
@@ -15,46 +19,95 @@ namespace helpers {
     // ( shape[i], strides[i] )
     template<size_t N> using SliceAcc = vecarray<ShapeStridePair, N>;
 
-    /**
-     *
-     *
-     * tuple : size_t start_index, vecarray<array<long, 2>, ndims_slice> slices):
-     *
-     */
-    template <long ndimslices>
-    indexer<ndimslices> make_indexer_helper(std::pair<size_t, SliceAcc<ndimslices>> pr) {
-
-        vecarray<size_t, ndimslices> shape (pr.second.dynsize());
-        vecarray<long, ndimslices> strides (pr.second.dynsize());
-
-        for (size_t i = 0; i < pr.second.size(); ++i) {
-            ShapeStridePair sh_st_p = pr.second[i];
-            shape[i] = sh_st_p.first;
-            strides[i] = sh_st_p.second;
-        }
-
-        return indexer<ndimslices>(pr.first, shape, strides);
-
-    }
-
-    template<typename T, size_t static_size_1, size_t static_size_2>
+    //make vecarray like biggest with overloads to return a static if both operands are static,
+    //or a dynamic one if any or both operands are dynamic
+    template<
+        long StatSize1,
+        long StatSize2
+        >
     auto
     make_vecarray_like_biggest(
-            vecarray<T, static_size_1> v1,
-            vecarray<T, static_size_2> v2
+                vecarray<
+                    size_t,
+                    std::enable_if<StatSize1!=DYNAMIC_SIZE, std::integral_constant<long, StatSize1>>::type::value
+                    > v1,
+                vecarray<
+                    size_t,
+                    std::enable_if<StatSize2!=DYNAMIC_SIZE, std::integral_constant<long, StatSize2>>::type::value
+                    > v2
             )
     {
-        if (
-                static_size_1 != ndata::DYNAMIC_SIZE
-            and static_size_2 != ndata::DYNAMIC_SIZE
-                )
-        {
-            return vecarray<T, std::max(static_size_1, static_size_2)>();
-        } else {
-            return vecarray<T, ndata::DYNAMIC_SIZE> (std::max(v1.size(), v2.size()));
-        }
+        return vecarray<size_t,
+                (v1.static_size_or_dynamic >= v2.static_size_or_dynamic)?
+                                v1.static_size_or_dynamic :
+                                    v2.static_size_or_dynamic
+                       >();
     };
 
+
+    //make vecarray like biggest with overloads to return a static if both operands are static,
+    //or a dynamic one if any or both operands are dynamic
+    template<
+        long StatSize1,
+        long StatSize2
+        >
+    auto
+    make_vecarray_like_biggest_dyn(
+                vecarray<
+                    size_t,
+                    StatSize1//std::enable_if<StatSize1!=DYNAMIC_SIZE, std::integral_value<StatSize1>>::type::value
+                    > v1,
+                vecarray<
+                    size_t,
+                    StatSize2 //std::enable_if<StatSize2!=DYNAMIC_SIZE, std::integral_value<StatSize2>>::type::value
+                    > v2
+            )
+    {
+        return vecarray<size_t, ndata::DYNAMIC_SIZE> (std::max(v1.size(), v2.size()));
+    };
+
+
+    //make vecarray like biggest with overloads to return a static if both operands are static,
+    //or a dynamic one if any or both operands are dynamic
+    template<
+        long StatSize1,
+        long StatSize2
+        >
+    auto
+    make_vecarray_like_biggest(
+                vecarray<
+                    size_t,
+                    std::enable_if<StatSize1==DYNAMIC_SIZE, std::integral_constant<long, StatSize1>>::type::value
+                    > v1,
+                vecarray<
+                    size_t,
+                    StatSize2 //std::enable_if<StatSize2!=DYNAMIC_SIZE, std::integral_value<StatSize2>>::type::value
+                    > v2
+            )
+    {
+        return make_vecarray_like_biggest_dyn(v1, v2);
+    };
+
+    //make vecarray like biggest with overloads to return a static if both operands are static,
+    //or a dynamic one if any or both operands are dynamic
+    template<
+        long StatSize1,
+        long StatSize2
+        >
+    auto
+    make_vecarray_like_biggest(
+                vecarray<
+                    size_t,
+                    StatSize1
+                    > v1,
+                vecarray<
+                    size_t,
+                    std::enable_if<StatSize2==DYNAMIC_SIZE, std::integral_constant<long, StatSize2>>::type::value
+                    > v2
+            )
+    {
+        return make_vecarray_like_biggest_dyn(v1, v2);
+    };
 
     template<typename ContentT, size_t idim>
     vecarray<ContentT, idim>
@@ -77,67 +130,54 @@ namespace helpers {
         return array_from_argpack<ContentT, idim+1>(new_acc, rest...);
     }
 
-    template <typename IndexerOrView, typename... IndexerOrViews>
-    auto // vecarray<IndexerOrView, N>
-    broadcast(IndexerOrViews... others) {
-        constexpr size_t arrsize = sizeof...(others);
+    //template <typename Indexer, typename... Indexers>
+    //auto // vecarray<Indexer, N>
+    //broadcast(Indexers... others) {
+    //    constexpr size_t arrsize = sizeof...(others);
 
-        vecarray<IndexerOrView, arrsize> arr_args = array_from_argpack(vecarray<IndexerOrView, 0>(), others...);
+    //    vecarray<Indexer, arrsize> arr_args = array_from_argpack(vecarray<Indexer, 0>(), others...);
 
-        vecarray<IndexerOrView, arrsize> ret;
+    //    vecarray<Indexer, arrsize> ret;
 
-        for (size_t i = 0; i < ret.size(); ++i) {
-            vecarray<IndexerOrView, arrsize> reord;
-            reord[0] = arr_args[i];
-            size_t io = 1;
-            for (size_t i2 = 0; i2 < arrsize; ++i2) {
-                if (io != i) {
-                    reord[io] = arr_args[i2];
-                    io++;
-                }
-            }
-            ret[i] = broadcast_left_list(reord);
-        }
+    //    for (size_t i = 0; i < ret.size(); ++i) {
+    //        vecarray<Indexer, arrsize> reord;
+    //        reord[0] = arr_args[i];
+    //        size_t io = 1;
+    //        for (size_t i2 = 0; i2 < arrsize; ++i2) {
+    //            if (io != i) {
+    //                reord[io] = arr_args[i2];
+    //                io++;
+    //            }
+    //        }
+    //        ret[i] = broadcast_left_list(reord);
+    //    }
 
-        return ret;
-    }
-
-    template <typename IndexerOrView, size_t nargs>
-    IndexerOrView
-    broadcast_left_list(vecarray<IndexerOrView,  nargs> args) {
-        vecarray<IndexerOrView, nargs-2> rest;
-        for (size_t i = 0; i < rest.size(); ++i) {
-            rest[i] = args[i+2];
-        }
-        return broadcast_left_list(broadcast_left(args[0], args[1]), rest);
-    }
-
-    template <typename IndexerOrView>
-    IndexerOrView
-    broadcast_left_list(vecarray<IndexerOrView,  2> args) {
-        return broadcast_left(args[0], args[1]);
-    }
+    //    return ret;
+    //}
 
     //broadcasts v1 to match v2
-    template <typename IndexerOrView>
-    IndexerOrView
-    broadcast_left(IndexerOrView v1 , IndexerOrView v2) {
+    template <typename Indexer1, typename Indexer2>
+    auto
+    broadcast_left(Indexer1 v1 , Indexer2 v2, std::tuple<> empty_tup) {
 
         auto shape_v1 = v1.get_shape(),
              shape_v2 = v2.get_shape();
 
         size_t new_size = max(
                     shape_v1.size(),
-                    shape_v1.size()
+                    shape_v2.size()
                     );
 
         auto strides_v1 = v1.get_strides();
         //auto strides_v2 = v2.get_strides();
 
-        auto new_shape = make_vecarray_like_biggest(v1, v2);
+        auto new_shape = make_vecarray_like_biggest<
+                decltype(v1.get_shape())::static_size_or_dynamic,
+                decltype(v2.get_shape())::static_size_or_dynamic
+                >(v1.get_shape(), v2.get_shape());
 
-        auto
-            new_strides_v1 = new_shape;
+        vecarray<long, new_shape.static_size_or_dynamic>
+            new_strides_v1 (new_shape.dynsize());
             //new_strides_v2 = shape;
 
         for (size_t is = 0; is < new_size; ++is) {
@@ -174,31 +214,87 @@ namespace helpers {
             } else {
                 assert("false");
             }
-
-            //if (is < shape_.size()) {
-            //    size_t i_this = shape_.size() - is - 1;
-
-            //    assert(
-            //                targ_shape[i_v2] == shape_[i_this]
-            //             or shape_[i_this] == 1
-            //        );
-            //    new_shape[i_v2] = shape_[i_this];
-            //    if (shape_[i_this] == 1) {
-            //        //that's how this dimension is "extended" without creating new data
-            //        new_strides[i_v2] = 0;
-            //    } else {
-            //        new_strides[i_v2] = strides_[i_this];
-            //    }
-            //} else {
-            //    new_shape[i_v2] = targ_shape[i_v2];
-            //    new_strides[i_v2] = 0;
-            //}
-
         }
-
-        return v1.reindex(new_shape, new_strides_v1);
+        return v1.template reshape<new_shape.static_size_or_dynamic>(new_shape, new_strides_v1);
     }
-}
-}
+
+    template <typename Indexer1, typename Indexer2, typename... Indexers>
+    auto
+    broadcast_left(Indexer1 arg0, Indexer2 arg1, std::tuple<Indexers...> argN) {
+        return broadcast_left(
+                    broadcast_left(arg0, arg1, std::tuple<>()),
+                    tuple_utility::head(argN),
+                    tuple_utility::tail(argN)
+                    );
+    }
+
+    //recursion termination, when toproc is empty
+    template <
+              typename... IndexersAcc,
+              typename... IndexersFull
+            >
+    auto //std::tuple<IndexersFull...>
+    broadcast_rec(
+            //the accumulated result
+            std::tuple<IndexersAcc...> acc,
+            //this is the pack from which elements to be processed are taken, function returns when empty
+            std::tuple<> toproc,
+            //full list of indexers that is kept around
+            std::tuple<IndexersFull...> full
+        )
+    {
+        return acc;
+    }
+
+    template <
+              typename... IndexersAcc,
+              typename... IndexersToProcess,
+              typename... IndexersFull
+            >
+    auto //std::tuple<IndexersFull...>
+    broadcast_rec(
+            //the accumulated result
+            std::tuple<IndexersAcc...> acc,
+            //this is the pack from which elements to be processed are taken, function returns when empty
+            std::tuple<IndexersToProcess...> toproc,
+            //full list of indexers that is kept around
+            std::tuple<IndexersFull...> full
+            ) {
+        auto full_head = tuple_utility::head(toproc);
+        auto full_tail = tuple_utility::tail(toproc);
+        return broadcast_rec(
+                    //new acc
+                    std::tuple_cat(
+                        acc,
+                        std::make_tuple(
+                                broadcast_left(
+                                    tuple_utility::head(toproc),
+                                    full_head,
+                                    full_tail
+                                )
+                        )
+                    ),
+                    tuple_utility::tail(toproc),
+                    full
+        );
+    }
+
+
+    template <typename TupIndexers>
+    auto //std::tuple<Indexers...> tuple of broadcast indexers
+    broadcast(TupIndexers iovs) {
+        return broadcast_rec(
+                    //empty accumulator
+                    std::tuple<>(),
+                    //toproc
+                    iovs,
+                    //full
+                    iovs
+                    );
+    }
+
+} //end .namespace helpers
+
+} //end namespace ndata
 
 #endif /* end of include guard: HELPERS_HPP_YIOQCJSG */

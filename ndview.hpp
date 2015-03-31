@@ -18,7 +18,7 @@ namespace ndata {
  *
  * The method slice and broadcast return ndviews instead of indexer
  **/
-template<size_t ndims, typename ContainerT, typename T>
+template<typename ContainerT, typename T, size_t ndims>
 struct ndview: indexer<ndims> {
 
     ContainerT data_;
@@ -57,15 +57,15 @@ struct ndview: indexer<ndims> {
     }
 
     template <size_t ndims_broad>
-    ndview<ndims_broad, ContainerT, T>
-    broadcast(ndview<ndims_broad, ContainerT, T> target) {
+    ndview<ContainerT, T, ndims_broad>
+    broadcast(ndview<ContainerT, T, ndims_broad> target) {
         return broadcast_helper(this, target);
     }
 
     template <typename... NdViews, typename ReturnT, typename... Ts>
-    ndview<ndims, ContainerT, T>
+    ndview<ContainerT, T, ndims>
     transform(NdViews... ndv, std::function<ReturnT(Ts... args)> func) {
-        ndview<ndims, ContainerT, T> retdat = this;
+        ndview<ContainerT, T, ndims> retdat = this;
         for (size_t ielt = 0; ielt < indexer<ndims>::size(); ++ielt) {
             retdat[ielt] = func(ndv[ielt]...);
         }
@@ -107,14 +107,10 @@ struct ndview: indexer<ndims> {
      * used by broadcast
      */
     template<size_t new_ndims>
-    ndview<new_ndims, ContainerT, T>
+    ndview<ContainerT, T, new_ndims>
     reshape(vecarray<size_t, ndims> new_shape, vecarray<long, ndims> new_strides) {
-        return indexer<new_ndims>(indexer<ndims>::start_index_, new_shape, new_strides);
+        return ndview(data_, indexer<new_ndims>(indexer<ndims>::start_index_, new_shape, new_strides));
     }
-
-    T* begin();
-
-    size_t end();
 };
 
 

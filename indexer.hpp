@@ -67,6 +67,12 @@ make_indexer(Shape... shape) {
     return indexer<sizeof...(shape)>(shape...);
 }
 
+//necessary forward declaration
+namespace helpers {
+    template <long ndimslices>
+    indexer<ndimslices> make_indexer_helper(std::pair<size_t, SliceAcc<ndimslices>> pr);
+}
+
 template<size_t ndims>
 struct indexer {
 
@@ -90,14 +96,9 @@ struct indexer {
         strides_ = calc_strides_from_shape(shape_);
     }
 
+    //initialize from vecarray
+    //you can also pass a vector or array instead, in will autoconvert
     indexer(vecarray<size_t, ndims> shape):
-        start_index_(0),
-        shape_(shape),
-        strides_(calc_strides_from_shape(shape)) {
-    }
-
-    //made explicit to avoid ambiguous calls
-    indexer(std::initializer_list<size_t> shape):
         start_index_(0),
         shape_(shape),
         strides_(calc_strides_from_shape(shape)) {
@@ -115,7 +116,7 @@ struct indexer {
 
     /**
      * ndindex may here be passed as a vecarray (custom type), but also work with an 
-     * a std::array or an initializer_list (when the number of dimensions is
+     * a std::array or a std::vector (when the number of dimensions is
      * known at compile time), or an std::vector when the number of dimensions
      * is known at runtime. 
      */
@@ -155,7 +156,7 @@ struct indexer {
     /**
      * Return the stride for the current dimension
      */
-    vecarray<size_t, ndims> get_strides() {
+    vecarray<long, ndims> get_strides() {
         return strides_;
     }
 
@@ -317,9 +318,9 @@ struct indexer {
      *
      */
     template<typename ContainerT, typename T>
-    ndview<ndims, ContainerT, T>
+    ndview<ContainerT, T, ndims>
     view(ContainerT data) {
-        return ndview<ndims, ContainerT, T>(data, *this);
+        return ndview<ContainerT, T, ndims>(data, *this);
     }
 
     /**
@@ -458,6 +459,30 @@ struct indexer {
 
 
 };
+
+
+    namespace helpers {
+
+    /**
+     * tuple : size_t start_index, vecarray<array<long, 2>, ndims_slice> slices):
+     */
+    template <long ndimslices>
+    indexer<ndimslices> make_indexer_helper(std::pair<size_t, SliceAcc<ndimslices>> pr) {
+
+        vecarray<size_t, ndimslices> shape (pr.second.dynsize());
+        vecarray<long, ndimslices> strides (pr.second.dynsize());
+
+        for (size_t i = 0; i < pr.second.size(); ++i) {
+            ShapeStridePair sh_st_p = pr.second[i];
+            shape[i] = sh_st_p.first;
+            strides[i] = sh_st_p.second;
+        }
+
+        return indexer<ndimslices>(pr.first, shape, strides);
+
+    }
+
+}
 
 }
 #endif /* end of include guard: NDINDEXER_HPP_9FICI4GD */

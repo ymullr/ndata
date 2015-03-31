@@ -9,7 +9,7 @@ using namespace std;
 #define DECLARE_TESTRESULT(acc_success_status, acc_message) \
     bool acc_success_status=true; \
     string acc_message (""); \
-    bool success_status_TMP (true); \
+    bool success_status_TMP =true; \
     acc_success_status = success_status_TMP; /*disable warning when not using TEST macro*/ \
     string messages_TMP (""); \
     acc_message = messages_TMP; \
@@ -51,8 +51,7 @@ using namespace std;
  *
  * MakeString() << val << "stuff " << endl
  */
-class MakeString
-{
+class MakeString {
     public:
         std::stringstream stream;
         operator std::string() const { return stream.str(); }

@@ -29,6 +29,7 @@ struct vecarray {
 template<class T, long static_size>
 struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::type> {
 
+    static constexpr long static_size_or_dynamic = static_size;
 
     std::array<T, static_size> stackStorage;
 
@@ -91,7 +92,7 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::typ
 
     void fill(T val) {
         for (size_t i = 0; i < size(); ++i) {
-            this[i] = val;
+            this->operator[](i) = val;
         }
     }
 
@@ -135,6 +136,8 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::typ
  */
 template<class T, long static_size>
 struct vecarray<T, static_size, typename std::enable_if<(static_size == -1)>::type > {
+
+    static constexpr long static_size_or_dynamic = DYNAMIC_SIZE;
 
     std::vector<T> heapStorage;
 

@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <functional>
+#include "helpers.hpp"
 
 
 namespace ndata {
@@ -12,27 +13,19 @@ namespace ndata {
     template <size_t ndims>
     struct indexer;
 
-    template<size_t ndims, typename ContainerT, typename T>
+    template<typename ContainerT, typename T, size_t ndims>
     struct ndview;
 
-    template<size_t ndims, typename T>
+    template<typename T, size_t ndims>
     struct nvector;
 
-    template <typename... NVectorTs, typename... Ts, typename Tret>
-    ntransform(NVectorTs... vN, std::function<Tret(Ts...)> func)  {
-        tuple<nvector<Ts...>> vec_bc = helpers::broadcast(v1, vN);
-        nvector
-        for (int i = 0; i < vec_bc[0].size(); ++i) {
-
-        }
-
-    }
 }
 
 
 #include "indexer.hpp"
 #include "ndview.hpp"
 #include "nvector.hpp"
+#include "ndata_functions.hpp"
 //#include "ndview_impl.hpp"
 
 
