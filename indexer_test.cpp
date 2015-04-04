@@ -180,7 +180,7 @@ struct TestSuite {
             msg.append("\n");
         }
 
-        nvector<long, 2> u_sum = ntransform_helper<long>(make_tuple(u1, u2), [] (long v1, long v2) {
+        nvector<long, 2> u_sum = ntransform<long>(make_tuple(u1, u2), [] (long v1, long v2) {
             return v1+v2;
         });
 
@@ -200,15 +200,128 @@ struct TestSuite {
         RETURN_TESTRESULT(sb, msg)
 
     }
- 
+
+    static TestResult
+    broadcast_test() {
+        DECLARE_TESTRESULT(succ, msg);
+
+        auto u1 = make_nvector<long>(2, 5);
+        auto u2 = make_nvector<long>(2, 1);
+        auto u3 = make_nvector<long>(5);
+
+        auto tup = helpers::broadcast(make_tuple(u1, u2, u3));
+        auto u1_broad = get<0>(tup);
+        auto u2_broad = get<1>(tup);
+        auto u3_broad = get<2>(tup);
+        bool succ_u1u2 = true;
+        bool succ_u1u3 = true;
+        for (size_t i = 0; i < u1_broad.get_shape().size(); ++i) {
+            if (u1_broad.get_shape()[i] != u2_broad.get_shape()[i]) {
+                succ_u1u2 = false;
+            }
+            if (u1_broad.get_shape()[i] != u3_broad.get_shape()[i]) {
+                succ_u1u3 = false;
+            }
+            msg.append(MakeString() << "shape u1[i] :" << u1_broad.get_shape()[i]
+                       << " shape_u2[i]: " << u2_broad.get_shape()[i]
+                       << " shape_u3[i]: " << u3_broad.get_shape()[i]
+                       << "\n"
+                       );
+        }
+
+        succ = succ_u1u2 and succ_u1u3;
+
+        RETURN_TESTRESULT(succ, msg);
+    }
+
+    static
+    TestResult extended_transform_test () {
+
+        DECLARE_TESTRESULT(sb, msg);
+
+        size_t Nx = 5, Ny = 2;
+        auto u1 = make_nvector<long>(Nx, Ny);
+        auto u2 = make_nvector<float>(Nx*2, Ny);
+        auto u3 = make_nvector<std::pair<long, long>>(Ny);
+
+        for (size_t ix = 0; ix < Nx ; ++ix) {
+            for (size_t iy = 0; iy < Ny ; ++iy) {
+                u1.val(ix ,iy) = ix*Ny + iy;
+            }
+        }
+
+
+        for (size_t ix = 0; ix < Nx*2 ; ++ix) {
+            for (size_t iy = 0; iy < Ny ; ++iy) {
+                u2.val(ix ,iy) = ix*Ny + iy;
+            }
+        }
+
+        for (size_t iy = 0; iy < Ny ; ++iy) {
+            u3.val(iy) = make_pair(1,1);
+        }
+
+        //zero initialized
+        auto ures = make_nvector<float>(Nx, Ny);
+
+        nforeach<float>(
+            make_tuple(
+                //mutated variables must be passed as a view to foreach or changes wont be reflected in caller scope
+                //(so that data is passed by reference instead of by value)
+                ures,
+                u1,
+                u2.slice_view(Rng(0, Nx), Rng()),
+                u3.to_view()
+            ),
+            [] (float &res, long v1, float v2, std::pair<long, long> v3) {
+                res = v1+v2+v3.first;
+            }
+        );
+
+        auto u_res_transform = ntransform<float>(
+            make_tuple(
+                u1,
+                u2.slice_view(Rng(0, Nx), Rng()),
+                u3.to_view()
+            ),
+            [] (long v1, float v2, std::pair<long, long> v3) {
+                return v1+v2+v3.first;
+            }
+        );
+
+        string msg_foreach ("");
+        string msg_transform ("");
+        for (size_t ix = 0; ix < Nx ; ++ix) {
+            for (size_t iy = 0; iy < Ny ; ++iy) {
+                if (
+                    not (ures.val(ix, iy) == u_res_transform.val(ix, iy))
+                )
+                {
+                    sb = false;
+                }
+                msg_foreach.append(MakeString() << ures.val(ix, iy) << ", ");
+                msg_transform.append(MakeString() << u_res_transform.val(ix, iy) << ", ");
+            }
+            msg_transform.append("\n");
+            msg_foreach.append("\n");
+        }
+
+        msg.append(msg_transform);
+        msg.append("\n");
+        msg.append(msg_foreach);
+        RETURN_TESTRESULT(sb, msg)
+    }
+
     static
     TestResult run_all_tests () {
         DECLARE_TESTRESULT(b, s);
         //TEST(sequential_indexing(), b, s);
         //TEST(slice_test(), b, s);
-        TEST(extended_slices(), b, s);
-        TEST(nvector_test(), b, s);
-        TEST(transform_test(), b, s);
+        //TEST(extended_slices(), b, s);
+        //TEST(nvector_test(), b, s);
+        //TEST(transform_test(), b, s);
+        TEST(broadcast_test(), b, s);
+        TEST(extended_transform_test(), b, s);
         RETURN_TESTRESULT(b, s);
     }
 };

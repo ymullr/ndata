@@ -19,7 +19,7 @@ namespace ndata {
  * The method slice and broadcast return nviews instead of indexer
  **/
 template<typename ContainerT, typename T, size_t ndims>
-struct nview: indexer<ndims> {
+struct ndatacontainer: indexer<ndims> {
 
     ContainerT data_;
 
@@ -28,14 +28,14 @@ struct nview: indexer<ndims> {
     //    data_(data)
     //{ }
 
-    nview(ContainerT data, indexer<ndims> idxr):
+    ndatacontainer(ContainerT data, indexer<ndims> idxr):
         indexer<ndims>(idxr),
         data_(data)
     { }
 
 
     template<typename... SizeT>
-    nview(ContainerT data, size_t shape0, SizeT... shape):
+    ndatacontainer(ContainerT data, size_t shape0, SizeT... shape):
         indexer<ndims>(shape0, shape...),
         data_(data)
     {  }
@@ -57,15 +57,15 @@ struct nview: indexer<ndims> {
     }
 
     template <size_t ndims_broad>
-    nview<ContainerT, T, ndims_broad>
-    broadcast(nview<ContainerT, T, ndims_broad> target) {
+    ndatacontainer<ContainerT, T, ndims_broad>
+    broadcast(ndatacontainer<ContainerT, T, ndims_broad> target) {
         return broadcast_helper(this, target);
     }
 
     template <typename... NdViews, typename ReturnT, typename... Ts>
-    nview<ContainerT, T, ndims>
+    ndatacontainer<ContainerT, T, ndims>
     transform(NdViews... ndv, std::function<ReturnT(Ts... args)> func) {
-        nview<ContainerT, T, ndims> retdat = this;
+        ndatacontainer<ContainerT, T, ndims> retdat = this;
         for (size_t ielt = 0; ielt < indexer<ndims>::size(); ++ielt) {
             retdat[ielt] = func(ndv[ielt]...);
         }
@@ -79,20 +79,56 @@ struct nview: indexer<ndims> {
     template <typename... DimSliceT>
     auto
     slice(DimSliceT ... slice_or_index) {
-        //use slice method of the parent class and use it to view this.data_
+        //use slice method of the parent class and use it to own_data this.data_
         //and return a new slice
         return  indexer<ndims>::slice(
                     slice_or_index...
-                ).view(data_);
+                ).template own_data<ContainerT, T>(data_);
     }
+
+    /**
+     * Returns a new ndindexer with eventually a smaller number of dimensions,
+     * The new ndindexer computes indices matching the requested slice of the array.
+     *
+     * Unlike the slice(...) method, slice_view only returns an ndataview which only
+     * holds a pointer to its data.
+     */
+    template <typename... DimSliceT>
+    auto
+    slice_view(DimSliceT ... slice_or_index) {
+        //use slice method of the parent class and use it to own_data this.data_
+        //and return a new slice
+        return indexer<ndims>::slice(
+                    slice_or_index...
+                ).template view_data<ContainerT, T>(data_);
+    }
+
+    ndataview<T, ndims>
+    to_view() {
+        //use slice method of the parent class and use it to own_data this.data_
+        //and return a new slice
+        return ndataview<T, ndims>(&data_[0], *this);
+    }
+
+    //
+    // * Returns a new ndindexer with eventually a smaller number of dimensions,
+    // * The new ndindexer computes indices matching the requested slice of the array.
+    // */
+    //auto
+    //to_view() {
+    //    //use slice method of the parent class and use it to own_data this.data_
+    //    //and return a new slice
+    //    return this->template view_data<T>(data_);
+    //}
+
 
     /**
      * used by broadcast
      */
     template<size_t new_ndims>
-    nview<ContainerT, T, new_ndims>
-    reshape(vecarray<size_t, ndims> new_shape, vecarray<long, ndims> new_strides) {
-        return nview(data_, indexer<new_ndims>(indexer<ndims>::start_index_, new_shape, new_strides));
+    ndatacontainer<ContainerT, T, new_ndims>
+    reshape(vecarray<size_t, new_ndims> new_shape, vecarray<long, new_ndims> new_strides) {
+        return ndatacontainer<ContainerT, T, new_ndims>(data_, indexer<new_ndims>(this->start_index_, new_shape, new_strides));
     }
 };
 

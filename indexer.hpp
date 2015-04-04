@@ -319,8 +319,18 @@ struct indexer {
      */
     template<typename ContainerT, typename T>
     ndatacontainer<ContainerT, T, ndims>
-    view(ContainerT data) {
+    own_data(ContainerT data) {
         return ndatacontainer<ContainerT, T, ndims>(data, *this);
+    }
+
+    /**
+     * produces a ndataview, which is like an ndatacontainer but only
+     * holds a pointer to its data. See ndatacontainer.
+     */
+    template<typename ContainerT, typename T>
+    ndataview<T, ndims>
+    view_data(ContainerT data) {
+        return ndataview<T, ndims>(&data[0], *this);
     }
 
     /**

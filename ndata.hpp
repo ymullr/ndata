@@ -13,9 +13,20 @@ namespace ndata {
     template <size_t ndims>
     struct indexer;
 
+    /**
+     * inherits from indexer
+     */
     template<typename ContainerT, typename T, size_t ndims>
     struct ndatacontainer;
 
+    //an ndatacontainer that doesn't own its data
+    template <typename T, size_t ndims>
+    using ndataview = ndatacontainer<T*, T, ndims>;
+
+    /**
+     * Inherits from ndatacontainer, essentially an ndatacontainer based on a
+     * std::vector with some convenience constructors.
+     */
     template<typename T, size_t ndims>
     struct nvector;
 

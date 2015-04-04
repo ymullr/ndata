@@ -159,6 +159,7 @@ namespace helpers {
     template <typename Indexer1, typename Indexer2>
     auto
     broadcast_left(Indexer1 v1 , Indexer2 v2, std::tuple<> empty_tup) {
+        empty_tup = empty_tup; //silence a warning
 
         auto shape_v1 = v1.get_shape(),
              shape_v2 = v2.get_shape();
@@ -171,13 +172,15 @@ namespace helpers {
         auto strides_v1 = v1.get_strides();
         //auto strides_v2 = v2.get_strides();
 
+        //new shape can be a static vecaray or a dynamic vecarray if any
+        //of v1 or v2 is dynamic
         auto new_shape = make_vecarray_like_biggest<
                 decltype(v1.get_shape())::static_size_or_dynamic,
                 decltype(v2.get_shape())::static_size_or_dynamic
                 >(v1.get_shape(), v2.get_shape());
 
         vecarray<long, new_shape.static_size_or_dynamic>
-            new_strides_v1 (new_shape.dynsize());
+            new_strides (new_shape.dynsize());
             //new_strides_v2 = shape;
 
         for (size_t is = 0; is < new_size; ++is) {
@@ -189,15 +192,15 @@ namespace helpers {
 
                 if (shape_v1[i_v1] == shape_v2[i_v2]) {
                     new_shape[i_new] = shape_v1[i_v1];
-                    new_strides_v1[i_new] = strides_v1[i_v1];
+                    new_strides[i_new] = strides_v1[i_v1];
                     //new_strides_v2[i_new] = strides_v2[i_v2];
                 } else if (shape_v1[i_v1] == 1) {
                     new_shape[i_new] = shape_v2[i_v2];
-                    new_strides_v1[i_new] = 0;
+                    new_strides[i_new] = 0;
                     //new_strides_v2[i_new] = strides_v2[i_v2];
                 } else if (shape_v2[i_v2] == 1) {
                     new_shape[i_new] = shape_v1[i_v1];
-                    new_strides_v1[i_new] = strides_v1[i_v1];
+                    new_strides[i_new] = strides_v1[i_v1];
                     //new_strides_v2[i_new] = 0;
                 } else {
                     throw(std::domain_error("Dimension size must match or be equal to 1"));
@@ -205,27 +208,28 @@ namespace helpers {
 
             } else if (i_v2 >= v2.get_shape().size()) {
                 new_shape[i_new] = shape_v1[i_v1];
-                new_strides_v1[i_new] = strides_v1[i_v1];
+                new_strides[i_new] = strides_v1[i_v1];
                 //new_strides_v2[i_new] = 0;
             } else if (i_v1 >= v1.get_shape().size()) {
                 new_shape[i_new] = shape_v2[i_v2];
-                new_strides_v1[i_new] = 0;
+                new_strides[i_new] = 0;
                 //new_strides_v2[i_new] = strides_v2[i_v2];
             } else {
                 assert("false");
             }
         }
-        return v1.template reshape<new_shape.static_size_or_dynamic>(new_shape, new_strides_v1);
+        return v1.template reshape<new_shape.static_size_or_dynamic>(new_shape, new_strides);
     }
 
     template <typename Indexer1, typename Indexer2, typename... Indexers>
     auto
-    broadcast_left(Indexer1 arg0, Indexer2 arg1, std::tuple<Indexers...> argN) {
-        return broadcast_left(
+    broadcast_left(Indexer1 & arg0, Indexer2 & arg1, std::tuple<Indexers...> & argN) {
+        auto ret = broadcast_left(
                     broadcast_left(arg0, arg1, std::tuple<>()),
                     tuple_utility::head(argN),
                     tuple_utility::tail(argN)
                     );
+        return ret;
     }
 
     //recursion termination, when toproc is empty
@@ -236,13 +240,15 @@ namespace helpers {
     auto //std::tuple<IndexersFull...>
     broadcast_rec(
             //the accumulated result
-            std::tuple<IndexersAcc...> acc,
+            const std::tuple<IndexersAcc...> & acc,
             //this is the pack from which elements to be processed are taken, function returns when empty
-            std::tuple<> toproc,
+            std::tuple<> & toproc,
             //full list of indexers that is kept around
-            std::tuple<IndexersFull...> full
+            std::tuple<IndexersFull...> & full
         )
     {
+        toproc = toproc; //silence warnings
+        full=full;
         return acc;
     }
 
@@ -254,36 +260,39 @@ namespace helpers {
     auto //std::tuple<IndexersFull...>
     broadcast_rec(
             //the accumulated result
-            std::tuple<IndexersAcc...> acc,
+            std::tuple<IndexersAcc...> & acc,
             //this is the pack from which elements to be processed are taken, function returns when empty
-            std::tuple<IndexersToProcess...> toproc,
+            std::tuple<IndexersToProcess...> & toproc,
             //full list of indexers that is kept around
-            std::tuple<IndexersFull...> full
+            std::tuple<IndexersFull...> & full
             ) {
-        auto full_head = tuple_utility::head(toproc);
-        auto full_tail = tuple_utility::tail(toproc);
+        auto proc_head = tuple_utility::head(toproc);
+        auto proc_tail = tuple_utility::tail(toproc);
+        auto full_head = tuple_utility::head(full);
+        auto full_tail = tuple_utility::tail(full);
+
+        auto processed_indexer =
+                broadcast_left(
+                    proc_head,
+                    full_head,
+                    full_tail
+                    );
         return broadcast_rec(
-                    //new acc
-                    std::tuple_cat(
-                        acc,
-                        std::make_tuple(
-                                broadcast_left(
-                                    tuple_utility::head(toproc),
-                                    full_head,
-                                    full_tail
-                                )
-                        )
-                    ),
-                    tuple_utility::tail(toproc),
-                    full
+            //new acc
+            std::tuple_cat(
+                acc,
+                make_tuple(processed_indexer)
+            ),
+            proc_tail,
+            full
         );
     }
 
 
     template <typename TupIndexers>
     auto //std::tuple<Indexers...> tuple of broadcast indexers
-    broadcast(TupIndexers iovs) {
-        return broadcast_rec(
+    broadcast(const TupIndexers & iovs) {
+        auto ret = broadcast_rec(
                     //empty accumulator
                     std::tuple<>(),
                     //toproc
@@ -291,6 +300,7 @@ namespace helpers {
                     //full
                     iovs
                     );
+        return ret;
     }
 
 } //end .namespace helpers

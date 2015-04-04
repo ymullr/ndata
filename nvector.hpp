@@ -2,13 +2,10 @@
 #define NVECTOR_HPP_B0EOQJGU
 
 #include <vector>
+#include "ndatacontainer.hpp"
 
 namespace ndata {
 
-
-//type alias for uniformity with nvector
-template <typename T, size_t ndims>
-using ndataview = ndatacontainer<(&std::raw vector<T>), T, ndims>;
 
 
 //forward declaration
@@ -17,7 +14,7 @@ auto //nvector<T, somedim>
 make_nvector(ndatacontainer<std::vector<T>, T, StatSize> idxr);
 
 template<typename T, size_t ndims>
-struct nvector: public ndatacontainer<std::vector<T>, T, ndims>  {
+struct nvector: ndatacontainer<std::vector<T>, T, ndims>  {
 
     //construct from ndatacontainer
     nvector(ndatacontainer<std::vector<T>, T, ndims> ndv):
@@ -86,11 +83,11 @@ struct nvector: public ndatacontainer<std::vector<T>, T, ndims>  {
     slice(DimSliceT ... slice_or_index) {
         //use slice method of the parent class and use it to view this.data_
         //and return a new slice
-        return  make_vector(
+        return  make_nvector(
                     ndatacontainer<std::vector<T>, T, ndims>::slice(
                     slice_or_index...
-                )
-                    );
+                    )
+                );
     }
 
 };

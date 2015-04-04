@@ -22,15 +22,14 @@ namespace tuple_utility {
     //}
 
     //http://stackoverflow.com/questions/10626856/how-to-split-a-tuple
-    template < typename T , typename... Ts >
+    template <typename T , typename... Ts >
     auto head( std::tuple<T,Ts...> t )
     {
        return  std::get<0>(t);
     }
 
     template < std::size_t... Ns , typename... Ts >
-    auto tail_impl( std::index_sequence<Ns...> , std::tuple<Ts...> t )
-    {
+    auto tail_impl( std::index_sequence<Ns...> , std::tuple<Ts...> t ) {
        return  std::make_tuple( std::get<Ns+1u>(t)... );
     }
 
@@ -41,7 +40,7 @@ namespace tuple_utility {
     }
 
     template <typename FuncT, typename TupT, size_t... Is>
-    auto apply_impl(FuncT func, TupT t,
+    auto apply_impl(FuncT func, TupT &t,
                               std::index_sequence<Is...>)
     {
        //note difference in position of expansion between apply and tuple transform
@@ -49,13 +48,21 @@ namespace tuple_utility {
     }
 
     template <typename FuncT, typename TupT>
-    auto apply(FuncT func, TupT t)
+    auto apply(FuncT func, TupT & t)
     {
-       return  apply_impl(func, t, std::make_index_sequence<std::tuple_size<decltype(t)>::value>());
+       return  apply_impl(
+                   func,
+                   t,
+                   std::make_index_sequence<
+                          std::tuple_size<
+                          TupT
+                          >::value
+                          >()
+                          );
     }
 
     template <typename FuncT, typename TupT, size_t... Is>
-    auto tuple_transform_impl(FuncT func, TupT t,
+    auto tuple_transform_impl(FuncT func, TupT & t,
                               std::index_sequence<Is...>)
     {
        //note difference in position of expansion between apply and tuple transform
@@ -63,9 +70,15 @@ namespace tuple_utility {
     }
 
     template <typename FuncT, typename TupT>
-    auto tuple_transform(FuncT func, TupT t)
+    auto tuple_transform(FuncT func, TupT & t)
     {
-       return  tuple_transform_impl(func, t, std::make_index_sequence<std::tuple_size<decltype(t)>::value>());
+       return  tuple_transform_impl(func, t,
+                                    std::make_index_sequence<
+                                    std::tuple_size<
+                                    TupT
+                                    >::value
+                                    >()
+                                    );
     }
 
 }
