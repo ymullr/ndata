@@ -223,7 +223,7 @@ namespace helpers {
 
     template <typename Indexer1, typename Indexer2, typename... Indexers>
     auto
-    broadcast_left(Indexer1 & arg0, Indexer2 & arg1, std::tuple<Indexers...> & argN) {
+    broadcast_left(Indexer1 arg0, Indexer2 arg1, std::tuple<Indexers...> argN) {
         auto ret = broadcast_left(
                     broadcast_left(arg0, arg1, std::tuple<>()),
                     tuple_utility::head(argN),
@@ -240,11 +240,11 @@ namespace helpers {
     auto //std::tuple<IndexersFull...>
     broadcast_rec(
             //the accumulated result
-            const std::tuple<IndexersAcc...> & acc,
+            std::tuple<IndexersAcc...> acc,
             //this is the pack from which elements to be processed are taken, function returns when empty
-            std::tuple<> & toproc,
+            std::tuple<> toproc,
             //full list of indexers that is kept around
-            std::tuple<IndexersFull...> & full
+            std::tuple<IndexersFull...> full
         )
     {
         toproc = toproc; //silence warnings
@@ -260,11 +260,11 @@ namespace helpers {
     auto //std::tuple<IndexersFull...>
     broadcast_rec(
             //the accumulated result
-            std::tuple<IndexersAcc...> & acc,
+            std::tuple<IndexersAcc...> acc,
             //this is the pack from which elements to be processed are taken, function returns when empty
-            std::tuple<IndexersToProcess...> & toproc,
+            std::tuple<IndexersToProcess...> toproc,
             //full list of indexers that is kept around
-            std::tuple<IndexersFull...> & full
+            std::tuple<IndexersFull...> full
             ) {
         auto proc_head = tuple_utility::head(toproc);
         auto proc_tail = tuple_utility::tail(toproc);
@@ -291,7 +291,7 @@ namespace helpers {
 
     template <typename TupIndexers>
     auto //std::tuple<Indexers...> tuple of broadcast indexers
-    broadcast(const TupIndexers & iovs) {
+    broadcast(TupIndexers iovs) {
         auto ret = broadcast_rec(
                     //empty accumulator
                     std::tuple<>(),

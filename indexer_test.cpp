@@ -5,6 +5,10 @@
 using namespace std;
 using namespace ndata;
 
+struct uncopyable {
+    uncopyable(uncopyable&) ;
+};
+
 struct TestSuite {
 
     static
@@ -234,6 +238,36 @@ struct TestSuite {
         RETURN_TESTRESULT(succ, msg);
     }
 
+    static TestResult
+    view_test() {
+
+        DECLARE_TESTRESULT(succ, msg);
+
+        //zero initialized
+        auto u = make_nvector<long>(2, 5);
+
+        auto uview = u.to_view();
+
+        for (size_t ix = 0; ix < 2; ++ix) {
+            for (size_t iy = 0; iy < 5; ++iy) {
+                uview.val(ix, iy) = 2;
+            }
+        }
+
+        for (size_t ix = 0; ix < 2; ++ix) {
+            for (size_t iy = 0; iy < 5; ++iy) {
+                if (u.val(ix, iy) != 2) {
+                    succ = false;
+                };
+                msg.append(MakeString () << u.val(ix, iy) << ", ");
+            }
+            msg.append("\n");
+        }
+
+        RETURN_TESTRESULT(succ, msg);
+
+    }
+
     static
     TestResult extended_transform_test () {
 
@@ -268,13 +302,14 @@ struct TestSuite {
             make_tuple(
                 //mutated variables must be passed as a view to foreach or changes wont be reflected in caller scope
                 //(so that data is passed by reference instead of by value)
-                ures,
+                ures.to_view(),
                 u1,
                 u2.slice_view(Rng(0, Nx), Rng()),
                 u3.to_view()
             ),
-            [] (float &res, long v1, float v2, std::pair<long, long> v3) {
-                res = v1+v2+v3.first;
+            //lambda function must take its arguments as pointers
+            [] (float * res, long * v1, float * v2, std::pair<long, long> * v3) {
+                *res = *v1+*v2+(*v3).first;
             }
         );
 
@@ -320,6 +355,7 @@ struct TestSuite {
         //TEST(extended_slices(), b, s);
         //TEST(nvector_test(), b, s);
         //TEST(transform_test(), b, s);
+        TEST(view_test(), b, s);
         TEST(broadcast_test(), b, s);
         TEST(extended_transform_test(), b, s);
         RETURN_TESTRESULT(b, s);

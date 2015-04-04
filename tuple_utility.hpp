@@ -23,18 +23,18 @@ namespace tuple_utility {
 
     //http://stackoverflow.com/questions/10626856/how-to-split-a-tuple
     template <typename T , typename... Ts >
-    auto head( std::tuple<T,Ts...> t )
+    auto head(std::tuple<T,Ts...> & t )
     {
        return  std::get<0>(t);
     }
 
     template < std::size_t... Ns , typename... Ts >
-    auto tail_impl( std::index_sequence<Ns...> , std::tuple<Ts...> t ) {
+    auto tail_impl( std::index_sequence<Ns...> , std::tuple<Ts...> & t ) {
        return  std::make_tuple( std::get<Ns+1u>(t)... );
     }
 
     template < typename... Ts >
-    auto tail( std::tuple<Ts...> t )
+    auto tail( std::tuple<Ts...> & t )
     {
        return  tail_impl( std::make_index_sequence<sizeof...(Ts) - 1u>() , t );
     }
