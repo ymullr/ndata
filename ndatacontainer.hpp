@@ -5,8 +5,8 @@
 
 #include "vecarray.hpp"
 #include "ndata.hpp"
-#include "indexer.hpp"
-#include "helpers.hpp"
+#include "nindexer.hpp"
+#include "nhelpers.hpp"
 
 namespace ndata {
 

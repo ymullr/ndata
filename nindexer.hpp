@@ -8,7 +8,7 @@
 
 #include "vecarray.hpp"
 #include "ndata.hpp"
-#include "helpers.hpp"
+#include "nhelpers.hpp"
 
 
 namespace ndata {
@@ -286,8 +286,7 @@ struct indexer {
      */
     template <typename... DimSliceT>
     auto
-    slice(Rng index_range,  DimSliceT ... slice_or_index) 
-    {
+    slice(Rng index_range,  DimSliceT ... slice_or_index)  {
         return helpers::make_indexer_helper(
                 slice_rec<0, 0>(
                     start_index_,
@@ -298,7 +297,7 @@ struct indexer {
                 );
     }
 
-    //fortran_order
+    //TODO fortran_order
 
     /**
      * produces a ndatacontainer. see ndatacontainer.

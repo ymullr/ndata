@@ -29,30 +29,30 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 
 include_directories(
 	./
+    ./c89/includes
 	)
 
 find_library(M_LIB m)
 find_library(DL_LIB dl)
 
 add_executable(
-	ndarray_test
-	./ndarray_test.cpp
-	./ndarray.c
+    narray_test
+    ./tests/narray_test.cpp
 	)
 
 add_executable(
         indexer_test
-        ./indexer_test.cpp
+        ./tests/indexer_test.cpp
 	)
 
 add_executable(
         interp_test
-        ./interp_test.cpp
+        ./tests/interp_test.cpp
 	)
 
 
 #fake target
-FILE(GLOB_RECURSE INC_ALL "./*.hpp")
+FILE(GLOB_RECURSE INC_ALL "./*.hpp" "./tests/*.hpp")
 add_custom_target(
     make_qtcreator_happy_and_able_to_find_my_headers
     SOURCES ${INC_ALL}

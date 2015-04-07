@@ -3,8 +3,7 @@
 
 #include <vector>
 #include <functional>
-#include "helpers.hpp"
-
+#include "nhelpers.hpp"
 
 namespace ndata {
 
@@ -32,7 +31,7 @@ namespace ndata {
 
 }
 
-#include "indexer.hpp"
+#include "nindexer.hpp"
 #include "ndatacontainer.hpp"
 #include "nvector.hpp"
 #include "ndata_functions.hpp"

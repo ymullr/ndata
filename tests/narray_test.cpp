@@ -1,5 +1,4 @@
-#include "ndarray.h"
-
+#include "narray.h"
 #include <iostream>
 
 using namespace std;

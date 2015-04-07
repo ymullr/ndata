@@ -69,7 +69,8 @@ struct KernNearestNeighbor {
 
 //Approximated tricubic interpolation with Keys' convolution kernel
 //(cf wikipedia bicubic interpolation, convolution version)
-//R. Keys, (1981). "Cubic convolution interpolation for digital image processing". IEEE Transactions on Acoustics, Speech, and Signal Processing 29 (6): 1153–1160.
+//R. Keys, (1981). "Cubic convolution interpolation for digital image processing".
+//IEEE Transactions on Acoustics, Speech, and Signal Processing 29 (6): 1153–1160.
 struct KernCubic {
     float kern(float x) {
 
@@ -308,7 +309,6 @@ array<float, vectorSize> interpolate (
     //
     //iunew_flat is the flattened multidimensional index (with VectorT stride)
     for (size_t iunew_flat = 0; iunew_flat < unew.size(); ++iunew_flat) {
-
 
         //compute the multidimensional index from the
         //start of the current column in the old u array

@@ -2,6 +2,8 @@
 
 #include "ndata.hpp"
 
+//TODO test dynamic ndarrays
+
 using namespace std;
 using namespace ndata;
 
@@ -298,14 +300,15 @@ struct TestSuite {
         //zero initialized
         auto ures = make_nvector<float>(Nx, Ny);
 
+        ndataview<float, 2> u2_slice =  u2.slice_view(Rng(0, Nx), Rng());
+
         nforeach<float>(
+            //nforeach takes a tuple of pointers to ndataview ndatacontainer or nvector
             make_tuple(
-                //mutated variables must be passed as a view to foreach or changes wont be reflected in caller scope
-                //(so that data is passed by reference instead of by value)
-                ures,
-                u1,
-                u2.slice_view(Rng(0, Nx), Rng()),
-                u3
+                &ures,
+                &u1,
+                &u2_slice,
+                &u3
             ),
             //lambda function must take its arguments as pointers
             [] (float * res, long * v1, float * v2, std::pair<long, long> * v3) {

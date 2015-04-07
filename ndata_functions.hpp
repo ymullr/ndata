@@ -4,7 +4,7 @@
 
 #include <tuple>
 //#include "nvector.hpp"
-#include "helpers.hpp"
+#include "nhelpers.hpp"
 #include <utility>
 #include "tuple_utility.hpp"
 
@@ -12,15 +12,16 @@ namespace ndata {
 
     template <typename Tret, typename FuncT, typename... Ndatacontainers>
     void
-    nforeach(std::tuple<Ndatacontainers...> vN_containers, FuncT func)  {
+    nforeach(std::tuple<Ndatacontainers*...> ndata_tup_ptrs, FuncT func)  {
 
-        //ensure all elements inside vN_containers are converted to views
+        //ensure all elements inside ndata_tup_ptrs are converted to views
         //necessing for returning pointers to elements in ndata later
-        auto vN = tuple_utility::tuple_transform_ptr([] (auto & elt) {
-            return elt.to_ndataview();
-        }, vN_containers);
+        //transform all pointers to ndatacontainers to ndviews
+        auto ndata_tup = tuple_utility::tuple_transform_ptr([] (auto * elt) {
+            return elt->to_ndataview();
+        }, ndata_tup_ptrs);
 
-        auto tuple_params_bc = helpers::broadcast(vN);
+        auto tuple_params_bc = helpers::broadcast(ndata_tup);
 
         //broadcast arguments against each others
         //all broadcasted indexers should have the same shape
@@ -33,7 +34,7 @@ namespace ndata {
 
         for (int i = 0; i < idxr.size(); ++i) {
             //transform tuple of ndatacontainers to tuple of refs to scalar values for current ndindex
-            auto tuple_params_scalar = tuple_utility::tuple_transform([ndindex] (auto A) {
+            auto tuple_params_scalar = tuple_utility::tuple_transform_ptr([ndindex] (auto A) {
                 return &A.val(ndindex);
             }, tuple_params_bc);
 
@@ -45,24 +46,24 @@ namespace ndata {
 
     //template <typename Tret, typename FuncT, typename... Ndatacontainers>
     //auto //nvector<Tret, some_ndims>
-    //nforeach(FuncT func, Ndatacontainers... vN)  {
-    //    nforeach(make_tuple(vN...), func);
+    //nforeach(FuncT func, Ndatacontainers... ndata_tup)  {
+    //    nforeach(make_tuple(ndata_tup...), func);
     //}
 
     //disabled bc FuncT can't be properly inferred with this signature which leads to awkward
     //call syntax
     //template <typename Tret, typename FuncT, typename... Ndatacontainers>
     //auto //nvector<Tret, some_ndims>
-    //ntransform(Ndatacontainers... vN, std::function<FuncT> func)  {
-    //    return ntransform<Tret, FuncT>(make_tuple(vN...), func);
+    //ntransform(Ndatacontainers... ndata_tup, std::function<FuncT> func)  {
+    //    return ntransform<Tret, FuncT>(make_tuple(ndata_tup...), func);
     //}
 
     template <typename Tret, typename FuncT, typename... Ndatacontainers>
     auto //nvector<Tret, some_ndims>
-    ntransform(std::tuple<Ndatacontainers...> vN, FuncT func)  {
+    ntransform(std::tuple<Ndatacontainers...> ndata_tup, FuncT func)  {
 
         //broadcast arguments against each others
-        auto tuple_params_bc = helpers::broadcast(vN);
+        auto tuple_params_bc = helpers::broadcast(ndata_tup);
 
         //init return nvector with correct shape
         auto retshape = std::get<0>(tuple_params_bc).get_shape();
@@ -87,8 +88,8 @@ namespace ndata {
     //alternative overload which avoids the creation of a tuple but seems less readable
     //template <typename Tret, typename FuncT, typename... Ndatacontainers>
     //auto //nvector<Tret, some_ndims>
-    //ntransform(FuncT func, Ndatacontainers... vN)  {
-    //    return ntransform<Tret, FuncT>(make_tuple(vN...), func);
+    //ntransform(FuncT func, Ndatacontainers... ndata_tup)  {
+    //    return ntransform<Tret, FuncT>(make_tuple(ndata_tup...), func);
     //}
 
 

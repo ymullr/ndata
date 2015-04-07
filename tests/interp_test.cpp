@@ -1,13 +1,13 @@
-#include "interp.hpp"
-#include "indexer.hpp"
+#include "numerics/ninterp.hpp"
+#include "nindexer.hpp"
 
 #include <iostream>
 #include <string>
 #include <array>
 #include <tuple>
 
-#include <debug_helpers.hpp>
-#include "interp.hpp"
+#include <tests/debug_helpers.hpp>
+#include "numerics/ninterp.hpp"
 
 using namespace ndata;
 
