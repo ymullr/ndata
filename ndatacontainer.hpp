@@ -98,9 +98,9 @@ struct ndatacontainer: indexer<ndims> {
     slice_view(DimSliceT ... slice_or_index) {
         //use slice method of the parent class and use it to own_data this.data_
         //and return a new slice
-        return indexer<ndims>::slice(
-                    slice_or_index...
-                ).template view_data<ContainerT, T>(data_);
+        ndataview<T, ndims> ret (&data_[0], indexer<ndims>::slice(
+                    slice_or_index...));
+        return ret;
     }
 
     ndataview<T, ndims>

@@ -16,8 +16,6 @@ namespace ndata {
 
         //broadcast arguments against each others
         auto tuple_params_bc = helpers::broadcast(vN);
-        auto ndv0 = std::get<0>(vN);
-        auto ndv1 = std::get<0>(tuple_params_bc);
 
         //all broadcasted indexers should have the same shape
         //let's get the first
@@ -29,10 +27,9 @@ namespace ndata {
 
         for (int i = 0; i < idxr.size(); ++i) {
             //transform tuple of ndatacontainers to tuple of refs to scalar values for current ndindex
-            auto tuple_params_scalar = tuple_utility::tuple_transform([ndindex] (auto & A) {
+            auto tuple_params_scalar = tuple_utility::tuple_transform([ndindex] (auto A) {
                 return &A.val(ndindex);
             }, tuple_params_bc);
-            //float * ndv3 = &std::get<0>(tuple_params_scalar);
 
             tuple_utility::apply(func, tuple_params_scalar);
 

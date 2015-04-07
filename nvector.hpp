@@ -23,13 +23,6 @@ struct nvector: ndatacontainer<std::vector<T>, T, ndims>  {
             )
     { }
 
-    //nvector(vecarray<size_t, ndims> shape):
-    //    ndatacontainer<ndims, std::vector<T>, T>(
-    //            std::vector<T>(make_indexer(shape).size()),
-    //            shape
-    //        )
-    //{  }
-
     //construct from indexer or shape
     nvector(indexer<ndims> idxr):
         ndatacontainer<std::vector<T>, T, ndims>(
@@ -48,15 +41,6 @@ struct nvector: ndatacontainer<std::vector<T>, T, ndims>  {
              )
     {  }
 
-
-    //construct from data and shape (default strides = 1)
-    //nvector(std::vector<T> data, vecarray<size_t, ndims> shape):
-    //    ndatacontainer<ndims, std::vector<T>, T>(
-    //            data,
-    //            shape
-    //        )
-    //{  assert(data.size() == indexer<ndims>::size()); }
-
     //construct from data and its indexer shape
     nvector(std::vector<T> data, indexer<ndims> idxr):
         ndatacontainer<std::vector<T>, T, ndims>(
@@ -65,14 +49,8 @@ struct nvector: ndatacontainer<std::vector<T>, T, ndims>  {
             )
     { assert(data.size() >= idxr.size() ); }
 
-    /**
-     * used by broadcast
-     */
-    //template<size_t new_ndims>
-    //ndatacontainer<ContainerT, T, new_ndims>
-    //reshape(vecarray<size_t, ndims> new_shape, vecarray<long, ndims> new_strides) {
-    //    return ndatacontainer(data_, indexer<new_ndims>(indexer<ndims>::start_index_, new_shape, new_strides));
-    //}
+    //TODO resize() function which would reallocate data and remove unreachable elements
+    //to be used after some slicing
 
     /**
      * Returns a new ndindexer with eventually a smaller number of dimensions,

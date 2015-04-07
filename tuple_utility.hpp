@@ -23,32 +23,32 @@ namespace tuple_utility {
 
     //http://stackoverflow.com/questions/10626856/how-to-split-a-tuple
     template <typename T , typename... Ts >
-    auto head(std::tuple<T,Ts...> & t )
+    auto head(std::tuple<T,Ts...> t )
     {
        return  std::get<0>(t);
     }
 
     template < std::size_t... Ns , typename... Ts >
-    auto tail_impl( std::index_sequence<Ns...> , std::tuple<Ts...> & t ) {
+    auto tail_impl( std::index_sequence<Ns...> , std::tuple<Ts...> t ) {
        return  std::make_tuple( std::get<Ns+1u>(t)... );
     }
 
     template < typename... Ts >
-    auto tail( std::tuple<Ts...> & t )
+    auto tail( std::tuple<Ts...> & t)
     {
        return  tail_impl( std::make_index_sequence<sizeof...(Ts) - 1u>() , t );
     }
 
     template <typename FuncT, typename TupT, size_t... Is>
-    auto apply_impl(FuncT func, TupT &t,
-                              std::index_sequence<Is...>)
+    auto apply_impl(FuncT func, TupT t,
+                      std::index_sequence<Is...>)
     {
        //note difference in position of expansion between apply and tuple transform
        return  func(std::get<Is>(t)...);
     }
 
     template <typename FuncT, typename TupT>
-    auto apply(FuncT func, TupT & t)
+    auto apply(FuncT func, TupT t)
     {
        return  apply_impl(
                    func,
@@ -62,7 +62,7 @@ namespace tuple_utility {
     }
 
     template <typename FuncT, typename TupT, size_t... Is>
-    auto tuple_transform_impl(FuncT func, TupT & t,
+    auto tuple_transform_impl(FuncT func, TupT t,
                               std::index_sequence<Is...>)
     {
        //note difference in position of expansion between apply and tuple transform
@@ -70,7 +70,7 @@ namespace tuple_utility {
     }
 
     template <typename FuncT, typename TupT>
-    auto tuple_transform(FuncT func, TupT & t)
+    auto tuple_transform(FuncT func, TupT t)
     {
        return  tuple_transform_impl(func, t,
                                     std::make_index_sequence<
@@ -82,6 +82,5 @@ namespace tuple_utility {
     }
 
 }
-
 
 #endif /* end of include guard: TUPLE_UTILITY_HPP_KC5LBUVV */ 

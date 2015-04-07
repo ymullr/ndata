@@ -303,7 +303,7 @@ struct TestSuite {
                 //mutated variables must be passed as a view to foreach or changes wont be reflected in caller scope
                 //(so that data is passed by reference instead of by value)
                 ures.to_view(),
-                u1,
+                u1.to_view(),
                 u2.slice_view(Rng(0, Nx), Rng()),
                 u3.to_view()
             ),
@@ -350,11 +350,11 @@ struct TestSuite {
     static
     TestResult run_all_tests () {
         DECLARE_TESTRESULT(b, s);
-        //TEST(sequential_indexing(), b, s);
-        //TEST(slice_test(), b, s);
-        //TEST(extended_slices(), b, s);
-        //TEST(nvector_test(), b, s);
-        //TEST(transform_test(), b, s);
+        TEST(sequential_indexing(), b, s);
+        TEST(slice_test(), b, s);
+        TEST(extended_slices(), b, s);
+        TEST(nvector_test(), b, s);
+        TEST(transform_test(), b, s);
         TEST(view_test(), b, s);
         TEST(broadcast_test(), b, s);
         TEST(extended_transform_test(), b, s);
