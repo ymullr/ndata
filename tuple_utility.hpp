@@ -75,8 +75,28 @@ namespace tuple_utility {
        return  tuple_transform_impl(func, t,
                                     std::make_index_sequence<
                                     std::tuple_size<
-                                    TupT
-                                    >::value
+                                        TupT
+                                        >::value
+                                    >()
+                                    );
+    }
+
+    template <typename FuncT, typename TupT, size_t... Is>
+    auto tuple_transform_impl_ptr(FuncT func, TupT & t,
+                              std::index_sequence<Is...>)
+    {
+       //note difference in position of expansion between apply and tuple transform
+       return  std::make_tuple(func(std::get<Is>(t))...);
+    }
+
+    template <typename FuncT, typename TupT>
+    auto tuple_transform_ptr(FuncT func, TupT& t)
+    {
+       return  tuple_transform_impl_ptr(func, t,
+                                    std::make_index_sequence<
+                                    std::tuple_size<
+                                        TupT
+                                        >::value
                                     >()
                                     );
     }

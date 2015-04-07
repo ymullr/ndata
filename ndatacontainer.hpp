@@ -103,12 +103,17 @@ struct ndatacontainer: indexer<ndims> {
         return ret;
     }
 
-    ndataview<T, ndims>
-    to_view() {
+    //default conversion operator to a view
+    operator ndataview<T, ndims>() {
         //use slice method of the parent class and use it to own_data this.data_
         //and return a new slice
         return ndataview<T, ndims>(&data_[0], *this);
     }
+
+    auto to_ndataview() {
+        return ndataview<T, ndims>(*this);
+    }
+
 
     //
     // * Returns a new ndindexer with eventually a smaller number of dimensions,

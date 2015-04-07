@@ -246,7 +246,7 @@ struct TestSuite {
         //zero initialized
         auto u = make_nvector<long>(2, 5);
 
-        auto uview = u.to_view();
+        auto uview = ndataview<long, 2>(u);
 
         for (size_t ix = 0; ix < 2; ++ix) {
             for (size_t iy = 0; iy < 5; ++iy) {
@@ -302,10 +302,10 @@ struct TestSuite {
             make_tuple(
                 //mutated variables must be passed as a view to foreach or changes wont be reflected in caller scope
                 //(so that data is passed by reference instead of by value)
-                ures.to_view(),
-                u1.to_view(),
+                ures,
+                u1,
                 u2.slice_view(Rng(0, Nx), Rng()),
-                u3.to_view()
+                u3
             ),
             //lambda function must take its arguments as pointers
             [] (float * res, long * v1, float * v2, std::pair<long, long> * v3) {
@@ -317,7 +317,7 @@ struct TestSuite {
             make_tuple(
                 u1,
                 u2.slice_view(Rng(0, Nx), Rng()),
-                u3.to_view()
+                u3
             ),
             [] (long v1, float v2, std::pair<long, long> v3) {
                 return v1+v2+v3.first;

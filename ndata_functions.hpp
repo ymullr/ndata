@@ -12,11 +12,17 @@ namespace ndata {
 
     template <typename Tret, typename FuncT, typename... Ndatacontainers>
     void
-    nforeach(std::tuple<Ndatacontainers...> vN, FuncT func)  {
+    nforeach(std::tuple<Ndatacontainers...> vN_containers, FuncT func)  {
 
-        //broadcast arguments against each others
+        //ensure all elements inside vN_containers are converted to views
+        //necessing for returning pointers to elements in ndata later
+        auto vN = tuple_utility::tuple_transform_ptr([] (auto & elt) {
+            return elt.to_ndataview();
+        }, vN_containers);
+
         auto tuple_params_bc = helpers::broadcast(vN);
 
+        //broadcast arguments against each others
         //all broadcasted indexers should have the same shape
         //let's get the first
         auto idxr = std::get<0>(tuple_params_bc);
