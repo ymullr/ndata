@@ -56,21 +56,6 @@ struct ndatacontainer: indexer<ndims> {
         return data_[indexer<ndims>::index(indices)];
     }
 
-    template <size_t ndims_broad>
-    ndatacontainer<ContainerT, T, ndims_broad>
-    broadcast(ndatacontainer<ContainerT, T, ndims_broad> target) {
-        return broadcast_helper(this, target);
-    }
-
-    template <typename... NdViews, typename ReturnT, typename... Ts>
-    ndatacontainer<ContainerT, T, ndims>
-    transform(NdViews... ndv, std::function<ReturnT(Ts... args)> func) {
-        ndatacontainer<ContainerT, T, ndims> retdat = this;
-        for (size_t ielt = 0; ielt < indexer<ndims>::size(); ++ielt) {
-            retdat[ielt] = func(ndv[ielt]...);
-        }
-        return retdat;
-    }
 
     /**
      * Returns a new ndindexer with eventually a smaller number of dimensions,
@@ -113,18 +98,6 @@ struct ndatacontainer: indexer<ndims> {
     auto to_ndataview() {
         return ndataview<T, ndims>(*this);
     }
-
-
-    //
-    // * Returns a new ndindexer with eventually a smaller number of dimensions,
-    // * The new ndindexer computes indices matching the requested slice of the array.
-    // */
-    //auto
-    //to_view() {
-    //    //use slice method of the parent class and use it to own_data this.data_
-    //    //and return a new slice
-    //    return this->template view_data<T>(data_);
-    //}
 
 
     /**

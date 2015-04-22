@@ -5,6 +5,7 @@
 #include <vector>
 #include <cassert>
 #include <initializer_list>
+#include <exception>
 
 #include <type_traits>
 
@@ -38,14 +39,14 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::typ
         assert(dynamic_size == -1);
     }
 
-    vecarray(long dynamic_size, std::vector<T> init) {
+    vecarray(long dynamic_size, std::vector<T> drop_last) {
         assert(dynamic_size == -1);
-        assert(init.size() <= static_size);
+        assert(drop_last.size() <= static_size);
 
-        //init members with content of the vector
-        //imitates the behaviour of initializer lists
-        for (size_t i = 0; i < init.size(); ++i) {
-            stackStorage[i] = init[i];
+        //drop_last members with content of the vector
+        //imitates the behaviour of drop_lastializer lists
+        for (size_t i = 0; i < drop_last.size(); ++i) {
+            stackStorage[i] = drop_last[i];
         }
     }
 
@@ -64,8 +65,8 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::typ
     //overloaded to avoid ambiguity btw vector and array
     vecarray(std::initializer_list<T> iniArr)
     {
-        assert(iniArr.size() == static_size);// "Size of initializer list doesn't match");
-        //static_assert(iniArr.size() == static_size, "");// "Size of initializer list doesn't match");
+        assert(iniArr.size() == static_size);// "Size of drop_lastializer list doesn't match");
+        //static_assert(iniArr.size() == static_size, "");// "Size of drop_lastializer list doesn't match");
 
         size_t i = 0;
         for (T val: iniArr) {
@@ -74,7 +75,7 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::typ
         }
     }
 
-    //empty initializer for later assignment
+    //empty drop_lastializer for later assignment
     vecarray() {};
 
     size_t size() {
@@ -112,9 +113,6 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::typ
 
     /**
      * Like push_back but returns new vecarray instead of mutating 
-     *
-     * Static version
-     *
      */
     vecarray<T, static_size+1>
     append (T val) {
@@ -129,13 +127,33 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::typ
         return new_vecarray;
     }
 
+    /**
+     * returns all elements of the vecarray but the last
+     */
+    vecarray<T, static_size-1>
+    drop_back (T val) {
+        static_assert(static_size>0, "woops already empty");
+
+        vecarray<T, static_size-1> new_vecarray;
+
+        for (size_t i = 0; i < new_vecarray.size(); ++i) {
+            new_vecarray[i] = operator[](i);
+        }
+
+        return new_vecarray;
+    }
+
+    T back() {
+        return operator[](size()-1);
+    }
+
 };
 
 /**
  * Specialization for a dynamic vecarray
  */
 template<class T, long static_size>
-struct vecarray<T, static_size, typename std::enable_if<(static_size == -1)>::type > {
+struct vecarray<T, static_size, typename std::enable_if<(static_size == DYNAMIC_SIZE)>::type > {
 
     static constexpr long static_size_or_dynamic = DYNAMIC_SIZE;
 
@@ -146,17 +164,17 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size == -1)>::ty
         assert(dynamic_size>=0);
     }
 
-    vecarray(long dynamic_size, std::vector<T> init) {
+    vecarray(long dynamic_size, std::vector<T> drop_last) {
 
         heapStorage = std::vector<T>(dynamic_size);
-        assert(init.size() <= dynamic_size);
+        assert(drop_last.size() <= dynamic_size);
 
         assert(dynamic_size>=0);
 
-        //init members with content of the vector
-        //imitates the behaviour of initializer lists
-        for (size_t i = 0; i < init.size(); ++i) {
-            heapStorage[i] = init[i];
+        //drop_last members with content of the vector
+        //imitates the behaviour of drop_lastializer lists
+        for (size_t i = 0; i < drop_last.size(); ++i) {
+            heapStorage[i] = drop_last[i];
         }
     }
 
@@ -175,7 +193,7 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size == -1)>::ty
         }
     }
 
-    //empty initializer for later assignment
+    //empty drop_lastializer for later assignment
     vecarray() {};
 
     size_t size() {
@@ -194,7 +212,7 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size == -1)>::ty
         }
     }
 
-    vecarray<T, -1>
+    vecarray<T, DYNAMIC_SIZE>
     reverse () {
         vecarray<T, 0> new_vecarray (size());
         size_t vecsize = new_vecarray.size();
@@ -214,9 +232,9 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size == -1)>::ty
      *
      * Dynamic version
      */
-    vecarray<T, -1>
+    vecarray<T, DYNAMIC_SIZE>
     append (T val) {
-        vecarray<T, -1> new_vecarray (size()+1);
+        vecarray<T, DYNAMIC_SIZE> new_vecarray (size()+1);
 
         for (size_t i = 0; i < size(); ++i) {
             new_vecarray[i] = this[i];
@@ -227,6 +245,27 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size == -1)>::ty
         return new_vecarray;
     }
 
+    /**
+     * returns all elements of the vecarray but the last
+     */
+    vecarray<T, DYNAMIC_SIZE>
+    drop_back (T val) {
+        if (size()>0){
+            throw(std::underflow_error("this.size() is already 0"));
+        }
+
+        vecarray<T, DYNAMIC_SIZE> new_vecarray;
+
+        for (size_t i = 0; i < new_vecarray.size(); ++i) {
+            new_vecarray[i] = operator[](i);
+        }
+
+        return new_vecarray;
+    }
+
+    T back() {
+        return operator[](size()-1);
+    }
 
 };
 

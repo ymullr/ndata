@@ -186,12 +186,18 @@ struct indexer {
         return acc;
     }
 
+    vecarray<size_t, ndims>
+    make_zero_ndindex() {
+        auto ret = shape_;
+        ret.fill(0);
+        return ret;
+    }
 
     /**
      * For a given ndarray, this will increments the dimensional indices for
      * each dimension in the correct order.
      *
-     * This will work with any decent container like std::array, a std::vector or a vecarray.
+     * This will work with stl containers such as std::array, a std::vector or a vecarray.
      *
      * Useful to avoid deeply nested loop with a large number of dimension by
      * folding everything into one. Also makes things easier when the number of

@@ -11,8 +11,6 @@
 #include <cassert>
 #include "ndata.hpp"
 
-using namespace std;
-
 namespace ndata {
 
 //-----------------------------------------------------------------------------
@@ -103,32 +101,28 @@ template<class KernT, size_t ndims, size_t vectorSize>
 struct InterpolateInner {
 
     static
-    array<float, vectorSize> interpolateInner(
-            vector<size_t> shape,
-            vector<array<float, vectorSize>> u, 
-            vector<float> indexFrac
+    vecarray<float, vectorSize> interpolateInner(
+            nvector<vecarray<float, vectorSize>, ndims> u,
+            std::vector<float> indexFrac
             )
     {
-        assert(ndims > 1);
-        assert(shape.size() == ndims);
+        static_assert(ndims > 1, "Dynamic case not implemented");
         
         //uNew loses the.back dimension compared to u
         //the.back dimension is the one on which the interpolation is performed
         //
         //the other dimensions are reduced to a number of values matching the kernel's width
-        auto unewShape = shape;
-        unewShape.pop_back();
+        auto unewShape = u.get_shape().drop_back();
 
         indexer<ndims-1> unewIndexer (unewShape);
 
         size_t unew_nvecs = unewIndexer.size();
 
-        auto uNew = vector<array<float, vectorSize>>(unew_nvecs, {0});
+        auto uNew = nvector<vecarray<float, vectorSize>, ndims-1>(unew_nvecs, {0});
 
         //multidimensional index (VectorT stride ignored) in uNew
-        auto ndindex_unew = vector<size_t>(unewShape.size(),0);
+        auto ndindex_unew = uNew.make_zero_ndindex();
 
-        //
         //iterating on all the vectors values of the new array uNew
         //also means iterating on all dimensions (but the last) of the old array
         //that is we iterate on all the 1D columns of the old array
@@ -140,12 +134,11 @@ struct InterpolateInner {
             //start of the current column in the old u array
             size_t iu0 = 0;
             for (size_t idim = 0; idim < ndims-1; ++idim) {
-                iu0 += ndindex_unew[idim]*shape.back();
+                iu0 += ndindex_unew[idim]*u.shape.back();
             }
 
-            vector<array<float, vectorSize>> uCol (
-                    shape.back(),
-                    {0}
+            nvector<vecarray<float, vectorSize>, 1> uCol (
+                        {u.shape.back()}
                     );
 
             for (size_t iCol = 0; iCol < uCol.size(); ++iCol) {
@@ -155,9 +148,8 @@ struct InterpolateInner {
             //update uNew
             //recursive call, this one doesn't have subrecursion since ndims == 1
             uNew[iunew_flat] = InterpolateInner<KernT, 1, vectorSize>::interpolateInner(
-                vector<size_t>(1, shape.back()),
                 uCol,
-                vector<float>(1, indexFrac.back())
+                {indexFrac.back()}
             );
 
             unewIndexer.increment_ndindex(ndindex_unew);
@@ -174,11 +166,11 @@ template <class KernT, size_t vectorSize>
 struct InterpolateInner<KernT, 1, vectorSize> {
 
     static 
-    array<float, vectorSize> 
+    std::array<float, vectorSize>
     interpolateInner(
-            vector<size_t> shape,
-            vector<array<float, vectorSize>> u, 
-            vector<float> indexFrac
+            std::vector<size_t> shape,
+            std::vector<std::array<float, vectorSize>> u,
+            std::vector<float> indexFrac
             )
     {
         assert(
@@ -191,7 +183,7 @@ struct InterpolateInner<KernT, 1, vectorSize> {
         //... easy
         KernT kern;
 
-        array<float, vectorSize> ret {0};
+        std::array<float, vectorSize> ret {0};
 
         for (size_t i = 0; i < shape[0]; ++i) {
             float x = float(i)-indexFrac[0];
@@ -205,28 +197,21 @@ struct InterpolateInner<KernT, 1, vectorSize> {
     }
 };
 
-template<class KernT, size_t ndims, size_t vectorSize>
-array<float, vectorSize> interpolate (
-        //lists the size of each dimension of the array of VectorT
-        //(the size of VectorT must not included)
-        //[ndims]
-        vector<size_t> shape,
+template<class T, size_t ndims, size_t vectorSize, class KernT>
+vecarray<float, vectorSize> interpolate (
         //flattened array of VectorT
         //TODO Note on VectorT packing/padding/casting
-        float * u, 
+        ndataview<T, ndims> u,
         //sampling is "normalized" by delta so it is expressed in terms of a fraction of
         //the sourceField indices instead of a real position
         //[ndims]
-        vector<float> indexFrac,
+        vecarray<float, ndims> indexFrac,
         //[from 1 to ndims]
-        vector<OverflowBehaviour> overflowBehaviours
+        vecarray<OverflowBehaviour> overflowBehaviours
         )
 {
-    assert(shape.size()>0);
     assert(
-            indexFrac.size() == ndims
-        and shape.size() == ndims
-        and indexFrac.size() == ndims
+            indexFrac.size() == u.shape.size()
         );
     assert(overflowBehaviours.size() <= shape.size() and overflowBehaviours.size() > 0);
 
@@ -359,7 +344,6 @@ array<float, vectorSize> interpolate (
     assert(indexFrac.size() == unewShape.size() );
 
     auto retArray = InterpolateInner<KernT, ndims, vectorSize>::interpolateInner(
-            vector<size_t>(unewShape.begin(), unewShape.end()),
             unew,
             indexFrac
             );
@@ -377,25 +361,14 @@ array<float, vectorSize> interpolate (
 //	NOW A BUNCH OF OVERLOADS FOR DEALING WITH SIMPLER CASES
 //-----------------------------------------------------------------------------
 
-/**
- * The main function to perform interpolation
- */
-template<class KernT, size_t ndims, size_t vectorSize>
-array<float, vectorSize> interpolate (
-        //lists the size of each dimension of the array of VectorT
-        //(the size of VectorT must not included)
-        //[ndims]
+template<class T, size_t ndims, size_t vectorSize, class KernT>
+vecarray<float, vectorSize> interpolate (
         vector<size_t> shape,
-        //flattened array of VectorT
         float * u, 
-        //sampling is "normalized" by delta so it is expressed in terms of a fraction of
-        //the sourceField indices instead of a real position
-        //[ndims]
-        vector<float> indexFrac,
-        //[from 1 to ndims]
+        vecarray<float> indexFrac,
         OverflowBehaviour overflowBehaviour = OverflowBehaviour::STRETCH
         ) {
-    return interpolate<KernT, ndims, vectorSize>(
+    return interpolate<T, ndims, vectorSize, KernT>(
         shape,
         u,
         indexFrac,
@@ -403,39 +376,24 @@ array<float, vectorSize> interpolate (
         );
 }
 
-template<class KernT, size_t ndims>
-float interpolate (
-        //[ndims]
-        vector<size_t> shape,
-        //vector of float
-        float * u, 
-        //sampling is "normalized" by delta so it is expressed in terms of a fraction of
-        //the sourceField indices instead of a real position
-        //[ndims]
-        vector<float> indexFrac,
-        //[from 1 to ndims]
+template<class T, size_t ndims, class KernT>
+T interpolate (
+        ndataview<T, ndims> u,
+        vecarray<float> indexFrac,
         OverflowBehaviour overflowBehaviour = OverflowBehaviour::STRETCH
         ) {
-    return interpolate<KernT, ndims, 1>(
-        shape,
+    return interpolate<T, ndims, 1, KernT>(
         u,
         indexFrac,
         {overflowBehaviour}
         )[0];
 }
 
-template<class KernT, size_t ndims>
-float interpolate (
-        //[ndims]
-        vector<size_t> shape,
-        //vector of float
-        float * u, 
-        //sampling is "normalized" by delta so it is expressed in terms of a fraction of
-        //the sourceField indices instead of a real position
-        //[ndims]
-        vector<float> indexFrac,
-        //[from 1 to ndims]
-        vector<OverflowBehaviour> overflowBehaviours
+template<class T, size_t ndims, class KernT>
+T interpolate (
+        ndataview<T, ndims> u,
+        vecarray<float> indexFrac,
+        vecarray<OverflowBehaviour> overflowBehaviours
         ) {
     return interpolate<KernT, ndims, 1>(
         shape,
@@ -445,15 +403,10 @@ float interpolate (
         )[0];
 }
 
-template<class KernT>
-float interpolate (
-        size_t shape,
-        //array of VectorT
-        float * u, 
-        //sampling is "normalized" by delta so it is expressed in terms of a fraction of
-        //the sourceField indices instead of a real position
+template<class T, class KernT>
+T interpolate (
+        ndataview<T, ndims> u,
         float indexFrac,
-        //[from 1 to ndims]
         OverflowBehaviour overflowBehaviour = OverflowBehaviour::STRETCH
         ) {
     return interpolate<KernT, 1, 1>(
@@ -464,18 +417,16 @@ float interpolate (
         )[0];
 }
 
-template<class KernT, size_t vectorSize>
-array<float, vectorSize> interpolate (
-        size_t shape,
-        //array of VectorT
-        float * u, 
+template<class T, size_t ndims, size_t vectorSize, class KernT>
+vecarray<float, vectorSize> interpolate (
+        ndataview<T, ndims> u,
         //sampling is "normalized" by delta so it is expressed in terms of a fraction of
         //the sourceField indices instead of a real position
         float indexFrac,
         //[from 1 to ndims]
         OverflowBehaviour overflowBehaviour = OverflowBehaviour::STRETCH
         ) {
-    return interpolate<KernT, 1, vectorSize>(
+    return interpolate<T, 1, vectorSize, KernT>(
         {shape},
         u,
         {indexFrac},
