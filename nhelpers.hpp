@@ -38,9 +38,9 @@ namespace helpers {
             )
     {
         return vecarray<size_t,
-                (v1.static_size_or_dynamic >= v2.static_size_or_dynamic)?
-                                v1.static_size_or_dynamic :
-                                    v2.static_size_or_dynamic
+                (v1.STATIC_SIZE_OR_DYNAMIC >= v2.STATIC_SIZE_OR_DYNAMIC)?
+                                v1.STATIC_SIZE_OR_DYNAMIC :
+                                    v2.STATIC_SIZE_OR_DYNAMIC
                        >();
     };
 
@@ -175,11 +175,11 @@ namespace helpers {
         //new shape can be a static vecaray or a dynamic vecarray if any
         //of v1 or v2 is dynamic
         auto new_shape = make_vecarray_like_biggest<
-                decltype(v1.get_shape())::static_size_or_dynamic,
-                decltype(v2.get_shape())::static_size_or_dynamic
+                decltype(v1.get_shape())::STATIC_SIZE_OR_DYNAMIC,
+                decltype(v2.get_shape())::STATIC_SIZE_OR_DYNAMIC
                 >(v1.get_shape(), v2.get_shape());
 
-        vecarray<long, new_shape.static_size_or_dynamic>
+        vecarray<long, new_shape.STATIC_SIZE_OR_DYNAMIC>
             new_strides (new_shape.dynsize());
             //new_strides_v2 = shape;
 
@@ -218,7 +218,7 @@ namespace helpers {
                 assert("false");
             }
         }
-        return v1.template reshape<new_shape.static_size_or_dynamic>(new_shape, new_strides);
+        return v1.template reshape<new_shape.STATIC_SIZE_OR_DYNAMIC>(new_shape, new_strides);
     }
 
     template <typename Indexer1, typename Indexer2, typename... Indexers>
@@ -290,15 +290,15 @@ namespace helpers {
 
 
     template <typename TupIndexers>
-    auto //std::tuple<Indexers...> tuple of broadcast indexers
-    broadcast(TupIndexers iovs) {
+    auto //std::tuple<Indexers...> tuple of indexers
+    broadcast(TupIndexers&& iovs) {
         auto ret = broadcast_rec(
                     //empty accumulator
                     std::tuple<>(),
                     //toproc
-                    iovs,
+                    std::move(iovs),
                     //full
-                    iovs
+                    std::move(iovs)
                     );
         return ret;
     }

@@ -67,7 +67,7 @@ namespace ndata {
 
         //init return nvector with correct shape
         auto retshape = std::get<0>(tuple_params_bc).get_shape();
-        nvector<Tret, retshape.static_size_or_dynamic> ret (retshape);
+        nvector<Tret, retshape.STATIC_SIZE_OR_DYNAMIC> ret (retshape);
 
         //our multidimensional index
         auto ndindex = retshape;

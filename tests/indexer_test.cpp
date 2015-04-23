@@ -68,14 +68,14 @@ struct TestSuite {
 
         //ndindexer<2> ndi_fullslice1 = ndi_u.slice(array<long, 3> {0, long(N0), 1}, array<long, 3> {0, long(N1), 1});
         
-        indexer<2> ndi_fullslice1 = ndi_u.index_slice(Rng(0, long(N0), 1), Rng(0, long(N1), 1));
+        indexer<2> ndi_fullslice1 = ndi_u.index(Rng(0, long(N0), 1), Rng(0, long(N1), 1));
 
-        indexer<2> ndi_fullslice2 = ndi_u.index_slice(
+        indexer<2> ndi_fullslice2 = ndi_u.index(
                 Rng(0, N0),
                 Rng(0, N1, 1)
                 );
 
-        indexer<2> ndi_fullslice3 = ndi_u.index_slice(Rng(0, N0), Rng(0, ndata::END));//END is = -1
+        indexer<2> ndi_fullslice3 = ndi_u.index(Rng(0, N0), Rng(0, ndata::END));//END is = -1
 
         bool fs1ok, fs2ok, fs3ok;
 
@@ -125,7 +125,7 @@ struct TestSuite {
     TestResult
     extended_slices() {
         auto ndi = make_indexer(4, 5, 3);
-        indexer<2> ndsli = ndi.slice(Rng(0, 2), 2, Rng());
+        indexer<2> ndsli = ndi.index(Rng(0, 2), 2, Rng());
 
         DECLARE_TESTRESULT(success, msg);
 
@@ -154,7 +154,7 @@ struct TestSuite {
         }
 
         long iy_start = 1;
-        nvector<long, 2> usli = u.slice(Rng(), Rng(iy_start, 4));
+        nvector<long, 2> usli = u.index(Rng(), Rng(iy_start, 4));
 
         for (size_t ix = 0; ix < usli.get_shape()[0]; ++ix) {
             for (size_t iy = 0; iy < usli.get_shape()[1]; ++iy) {
@@ -300,7 +300,7 @@ struct TestSuite {
         //zero initialized
         auto ures = make_nvector<float>(make_indexer(Nx, Ny));
 
-        ndataview<float, 2> u2_slice =  u2.slice(Rng(0, Nx), Rng());
+        ndataview<float, 2> u2_slice =  u2(Rng(0, Nx), Rng());
 
         nforeach<float>(
             //nforeach takes a tuple of pointers to ndataview ndatacontainer or nvector
@@ -319,7 +319,8 @@ struct TestSuite {
         auto u_res_transform = ntransform<float>(
             make_tuple(
                 u1,
-                u2.slice_view(Rng(0, Nx), Rng()),
+                //u2.slice_view(Rng(0, Nx), Rng()),
+                u2(Rng(0, Nx), Rng()),
                 u3
             ),
             [] (long v1, float v2, std::pair<long, long> v3) {

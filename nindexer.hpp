@@ -67,11 +67,47 @@ make_indexer(Shape... shape) {
     return indexer<sizeof...(shape)>(shape...);
 }
 
-//necessary forward declaration
 namespace helpers {
-    template <long ndimslices>
-    indexer<ndimslices> make_indexer_from_slices(std::pair<size_t, SliceAcc<ndimslices>> pr);
+
+//forward declaration only
+template <long ndimslices>
+indexer<ndimslices> make_indexer_from_slices(std::pair<size_t, SliceAcc<ndimslices>> pr);
+
+
+//returns sliced indexer, general case
+template<long ndimslices, long ndims_base>
+struct return_sliced_indexer_or_index {
+
+    static
+    indexer<ndimslices>
+    do_it(
+            std::pair<size_t, helpers::SliceAcc<ndimslices>> pr
+            )
+    {
+        return make_indexer_from_slices_helper(
+                    pr
+               );
+    }
+};
+
+//specialisation when pr contains no slice (only straight indexes were given)
+//in that case returns the index
+template<long ndims_base>
+struct return_sliced_indexer_or_index<0, ndims_base> {
+
+    static
+    size_t
+    do_it(
+            std::pair<size_t, helpers::SliceAcc<0>> pr
+            )
+    {
+        return pr.first;
+    }
+};
+
+
 }
+
 
 template<long ndims>
 struct indexer {
@@ -114,22 +150,20 @@ struct indexer {
     //empty constructor for later assignment
     indexer() { };
 
-    static constexpr long NDIMS = ndims;
-
     /**
      * ndindex may here be passed as a vecarray (custom type), but also work with an 
      * a std::array or a std::vector (when the number of dimensions is
      * known at compile time), or an std::vector when the number of dimensions
      * is known at runtime. 
      */
-    size_t index(vecarray<size_t, ndims> ndindex){
+    size_t index(vecarray<long, ndims> ndindex){
         assert(ndindex.size() == shape_.size());
-
 
         size_t indexacc=start_index_;
 
         //looping on array dimensions
         for (size_t i = 0; i < ndindex.size(); ++i) {
+            size_t reversed_index = reverse_negative_index(shape_[i])
             //bound checking when debugging
             assert(ndindex[i] < shape_[i]);
 
@@ -139,20 +173,41 @@ struct indexer {
         return indexacc;
     }
 
-    template<typename... SizeT >
-    size_t index(size_t i0, SizeT... in){
-        static_assert(
-            ndims != DYNAMIC_SIZE,
-            "This overload is only available when the number of dimensions"
-            " is known at compile time"
-            );
-        static_assert(
-            ndims == sizeof...(in)+1,
-            "Number of parameters doesn't match the number of dimensions."
-        );
+    /**
+     * Returns a new ndindexer with eventually a smaller number of dimensions,
+     * The new ndindexer computes indices matching the requested slice of the array.
+     */
+    template <typename... DimSliceT>
+    auto
+    index(DimSliceT ... slice_or_index) {
 
-        return index_rec<0>(start_index_, i0, in...);
+        //type = std::pair<size_t, helpers::SliceAcc<STATIC_SIZE_OR_DYNAMIC>>
+        auto pr =
+                slice_rec<0, 0>(
+                    start_index_,
+                    helpers::SliceAcc<0>(),
+                    slice_or_index...
+                    );
+
+        return helpers::return_sliced_indexer_or_index<pr.second.STATIC_SIZE_OR_DYNAMIC, ndims>::do_it(
+                    pr
+                );
     }
+
+    //template<typename... SizeT >
+    //size_t index(size_t i0, SizeT... in){
+    //    static_assert(
+    //        ndims != DYNAMIC_SIZE,
+    //        "This overload is only available when the number of dimensions"
+    //        " is known at compile time"
+    //        );
+    //    static_assert(
+    //        ndims == sizeof...(in)+1,
+    //        "Number of parameters doesn't match the number of dimensions."
+    //    );
+
+    //    return index_rec<0>(start_index_, i0, in...);
+    //}
 
 
     /**
@@ -162,9 +217,6 @@ struct indexer {
         return strides_;
     }
 
-    ///**
-    // * Just returns the shape used to construct the class (if any).
-    // */
     vecarray<size_t, ndims> get_shape() {
         return shape_;
     }
@@ -263,40 +315,41 @@ struct indexer {
         return ndindex;
     }
 
-    /**
-     * Returns a new ndindexer with eventually a smaller number of dimensions,
-     * The new ndindexer computes indices matching the requested slice of the array.
-     */
-    template <typename... DimSliceT>
-    auto
-    index_slice(long index, DimSliceT ... slice_or_index) {
-        return helpers::make_indexer_from_slices(
-                slice_rec<0, 0>(
-                    start_index_,
-                    helpers::SliceAcc<0>(),
-                    index,
-                    slice_or_index...
-                    )
-                );
-    }
 
-    /**
-     * Returns a new ndindexer with eventually a smaller number of dimensions,
-     * The new ndindexer computes indices matching the requested slice of the array.
-     *
-     */
-    template <typename... DimSliceT>
-    auto
-    index_slice(Rng index_range,  DimSliceT ... slice_or_index)  {
-        return helpers::make_indexer_from_slices(
-                slice_rec<0, 0>(
-                    start_index_,
-                    helpers::SliceAcc<0>(),
-                    index_range,
-                    slice_or_index...
-                    )
-                );
-    }
+    ///**
+    // * Returns a new ndindexer with eventually a smaller number of dimensions,
+    // * The new ndindexer computes indices matching the requested slice of the array.
+    // */
+    //template <typename... DimSliceT>
+    //auto
+    //index_slice(long index, DimSliceT ... slice_or_index) {
+    //    return helpers::make_indexer_from_slices(
+    //            slice_rec<0, 0>(
+    //                start_index_,
+    //                helpers::SliceAcc<0>(),
+    //                index,
+    //                slice_or_index...
+    //                )
+    //            );
+    //}
+
+    ///**
+    // * Returns a new ndindexer with eventually a smaller number of dimensions,
+    // * The new ndindexer computes indices matching the requested slice of the array.
+    // *
+    // */
+    //template <typename... DimSliceT>
+    //auto
+    //index_slice(Rng index_range,  DimSliceT ... slice_or_index)  {
+    //    return helpers::make_indexer_from_slices(
+    //            slice_rec<0, 0>(
+    //                start_index_,
+    //                helpers::SliceAcc<0>(),
+    //                index_range,
+    //                slice_or_index...
+    //                )
+    //            );
+    //}
 
     //TODO fortran_order
 

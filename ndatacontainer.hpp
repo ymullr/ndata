@@ -16,15 +16,16 @@ namespace helpers {
 template<typename ContainerT, typename T, long ndimslices, long ndims_base>
 struct return_sliced_view_or_value {
 
+    static
     ndataview<T, ndimslices>
-    operator()(
+    do_it(
             std::pair<size_t, helpers::SliceAcc<ndimslices>> pr,
-            ContainerT data
+            ContainerT&& data
             )
     {
         return ndataview<T, ndimslices>(
                     make_indexer_from_slices_helper(pr),
-                    data
+                    std::move(data)
                     );
     }
 };
@@ -34,15 +35,17 @@ struct return_sliced_view_or_value {
 template<typename ContainerT, typename T, long ndims_base>
 struct return_sliced_view_or_value<ContainerT, T, 0, ndims_base> {
 
+    static
     T&
-    operator()(
+    do_it(
             std::pair<size_t, helpers::SliceAcc<0>> pr,
-            ContainerT data
+            ContainerT& data
             )
     {
         return data[pr.first];
     }
 };
+
 
 
 }
@@ -112,15 +115,16 @@ struct ndatacontainer: indexer<ndims> {
     operator()(IndexOrRangeT ... index_or_range) {
         helpers::SliceAcc<0> sa;
 
-        auto idx = indexer<ndims>::template slice_rec<0, 0>(
+        //type = std::pair<size_t start_index, helpers::SliceAcc<STATIC_SIZE_OR_DYNAMIC>>
+        auto pr = indexer<ndims>::template slice_rec<0, 0>(
             indexer<ndims>::start_index_,
             sa,
             index_or_range...
         );
 
-        return helpers::return_sliced_view_or_value<ContainerT, T, idx.NDIMS, ndims>(
-                    idx,
-                    data_.to_view()
+        return helpers::return_sliced_view_or_value<ContainerT, T, pr.second.STATIC_SIZE_OR_DYNAMIC, ndims>::do_it(
+                    pr,
+                    std::move(data_)
         );
 
     }
