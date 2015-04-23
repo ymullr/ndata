@@ -68,14 +68,14 @@ struct TestSuite {
 
         //ndindexer<2> ndi_fullslice1 = ndi_u.slice(array<long, 3> {0, long(N0), 1}, array<long, 3> {0, long(N1), 1});
         
-        indexer<2> ndi_fullslice1 = ndi_u.slice(Rng(0, long(N0), 1), Rng(0, long(N1), 1));
+        indexer<2> ndi_fullslice1 = ndi_u.index_slice(Rng(0, long(N0), 1), Rng(0, long(N1), 1));
 
-        indexer<2> ndi_fullslice2 = ndi_u.slice(
+        indexer<2> ndi_fullslice2 = ndi_u.index_slice(
                 Rng(0, N0),
                 Rng(0, N1, 1)
                 );
 
-        indexer<2> ndi_fullslice3 = ndi_u.slice(Rng(0, N0), Rng(0, ndata::END));//END is = -1
+        indexer<2> ndi_fullslice3 = ndi_u.index_slice(Rng(0, N0), Rng(0, ndata::END));//END is = -1
 
         bool fs1ok, fs2ok, fs3ok;
 
@@ -147,7 +147,7 @@ struct TestSuite {
 
         size_t Nx=3, Ny=5;
 
-        nvector<long, 2> u (Nx, Ny);
+        nvector<long, 2> u (make_indexer(Nx, Ny));
 
         for (size_t i = 0; i < u.size(); ++i) {
             u[i] = i;
@@ -174,8 +174,8 @@ struct TestSuite {
         DECLARE_TESTRESULT(sb, msg);
 
         size_t Nx = 5, Ny = 2;
-        auto u1 = make_nvector<long>(Nx, Ny);
-        auto u2 = make_nvector<long>(Nx, Ny);
+        auto u1 = make_nvector<long>(make_indexer(Nx, Ny));
+        auto u2 = make_nvector<long>(make_indexer(Nx, Ny));
 
         for (size_t ix = 0; ix < Nx ; ++ix) {
             for (size_t iy = 0; iy < Ny ; ++iy) {
@@ -211,9 +211,9 @@ struct TestSuite {
     broadcast_test() {
         DECLARE_TESTRESULT(succ, msg);
 
-        auto u1 = make_nvector<long>(2, 5);
-        auto u2 = make_nvector<long>(2, 1);
-        auto u3 = make_nvector<long>(5);
+        auto u1 = make_nvector<long>(make_indexer(2, 5));
+        auto u2 = make_nvector<long>(make_indexer(2, 1));
+        auto u3 = make_nvector<long>(make_indexer(5));
 
         auto tup = helpers::broadcast(make_tuple(u1, u2, u3));
         auto u1_broad = get<0>(tup);
@@ -246,7 +246,7 @@ struct TestSuite {
         DECLARE_TESTRESULT(succ, msg);
 
         //zero initialized
-        auto u = make_nvector<long>(2, 5);
+        auto u = make_nvector<long>(make_indexer(2, 5));
 
         auto uview = ndataview<long, 2>(u);
 
@@ -276,9 +276,9 @@ struct TestSuite {
         DECLARE_TESTRESULT(sb, msg);
 
         size_t Nx = 5, Ny = 2;
-        auto u1 = make_nvector<long>(Nx, Ny);
-        auto u2 = make_nvector<float>(Nx*2, Ny);
-        auto u3 = make_nvector<std::pair<long, long>>(Ny);
+        auto u1 = make_nvector<long>(make_indexer(Nx, Ny));
+        auto u2 = make_nvector<float>(make_indexer(Nx*2, Ny));
+        auto u3 = make_nvector<std::pair<long, long>>(make_indexer(Ny));
 
         for (size_t ix = 0; ix < Nx ; ++ix) {
             for (size_t iy = 0; iy < Ny ; ++iy) {
@@ -298,9 +298,9 @@ struct TestSuite {
         }
 
         //zero initialized
-        auto ures = make_nvector<float>(Nx, Ny);
+        auto ures = make_nvector<float>(make_indexer(Nx, Ny));
 
-        ndataview<float, 2> u2_slice =  u2.slice_view(Rng(0, Nx), Rng());
+        ndataview<float, 2> u2_slice =  u2.slice(Rng(0, Nx), Rng());
 
         nforeach<float>(
             //nforeach takes a tuple of pointers to ndataview ndatacontainer or nvector

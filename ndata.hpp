@@ -3,30 +3,33 @@
 
 #include <vector>
 #include <functional>
+#include <memory>
 #include "nhelpers.hpp"
 
 namespace ndata {
 
     struct Rng;
 
-    template <size_t ndims>
+    template <long ndims>
     struct indexer;
 
     /**
      * inherits from indexer
      */
-    template<typename ContainerT, typename T, size_t ndims>
+    template<typename ContainerT, typename T, long ndims>
     struct ndatacontainer;
 
     //an ndatacontainer that doesn't own its data
-    template <typename T, size_t ndims>
-    using ndataview = ndatacontainer<T*, T, ndims>;
+    //template <typename T, long ndims>
+    //using ndataview = ndatacontainer<T*, T, ndims>;
+    template <typename T, long ndims>
+    using ndataview = ndatacontainer<std::unique_ptr<T>, T, ndims>;
 
     /**
      * Inherits from ndatacontainer, essentially an ndatacontainer based on a
      * std::vector with some convenience constructors.
      */
-    template<typename T, size_t ndims>
+    template<typename T, long ndims>
     struct nvector;
 
 }

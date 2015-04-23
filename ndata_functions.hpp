@@ -18,7 +18,7 @@ namespace ndata {
         //necessing for returning pointers to elements in ndata later
         //transform all pointers to ndatacontainers to ndviews
         auto ndata_tup = tuple_utility::tuple_transform_ptr([] (auto * elt) {
-            return elt->to_ndataview();
+            return elt->to_view();
         }, ndata_tup_ptrs);
 
         auto tuple_params_bc = helpers::broadcast(ndata_tup);

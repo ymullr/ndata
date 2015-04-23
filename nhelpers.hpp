@@ -161,8 +161,8 @@ namespace helpers {
     broadcast_left(Indexer1 v1 , Indexer2 v2, std::tuple<> empty_tup) {
         empty_tup = empty_tup; //silence a warning
 
-        auto shape_v1 = v1.get_shape(),
-             shape_v2 = v2.get_shape();
+        auto shape_v1 = v1.get_shape();
+        auto shape_v2 = v2.get_shape();
 
         size_t new_size = max(
                     shape_v1.size(),

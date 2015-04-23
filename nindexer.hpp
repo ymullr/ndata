@@ -70,10 +70,10 @@ make_indexer(Shape... shape) {
 //necessary forward declaration
 namespace helpers {
     template <long ndimslices>
-    indexer<ndimslices> make_indexer_helper(std::pair<size_t, SliceAcc<ndimslices>> pr);
+    indexer<ndimslices> make_indexer_from_slices(std::pair<size_t, SliceAcc<ndimslices>> pr);
 }
 
-template<size_t ndims>
+template<long ndims>
 struct indexer {
 
     template<typename... SizeT>
@@ -113,6 +113,8 @@ struct indexer {
 
     //empty constructor for later assignment
     indexer() { };
+
+    static constexpr long NDIMS = ndims;
 
     /**
      * ndindex may here be passed as a vecarray (custom type), but also work with an 
@@ -167,15 +169,15 @@ struct indexer {
         return shape_;
     }
 
-    size_t stride(size_t i) {
-        assert(i<shape_.size());
-        return strides_[i];
-    }
+    //size_t stride(size_t i) {
+    //    assert(i<shape_.size());
+    //    return strides_[i];
+    //}
 
-    size_t shape(size_t i) {
-        assert(i<shape_.size());
-        return shape_[i];
-    }
+    //size_t shape(size_t i) {
+    //    assert(i<shape_.size());
+    //    return shape_[i];
+    //}
 
 
     size_t size(){
@@ -184,13 +186,6 @@ struct indexer {
             acc*=shape_[i];
         }
         return acc;
-    }
-
-    vecarray<size_t, ndims>
-    make_zero_ndindex() {
-        auto ret = shape_;
-        ret.fill(0);
-        return ret;
     }
 
     /**
@@ -274,8 +269,8 @@ struct indexer {
      */
     template <typename... DimSliceT>
     auto
-    slice(long index, DimSliceT ... slice_or_index) {
-        return helpers::make_indexer_helper(
+    index_slice(long index, DimSliceT ... slice_or_index) {
+        return helpers::make_indexer_from_slices(
                 slice_rec<0, 0>(
                     start_index_,
                     helpers::SliceAcc<0>(),
@@ -292,8 +287,8 @@ struct indexer {
      */
     template <typename... DimSliceT>
     auto
-    slice(Rng index_range,  DimSliceT ... slice_or_index)  {
-        return helpers::make_indexer_helper(
+    index_slice(Rng index_range,  DimSliceT ... slice_or_index)  {
+        return helpers::make_indexer_from_slices(
                 slice_rec<0, 0>(
                     start_index_,
                     helpers::SliceAcc<0>(),
@@ -305,38 +300,38 @@ struct indexer {
 
     //TODO fortran_order
 
-    /**
-     * produces a ndatacontainer. see ndatacontainer.
-     * To use in for loops
-     *
-     * auto ind_it = my_ndindexes.slice(3, {2, 6}, {}); //{} is equivalent to {0:-1}
-     *
-     * for(size_t ind_it.begin(); ind_it < ind_it.end();ind_it++) {
-     *    do_stuff(my_vector[ind_it]);
-     * }
-     *
-     * //Or even with a for range loop :
-     *
-     * for(size_t ind : ind_it) {
-     *     do_stuff(my_vector[ind_it]);
-     * }
-     *
-     */
-    template<typename ContainerT, typename T>
-    ndatacontainer<ContainerT, T, ndims>
-    own_data(ContainerT data) {
-        return ndatacontainer<ContainerT, T, ndims>(data, *this);
-    }
+    ///**
+    // * produces a ndatacontainer. see ndatacontainer.
+    // * To use in for loops
+    // *
+    // * auto ind_it = my_ndindexes.slice(3, {2, 6}, {}); //{} is equivalent to {0:-1}
+    // *
+    // * for(size_t ind_it.begin(); ind_it < ind_it.end();ind_it++) {
+    // *    do_stuff(my_vector[ind_it]);
+    // * }
+    // *
+    // * //Or even with a for range loop :
+    // *
+    // * for(size_t ind : ind_it) {
+    // *     do_stuff(my_vector[ind_it]);
+    // * }
+    // *
+    // */
+    //template<typename ContainerT, typename T>
+    //ndatacontainer<ContainerT, T, ndims>
+    //own_data(ContainerT data) {
+    //    return ndatacontainer<ContainerT, T, ndims>(*this, data);
+    //}
 
-    /**
-     * produces a ndataview, which is like an ndatacontainer but only
-     * holds a pointer to its data. See ndatacontainer.
-     */
-    template<typename ContainerT, typename T>
-    ndataview<T, ndims>
-    view_data(ContainerT data) {
-        return ndataview<T, ndims>(&data[0], *this);
-    }
+    //**
+    // * produces a ndataview, which is like an ndatacontainer but only
+    // * holds a pointer to its data. See ndatacontainer.
+    // */
+    //template<typename ContainerT, typename T>
+    //ndataview<T, ndims>
+    //view_data(ContainerT data) {
+    //    return ndataview<T, ndims>(&data[0], *this);
+    //}
 
     /**
      * used by broadcast
@@ -351,7 +346,7 @@ struct indexer {
 
     size_t start_index_;
 
-    //for bound checking
+    //kept for bound checking
     vecarray<size_t, ndims> shape_; 
 
     vecarray<long, ndims> strides_;
@@ -409,7 +404,7 @@ struct indexer {
      * the current shape/stride element is discarded and only the start_index is
      * repositioned to the relevant position
      */
-    template <size_t idim, size_t ndimslices, typename... SliceIndex>
+    template <size_t idim, long ndimslices, typename... SliceIndex>
     auto
     slice_rec(
             size_t start_ind,
@@ -424,7 +419,7 @@ struct indexer {
     }
 
     //full slice {start, stop, step}
-    template <size_t idim, size_t ndimslices, typename... SliceIndex>
+    template <size_t idim, long ndimslices, typename... SliceIndex>
     auto
     slice_rec(
             size_t start_ind,
@@ -452,7 +447,7 @@ struct indexer {
     }
 
     //termination
-    template <size_t idim, size_t ndimslices>
+    template <size_t idim, long ndimslices>
     std::pair<size_t, helpers::SliceAcc<ndimslices>>
     slice_rec(size_t start_ind, helpers::SliceAcc<ndimslices> slices) {
 
@@ -461,7 +456,7 @@ struct indexer {
             ""
         );
 
-        static_assert(ndimslices<=ndims, "");
+        static_assert(ndims == -1 or ndimslices<=ndims, "");
 
         return make_pair(start_ind, slices);
     }
@@ -476,13 +471,13 @@ struct indexer {
 };
 
 
-    namespace helpers {
+namespace helpers {
 
     /**
      * tuple : size_t start_index, vecarray<array<long, 2>, ndims_slice> slices):
      */
     template <long ndimslices>
-    indexer<ndimslices> make_indexer_helper(std::pair<size_t, SliceAcc<ndimslices>> pr) {
+    indexer<ndimslices> make_indexer_from_slices_helper(std::pair<size_t, SliceAcc<ndimslices>> pr) {
 
         vecarray<size_t, ndimslices> shape (pr.second.dynsize());
         vecarray<long, ndimslices> strides (pr.second.dynsize());

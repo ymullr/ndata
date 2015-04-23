@@ -88,6 +88,7 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::typ
     constexpr long dynsize () { return -1;}
 
     T& operator[](size_t index) {
+        assert(index<size());
         return stackStorage[index];
     }
 
@@ -203,6 +204,7 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size == DYNAMIC_
     long dynsize () { return heapStorage.size();}
 
     T& operator[](size_t index) {
+        assert(index<size());
         return heapStorage[index];
     }
 
