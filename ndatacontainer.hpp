@@ -10,45 +10,20 @@
 
 namespace ndata {
 
-namespace helpers {
-
-//returns sliced indexer, general case
-template<typename ContainerT, typename T, long ndimslices, long ndims_base>
-struct return_sliced_view_or_value {
-
-    static
-    ndataview<T, ndimslices>
-    do_it(
-            std::pair<size_t, helpers::SliceAcc<ndimslices>> pr,
-            ContainerT&& data
-            )
-    {
-        return ndataview<T, ndimslices>(
-                    make_indexer_from_slices_helper(pr),
-                    std::move(data)
-                    );
-    }
-};
-
-//specialisation when pr contains no slice (only straight indexes were given
-//in that case returns a reference to a numerical value
-template<typename ContainerT, typename T, long ndims_base>
-struct return_sliced_view_or_value<ContainerT, T, 0, ndims_base> {
-
-    static
-    T&
-    do_it(
-            std::pair<size_t, helpers::SliceAcc<0>> pr,
-            ContainerT& data
-            )
-    {
-        return data[pr.first];
-    }
-};
-
-
-
+template <typename ContainerT, typename T, long ndims>
+ndatacontainer<ContainerT, T, ndims>
+make_ndatacontainer(
+        indexer<ndims> idx,
+        ContainerT data
+        )
+{
+    return ndatacontainer<ContainerT, T, ndims>(
+                idx,
+                data
+                );
 }
+
+
 
 /**
  * An special ndindexer holding its data (or a pointer to it).
@@ -61,12 +36,16 @@ struct return_sliced_view_or_value<ContainerT, T, 0, ndims_base> {
 template<typename ContainerT, typename T, long ndims>
 struct ndatacontainer: indexer<ndims> {
 
+    //contained data
     ContainerT data_;
 
-    //nview(ContainerT data, vecarray<size_t, ndims> shape):
-    //    indexer<ndims>(shape),
-    //    data_(data)
-    //{ }
+    //static members
+    typedef ContainerT type_ContainerT;
+
+    typedef T type_T;
+
+    //static constexpr long STATIC_SIZE_OR_DYNAMIC = ndims;
+
 
     /**
      * @brief Construct from indexer and data
@@ -83,17 +62,11 @@ struct ndatacontainer: indexer<ndims> {
         return data_[i];
     }
 
-    template <typename... SizeT>
-    T&
-    val(SizeT... indices) {
-        return data_[indexer<ndims>::index(indices...)];
-    }
-
-    T&
-    val(vecarray<size_t, ndims> indices) {
-        return data_[indexer<ndims>::index(indices)];
-    }
-
+    //template <typename... SizeT>
+    //T&
+    //val(SizeT... indices) {
+    //    return data_[indexer<ndims>::index(indices...)];
+    //}
 
     //
     ///**
@@ -110,23 +83,26 @@ struct ndatacontainer: indexer<ndims> {
     //            ).template own_data<ContainerT, T>(data_);
     //}
 
+
+public :
+
+    /**
+     * Returns a view
+     */
     template <typename... IndexOrRangeT>
     auto
-    operator()(IndexOrRangeT ... index_or_range) {
-        helpers::SliceAcc<0> sa;
+    slice(IndexOrRangeT ... index_or_range) {
+        return  make_ndatacontainer<T*, T>(
+                    this->index_slice(index_or_range...),
+                    &data_[0]
+                );
+    }
 
-        //type = std::pair<size_t start_index, helpers::SliceAcc<STATIC_SIZE_OR_DYNAMIC>>
-        auto pr = indexer<ndims>::template slice_rec<0, 0>(
-            indexer<ndims>::start_index_,
-            sa,
-            index_or_range...
-        );
-
-        return helpers::return_sliced_view_or_value<ContainerT, T, pr.second.STATIC_SIZE_OR_DYNAMIC, ndims>::do_it(
-                    pr,
-                    std::move(data_)
-        );
-
+    template <typename ... Long>
+    T&
+    operator()(Long... indices) {
+        size_t index = indexer<ndims>::index(indices...);
+        return data_[index];
     }
 
     ///**
@@ -170,6 +146,20 @@ struct ndatacontainer: indexer<ndims> {
     //    return ret;
     //}
 
+    template <typename ContainerT_rhs, typename T_rhs, long ndims_rhs>
+    void
+    assign(ndatacontainer<ContainerT_rhs, T_rhs, ndims_rhs> rhs) {
+
+        static_assert(ndims_rhs == ndims or ndims_rhs == DYNAMIC_SIZE, "");
+
+        auto ndi = this->ndindex(0);
+        for (size_t i = 0; i < this->size(); ++i) {
+            this->operator()(ndi) = rhs(ndi);
+            this->increment_ndindex(ndi);
+        }
+    }
+
+
     //default conversion operator to a view
     operator ndataview<T, ndims>() {
         //use slice method of the parent class and use it to own_data this.data_
@@ -196,6 +186,7 @@ struct ndatacontainer: indexer<ndims> {
     reshape(vecarray<size_t, new_ndims> new_shape, vecarray<long, new_ndims> new_strides) {
         return ndatacontainer<ContainerT, T, new_ndims>(indexer<new_ndims>(this->start_index_, new_shape, new_strides), data_);
     }
+
 };
 
 

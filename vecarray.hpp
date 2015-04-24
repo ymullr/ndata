@@ -32,6 +32,8 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::typ
 
     static constexpr long STATIC_SIZE_OR_DYNAMIC = static_size;
 
+    typedef T type_T;
+
     std::array<T, static_size> stackStorage;
 
     //provided for compatibility with dynamic version
@@ -132,7 +134,7 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::typ
      * returns all elements of the vecarray but the last
      */
     vecarray<T, static_size-1>
-    drop_back (T val) {
+    drop_back () {
         static_assert(static_size>0, "woops already empty");
 
         vecarray<T, static_size-1> new_vecarray;
@@ -251,7 +253,7 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size == DYNAMIC_
      * returns all elements of the vecarray but the last
      */
     vecarray<T, DYNAMIC_SIZE>
-    drop_back (T val) {
+    drop_back () {
         if (size()>0){
             throw(std::underflow_error("this.size() is already 0"));
         }

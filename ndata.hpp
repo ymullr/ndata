@@ -4,7 +4,6 @@
 #include <vector>
 #include <functional>
 #include <memory>
-#include "nhelpers.hpp"
 
 namespace ndata {
 
@@ -20,10 +19,8 @@ namespace ndata {
     struct ndatacontainer;
 
     //an ndatacontainer that doesn't own its data
-    //template <typename T, long ndims>
-    //using ndataview = ndatacontainer<T*, T, ndims>;
     template <typename T, long ndims>
-    using ndataview = ndatacontainer<std::unique_ptr<T>, T, ndims>;
+    using ndataview = ndatacontainer<T*, T, ndims>;
 
     /**
      * Inherits from ndatacontainer, essentially an ndatacontainer based on a
@@ -34,6 +31,8 @@ namespace ndata {
 
 }
 
+#include "ndata_forward_declarations.hpp"
+#include "nhelpers.hpp"
 #include "nindexer.hpp"
 #include "ndatacontainer.hpp"
 #include "nvector.hpp"

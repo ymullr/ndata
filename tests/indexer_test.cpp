@@ -7,10 +7,6 @@
 using namespace std;
 using namespace ndata;
 
-struct uncopyable {
-    uncopyable(uncopyable&) ;
-};
-
 struct TestSuite {
 
     static
@@ -68,14 +64,14 @@ struct TestSuite {
 
         //ndindexer<2> ndi_fullslice1 = ndi_u.slice(array<long, 3> {0, long(N0), 1}, array<long, 3> {0, long(N1), 1});
         
-        indexer<2> ndi_fullslice1 = ndi_u.index(Rng(0, long(N0), 1), Rng(0, long(N1), 1));
+        indexer<2> ndi_fullslice1 = ndi_u.index_slice(Rng(0, long(N0), 1), Rng(0, long(N1), 1));
 
-        indexer<2> ndi_fullslice2 = ndi_u.index(
+        indexer<2> ndi_fullslice2 = ndi_u.index_slice(
                 Rng(0, N0),
                 Rng(0, N1, 1)
                 );
 
-        indexer<2> ndi_fullslice3 = ndi_u.index(Rng(0, N0), Rng(0, ndata::END));//END is = -1
+        indexer<2> ndi_fullslice3 = ndi_u.index_slice(Rng(0, N0), Rng(0, ndata::END));//END is = -1
 
         bool fs1ok, fs2ok, fs3ok;
 
@@ -125,7 +121,7 @@ struct TestSuite {
     TestResult
     extended_slices() {
         auto ndi = make_indexer(4, 5, 3);
-        indexer<2> ndsli = ndi.index(Rng(0, 2), 2, Rng());
+        indexer<2> ndsli = ndi.index_slice(Rng(0, 2), 2, Rng());
 
         DECLARE_TESTRESULT(success, msg);
 
@@ -147,20 +143,20 @@ struct TestSuite {
 
         size_t Nx=3, Ny=5;
 
-        nvector<long, 2> u (make_indexer(Nx, Ny));
+        nvector<long, 2> u (make_indexer(Nx, Ny), {0});
 
         for (size_t i = 0; i < u.size(); ++i) {
             u[i] = i;
         }
 
         long iy_start = 1;
-        nvector<long, 2> usli = u.index(Rng(), Rng(iy_start, 4));
+        nvector<long, 2> usli = u.slice(Rng(), Rng(iy_start, 4));
 
         for (size_t ix = 0; ix < usli.get_shape()[0]; ++ix) {
             for (size_t iy = 0; iy < usli.get_shape()[1]; ++iy) {
-                long indval = usli.val(ix, iy);
+                long indval = usli(ix, iy);
                 success = indval == long(ix*Ny+(iy+iy_start));
-                msg.append(MakeString() << usli.val(ix, iy) << ", ");
+                msg.append(MakeString() << usli(ix, iy) << ", ");
             }
             msg.append("\n");
         }
@@ -174,31 +170,31 @@ struct TestSuite {
         DECLARE_TESTRESULT(sb, msg);
 
         size_t Nx = 5, Ny = 2;
-        auto u1 = make_nvector<long>(make_indexer(Nx, Ny));
-        auto u2 = make_nvector<long>(make_indexer(Nx, Ny));
+        auto u1 = make_nvector<long>(make_indexer(Nx, Ny), 0);
+        auto u2 = make_nvector<long>(make_indexer(Nx, Ny), 0);
 
         for (size_t ix = 0; ix < Nx ; ++ix) {
             for (size_t iy = 0; iy < Ny ; ++iy) {
-                u1.val(ix ,iy) = ix*Ny + iy;
-                u2.val(ix ,iy) = ix*Ny + iy;
+                u1(ix ,iy) = ix*Ny + iy;
+                u2(ix ,iy) = ix*Ny + iy;
                 //msg.append(MakeString() << u1.val(ix, iy) << ", ");
             }
             msg.append("\n");
         }
 
-        nvector<long, 2> u_sum = ntransform<long>(make_tuple(u1, u2), [] (long v1, long v2) {
+        nvector<long, 2> u_sum = ntransform<long>(tie(u1, u2), [] (long v1, long v2) {
             return v1+v2;
         });
 
         for (size_t ix = 0; ix < Nx ; ++ix) {
             for (size_t iy = 0; iy < Ny ; ++iy) {
                 if (
-                        not (u1.val(ix ,iy)*2 == u_sum.val(ix, iy))
+                        not (u1(ix ,iy)*2 == u_sum(ix, iy))
                         )
                 {
                     sb = false;
                 }
-                msg.append(MakeString() << u_sum.val(ix, iy) << ", ");
+                msg.append(MakeString() << u_sum(ix, iy) << ", ");
             }
             msg.append("\n");
         }
@@ -211,9 +207,9 @@ struct TestSuite {
     broadcast_test() {
         DECLARE_TESTRESULT(succ, msg);
 
-        auto u1 = make_nvector<long>(make_indexer(2, 5));
-        auto u2 = make_nvector<long>(make_indexer(2, 1));
-        auto u3 = make_nvector<long>(make_indexer(5));
+        auto u1 = make_nvector<long>(make_indexer(2, 5), 0);
+        auto u2 = make_nvector<long>(make_indexer(2, 1), 0);
+        auto u3 = make_nvector<long>(make_indexer(5), 0);
 
         auto tup = helpers::broadcast(make_tuple(u1, u2, u3));
         auto u1_broad = get<0>(tup);
@@ -252,16 +248,16 @@ struct TestSuite {
 
         for (size_t ix = 0; ix < 2; ++ix) {
             for (size_t iy = 0; iy < 5; ++iy) {
-                uview.val(ix, iy) = 2;
+                uview(ix, iy) = 2;
             }
         }
 
         for (size_t ix = 0; ix < 2; ++ix) {
             for (size_t iy = 0; iy < 5; ++iy) {
-                if (u.val(ix, iy) != 2) {
+                if (u(ix, iy) != 2) {
                     succ = false;
                 };
-                msg.append(MakeString () << u.val(ix, iy) << ", ");
+                msg.append(MakeString () << u(ix, iy) << ", ");
             }
             msg.append("\n");
         }
@@ -282,25 +278,25 @@ struct TestSuite {
 
         for (size_t ix = 0; ix < Nx ; ++ix) {
             for (size_t iy = 0; iy < Ny ; ++iy) {
-                u1.val(ix ,iy) = ix*Ny + iy;
+                u1(ix ,iy) = ix*Ny + iy;
             }
         }
 
 
         for (size_t ix = 0; ix < Nx*2 ; ++ix) {
             for (size_t iy = 0; iy < Ny ; ++iy) {
-                u2.val(ix ,iy) = ix*Ny + iy;
+                u2(ix ,iy) = ix*Ny + iy;
             }
         }
 
         for (size_t iy = 0; iy < Ny ; ++iy) {
-            u3.val(iy) = make_pair(1,1);
+            u3(iy) = make_pair(1,1);
         }
 
         //zero initialized
         auto ures = make_nvector<float>(make_indexer(Nx, Ny));
 
-        ndataview<float, 2> u2_slice =  u2(Rng(0, Nx), Rng());
+        ndataview<float, 2> u2_slice =  u2.slice(Rng(0, Nx), Rng());
 
         nforeach<float>(
             //nforeach takes a tuple of pointers to ndataview ndatacontainer or nvector
@@ -317,10 +313,10 @@ struct TestSuite {
         );
 
         auto u_res_transform = ntransform<float>(
-            make_tuple(
+            std::make_tuple(
                 u1,
                 //u2.slice_view(Rng(0, Nx), Rng()),
-                u2(Rng(0, Nx), Rng()),
+                u2.slice(Rng(0, Nx), Rng()),
                 u3
             ),
             [] (long v1, float v2, std::pair<long, long> v3) {
@@ -333,13 +329,13 @@ struct TestSuite {
         for (size_t ix = 0; ix < Nx ; ++ix) {
             for (size_t iy = 0; iy < Ny ; ++iy) {
                 if (
-                    not (ures.val(ix, iy) == u_res_transform.val(ix, iy))
+                    not (ures(ix, iy) == u_res_transform(ix, iy))
                 )
                 {
                     sb = false;
                 }
-                msg_foreach.append(MakeString() << ures.val(ix, iy) << ", ");
-                msg_transform.append(MakeString() << u_res_transform.val(ix, iy) << ", ");
+                msg_foreach.append(MakeString() << ures(ix, iy) << ", ");
+                msg_transform.append(MakeString() << u_res_transform(ix, iy) << ", ");
             }
             msg_transform.append("\n");
             msg_foreach.append("\n");

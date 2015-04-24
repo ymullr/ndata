@@ -16,28 +16,55 @@ make_nvector(ndatacontainer<std::vector<T>, T, ndims> idxr);
 template<typename T, long ndims>
 struct nvector: ndatacontainer<std::vector<T>, T, ndims>  {
 
-    //construct from ndatacontainer
-    nvector(ndatacontainer<std::vector<T>, T, ndims> ndv):
-        ndatacontainer<std::vector<T>, T, ndims>(
-            ndv
-            )
+
+    /**
+     * @brief construct from an indexer and associated (pointer to) data
+     * @param idxr
+     * @param data
+     */
+    template <typename T_rhs>
+    nvector(
+            indexer<ndims> idxr,
+            T_rhs* data
+            ):
+        nvector(idxr)
+    {
+        ndataview<T_rhs, ndims> arg_data_view (idxr, data);
+
+        this->assign(
+                    arg_data_view
+                    );
+    }
+
+    /**
+     * @brief construct from an indexer and initial value to which the elements of the vector are initialized
+     * @param idxr
+     * @param data
+     */
+    nvector(
+            indexer<ndims> idxr,
+            T initial_value = T()
+            ):
+        ndatacontainer<std::vector<T>, T, ndims>(idxr.get_shape(), std::vector<T>(idxr.size(), initial_value))
     { }
 
-    //construct from indexer or shape
-    nvector(indexer<ndims> idxr):
-        ndatacontainer<std::vector<T>, T, ndims>(
-            idxr,
-            std::vector<T>(idxr.size())
-            )
-    {  }
 
-    //construct from data and its indexer shape
-    nvector(indexer<ndims> idxr, std::vector<T> data):
-        ndatacontainer<std::vector<T>, T, ndims>(
-                idxr,
-                data
+    /**
+     * @brief construct from indexer and data perform elementwise copy of data passed as argument
+     *  to the inner vector container only the elements reachable vie the indexer slice are
+     *  copied the inner container may be smaller than the copied from data
+     * @param idxr
+     * @param data
+     */
+    template <typename ContainerT_rhs, typename T_rhs>
+    nvector(
+            ndatacontainer<ContainerT_rhs, T_rhs, ndims> ndv
+            ):
+        nvector(
+            ndv,
+            &ndv.data_[0]
             )
-    { assert(data.size() >= idxr.size() ); }
+    { }
 
     //TODO? resize() function which would reallocate data and remove unreachable elements
     //to be used after some slicing
@@ -64,8 +91,8 @@ struct nvector: ndatacontainer<std::vector<T>, T, ndims>  {
 //make new nvector from indexer or shape with 0 initialized data
 template<typename T, long ndims>
 auto //nvector<T, somedim>
-make_nvector(indexer<ndims> idxr) {
-    nvector<T, ndims> ret (idxr);
+make_nvector(indexer<ndims> idxr, T initial_value = T()) {
+    nvector<T, ndims> ret (idxr, initial_value);
     return ret;
 }
 

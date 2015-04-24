@@ -19,6 +19,27 @@ namespace helpers {
     // ( shape[i], strides[i] )
     template<size_t N> using SliceAcc = vecarray<ShapeStridePair, N>;
 
+
+    template <long ... vals>
+    struct static_max_or_dynamic {
+    };
+
+    template <long val1, long val2, long ... vals>
+    struct static_max_or_dynamic<val1, val2, vals...> {
+
+        static constexpr long value =
+                (val1==DYNAMIC_SIZE or val2==DYNAMIC_SIZE)?
+                        DYNAMIC_SIZE:
+                    (val1 >= val2)?
+                        static_max_or_dynamic<val1, vals...>::value:
+                            static_max_or_dynamic<val2, vals...>::value;
+    };
+
+    template <long val1>
+    struct static_max_or_dynamic<val1> {
+        static constexpr long value = val1;
+    };
+
     //make vecarray like biggest with overloads to return a static if both operands are static,
     //or a dynamic one if any or both operands are dynamic
     template<
@@ -130,6 +151,24 @@ namespace helpers {
         return array_from_argpack<ContentT, idim+1>(new_acc, rest...);
     }
 
+    template <typename ... Ts>
+    struct static_check_valid_indice_types {
+    };
+
+    template <typename T, typename ... Ts>
+    struct static_check_valid_indice_types<T, Ts...>{
+        static constexpr bool value =
+                static_check_valid_indice_types<T>::value
+                and
+                static_check_valid_indice_types<Ts...>::value ;
+    };
+
+    //termination
+    template <typename T>
+    struct static_check_valid_indice_types<T> {
+        static constexpr bool value = std::is_integral<T>::value;
+    };
+
     //template <typename Indexer, typename... Indexers>
     //auto // vecarray<Indexer, N>
     //broadcast(Indexers... others) {
@@ -155,11 +194,21 @@ namespace helpers {
     //    return ret;
     //}
 
-    //broadcasts v1 to match v2
-    template <typename Indexer1, typename Indexer2>
+    //termination
+    template <typename Indexer>
     auto
-    broadcast_left(Indexer1 v1 , Indexer2 v2, std::tuple<> empty_tup) {
-        empty_tup = empty_tup; //silence a warning
+    broadcast_left(Indexer ind, std::tuple<> t) {
+        t=t;//silence warning
+        return ind;
+    }
+
+    //broadcasts first element of the tuple on the other elements in the tuple
+    template <typename Indexer, typename ... Indexers>
+    auto
+    broadcast_left(Indexer v1, std::tuple<Indexers...> t) {
+        auto h_t = tuple_utility::split_ht(std::move(t));
+        auto v2 = h_t.first;
+        auto tuple_rest = h_t.second;
 
         auto shape_v1 = v1.get_shape();
         auto shape_v2 = v2.get_shape();
@@ -175,9 +224,34 @@ namespace helpers {
         //new shape can be a static vecaray or a dynamic vecarray if any
         //of v1 or v2 is dynamic
         auto new_shape = make_vecarray_like_biggest<
-                decltype(v1.get_shape())::STATIC_SIZE_OR_DYNAMIC,
-                decltype(v2.get_shape())::STATIC_SIZE_OR_DYNAMIC
+                decltype(shape_v1)::STATIC_SIZE_OR_DYNAMIC,
+                decltype(shape_v2)::STATIC_SIZE_OR_DYNAMIC
                 >(v1.get_shape(), v2.get_shape());
+
+        static_assert(
+                    new_shape.STATIC_SIZE_OR_DYNAMIC ==  decltype(shape_v1)::STATIC_SIZE_OR_DYNAMIC
+                    or
+                    new_shape.STATIC_SIZE_OR_DYNAMIC ==  decltype(shape_v2)::STATIC_SIZE_OR_DYNAMIC,
+                    ""
+                    );
+
+        //static_assert(
+        //            new_shape.STATIC_SIZE_OR_DYNAMIC == std::max(
+        //                decltype(shape_v1)::STATIC_SIZE_OR_DYNAMIC,
+        //                decltype(shape_v2)::STATIC_SIZE_OR_DYNAMIC
+        //                )
+        //            or
+        //            (
+        //                (
+        //                    decltype(shape_v1)::STATIC_SIZE_OR_DYNAMIC == DYNAMIC_SIZE
+        //                    or
+        //                    decltype(shape_v2)::STATIC_SIZE_OR_DYNAMIC == DYNAMIC_SIZE
+        //                )
+        //                and
+        //                new_shape.STATIC_SIZE_OR_DYNAMIC == DYNAMIC_SIZE
+        //            ),
+        //            ""
+        //            );
 
         vecarray<long, new_shape.STATIC_SIZE_OR_DYNAMIC>
             new_strides (new_shape.dynsize());
@@ -218,89 +292,130 @@ namespace helpers {
                 assert("false");
             }
         }
-        return v1.template reshape<new_shape.STATIC_SIZE_OR_DYNAMIC>(new_shape, new_strides);
+        auto broadcasted_tuple = v1.template reshape<new_shape.STATIC_SIZE_OR_DYNAMIC>(new_shape, new_strides);
+        return broadcast_left(
+                    broadcasted_tuple,
+                    tuple_rest
+                    );
     }
 
-    template <typename Indexer1, typename Indexer2, typename... Indexers>
+
+    ////recursion termination, when toproc is empty
+    //template <
+    //          typename... IndexersAcc,
+    //          typename... IndexersFull
+    //        >
+    //auto //std::tuple<IndexersFull...>
+    //broadcast_rec(
+    //        //the accumulated result
+    //        std::tuple<IndexersAcc...> acc,
+    //        //this is the pack from which elements to be processed are taken, function returns when empty
+    //        std::tuple<> toproc
+    //    )
+    //{
+    //    toproc = toproc; //silence warnings
+    //    return acc;
+    //}
+
+    //template <
+    //          typename... IndexersAcc,
+    //          typename... IndexersToProcess
+    //        >
+    //auto //std::tuple<IndexersFull...>
+    //broadcast_rec(
+    //        //the accumulated result
+    //        std::tuple<IndexersAcc...> acc,
+    //        //this is the pack from which elements to be processed are taken, function returns when empty
+    //        std::tuple<IndexersToProcess...> toproc
+    //        ) {
+    //    auto proc_head = tuple_utility::head(toproc);
+    //    auto proc_tail = tuple_utility::tail(toproc);
+
+    //    auto processed_indexer =
+    //            broadcast_left(
+    //                proc_head,
+    //                full_head,
+    //                full_tail
+    //                );
+    //    return broadcast_rec(
+    //        //new acc
+    //        std::tuple_cat(
+    //            acc,
+    //            make_tuple(processed_indexer)
+    //        ),
+    //        proc_tail
+    //    );
+    //}
+
+    template <
+            long ndims,
+            typename ... Indexers
+            >
     auto
-    broadcast_left(Indexer1 arg0, Indexer2 arg1, std::tuple<Indexers...> argN) {
-        auto ret = broadcast_left(
-                    broadcast_left(arg0, arg1, std::tuple<>()),
-                    tuple_utility::head(argN),
-                    tuple_utility::tail(argN)
-                    );
-        return ret;
-    }
-
-    //recursion termination, when toproc is empty
-    template <
-              typename... IndexersAcc,
-              typename... IndexersFull
-            >
-    auto //std::tuple<IndexersFull...>
-    broadcast_rec(
-            //the accumulated result
-            std::tuple<IndexersAcc...> acc,
-            //this is the pack from which elements to be processed are taken, function returns when empty
-            std::tuple<> toproc,
-            //full list of indexers that is kept around
-            std::tuple<IndexersFull...> full
-        )
+    broadcast_on_target(
+            indexer<ndims> target,
+            tuple<Indexers...> all
+            )
     {
-        toproc = toproc; //silence warnings
-        full=full;
-        return acc;
-    }
-
-    template <
-              typename... IndexersAcc,
-              typename... IndexersToProcess,
-              typename... IndexersFull
-            >
-    auto //std::tuple<IndexersFull...>
-    broadcast_rec(
-            //the accumulated result
-            std::tuple<IndexersAcc...> acc,
-            //this is the pack from which elements to be processed are taken, function returns when empty
-            std::tuple<IndexersToProcess...> toproc,
-            //full list of indexers that is kept around
-            std::tuple<IndexersFull...> full
-            ) {
-        auto proc_head = tuple_utility::head(toproc);
-        auto proc_tail = tuple_utility::tail(toproc);
-        auto full_head = tuple_utility::head(full);
-        auto full_tail = tuple_utility::tail(full);
-
-        auto processed_indexer =
-                broadcast_left(
-                    proc_head,
-                    full_head,
-                    full_tail
-                    );
-        return broadcast_rec(
-            //new acc
-            std::tuple_cat(
-                acc,
-                make_tuple(processed_indexer)
-            ),
-            proc_tail,
-            full
+        return tuple_utility::tuple_transform(
+                [target] (auto&& tup) {
+                    return broadcast_left(
+                                tup,
+                                std::make_tuple(target)
+                                );
+                },
+                all
         );
     }
 
 
-    template <typename TupIndexers>
+    template <typename ... Indexers>
     auto //std::tuple<Indexers...> tuple of indexers
-    broadcast(TupIndexers&& iovs) {
-        auto ret = broadcast_rec(
-                    //empty accumulator
-                    std::tuple<>(),
-                    //toproc
-                    std::move(iovs),
-                    //full
-                    std::move(iovs)
-                    );
+    broadcast(std::tuple<Indexers...> tup_ind) {
+        auto h_t = tuple_utility::split_ht(std::move(tup_ind));
+
+        //indexer<helpers::static_max_or_dynamic<
+        //        decltype(Indexers::shape_)::STATIC_SIZE_OR_DYNAMIC...>::value>
+        auto
+            indexer_target = broadcast_left(
+                //tuple_utility::head(tup_ind),
+                //tuple_utility::tail(tup_ind)
+                h_t.first,
+                h_t.second
+                );
+
+        //std::tuple<
+        //        ndatacontainer<
+        //            typename Indexers::type_ContainerT,
+        //            typename Indexers::type_T,
+        //            helpers::static_max_or_dynamic<Indexers::STATIC_SIZE_OR_DYNAMIC...>::value
+        //        >...
+        //    >
+        auto
+        ret = broadcast_on_target(
+            make_indexer(indexer_target),
+            //toproc
+            std::tuple_cat(
+                std::make_tuple(h_t.first),
+                h_t.second
+                )
+            );
         return ret;
+    }
+
+    template <typename TupIndexers>
+    auto
+    broadcast_views(
+            TupIndexers & tup_ind
+            )
+    {
+        auto tupind_views = tuple_utility::tuple_transform_ptr(
+                    [] (auto& tupelt) {
+                        return tupelt.to_view();
+                    },
+                    tup_ind
+                );
+        return broadcast(tupind_views);
     }
 
 } //end .namespace helpers
