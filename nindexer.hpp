@@ -248,17 +248,6 @@ struct indexer {
         return strides_;
     }
 
-    //size_t stride(size_t i) {
-    //    assert(i<shape_.size());
-    //    return strides_[i];
-    //}
-
-    //size_t shape(size_t i) {
-    //    assert(i<shape_.size());
-    //    return shape_[i];
-    //}
-
-
     size_t size(){
         size_t acc=1;
         for(size_t i=0;i<shape_.size();i++){
@@ -353,76 +342,7 @@ struct indexer {
         return ndindex;
     }
 
-
-    ///**
-    // * Returns a new ndindexer with eventually a smaller number of dimensions,
-    // * The new ndindexer computes indices matching the requested slice of the array.
-    // */
-    //template <typename... DimSliceT>
-    //auto
-    //index_slice(long index, DimSliceT ... slice_or_index) {
-    //    return helpers::make_indexer_from_slices(
-    //            slice_rec<0, 0>(
-    //                start_index_,
-    //                helpers::SliceAcc<0>(),
-    //                index,
-    //                slice_or_index...
-    //                )
-    //            );
-    //}
-
-    ///**
-    // * Returns a new ndindexer with eventually a smaller number of dimensions,
-    // * The new ndindexer computes indices matching the requested slice of the array.
-    // *
-    // */
-    //template <typename... DimSliceT>
-    //auto
-    //index_slice(Rng index_range,  DimSliceT ... slice_or_index)  {
-    //    return helpers::make_indexer_from_slices(
-    //            slice_rec<0, 0>(
-    //                start_index_,
-    //                helpers::SliceAcc<0>(),
-    //                index_range,
-    //                slice_or_index...
-    //                )
-    //            );
-    //}
-
-    //TODO fortran_order
-
-    ///**
-    // * produces a ndatacontainer. see ndatacontainer.
-    // * To use in for loops
-    // *
-    // * auto ind_it = my_ndindexes.slice(3, {2, 6}, {}); //{} is equivalent to {0:-1}
-    // *
-    // * for(size_t ind_it.begin(); ind_it < ind_it.end();ind_it++) {
-    // *    do_stuff(my_vector[ind_it]);
-    // * }
-    // *
-    // * //Or even with a for range loop :
-    // *
-    // * for(size_t ind : ind_it) {
-    // *     do_stuff(my_vector[ind_it]);
-    // * }
-    // *
-    // */
-    //template<typename ContainerT, typename T>
-    //ndatacontainer<ContainerT, T, ndims>
-    //own_data(ContainerT data) {
-    //    return ndatacontainer<ContainerT, T, ndims>(*this, data);
-    //}
-
-    //**
-    // * produces a ndataview, which is like an ndatacontainer but only
-    // * holds a pointer to its data. See ndatacontainer.
-    // */
-    //template<typename ContainerT, typename T>
-    //ndataview<T, ndims>
-    //view_data(ContainerT data) {
-    //    return ndataview<T, ndims>(&data[0], *this);
-    //}
+    //TODO fortran_order, swap_dimensions, add empty dimension
 
     /**
      * used by broadcast
@@ -464,27 +384,6 @@ struct indexer {
 
 
 protected:
-
-
-    //template<size_t idim, typename... SizeT>
-    //size_t index_rec(size_t acc, long i_idim, SizeT... in){
-    //    assert(acc<size());
-    //    long i_idim_rev = reverse_negative_index(idim, i_idim);
-    //    assert(i_idim_rev < long(shape_[idim]));
-
-    //    size_t new_acc = acc+strides_[idim]*i_idim_rev;
-
-    //    return index_rec<idim+1>(new_acc, in...);
-    //}
-
-    //template<size_t idim>
-    //size_t index_rec(size_t acc){
-    //    static_assert(idim == ndims, "");
-    //    return acc;
-    //}
-
-    //now handling various arities and slice length/shorthand possible
-    //with template recursion
 
     /**
      * An actual index is given instead of a slice, only one element is thus

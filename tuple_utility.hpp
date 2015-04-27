@@ -64,16 +64,26 @@ namespace tuple_utility {
         //return ret;
     }
 
-    template <typename FuncT, typename TupT, size_t... Is>
-    auto apply_impl(FuncT func, TupT t,
+    template <typename FuncT, typename ... Ts, size_t... Is>
+    auto apply_impl(FuncT func, std::tuple<Ts...> & t,
                       std::index_sequence<Is...>)
     {
        //note difference in position of expansion between apply and tuple transform
        return  func(std::get<Is>(t)...);
     }
 
+    //dereferences pointers if tuple of pointers is passed
+    //so func can be written to take by value or byref instead of by ptr only
+    template <typename FuncT, typename ... Ts, size_t... Is>
+    auto apply_impl(FuncT func, std::tuple<Ts*...> & t,
+                      std::index_sequence<Is...>)
+    {
+       //note difference in position of expansion between apply and tuple transform
+       return  func(*std::get<Is>(t)...);
+    }
+
     template <typename FuncT, typename TupT>
-    auto apply(FuncT func, TupT t)
+    auto apply(FuncT func, TupT & t)
     {
        return  apply_impl(
                    func,
@@ -87,7 +97,7 @@ namespace tuple_utility {
     }
 
     template <typename FuncT, typename TupT, size_t... Is>
-    auto tuple_transform_impl(FuncT func, TupT t,
+    auto tuple_transform_impl(FuncT func, TupT & t,
                               std::index_sequence<Is...>)
     {
        //note difference in position of expansion between apply and tuple transform
@@ -95,7 +105,8 @@ namespace tuple_utility {
     }
 
     template <typename FuncT, typename TupT>
-    auto tuple_transform(FuncT func, TupT t)
+    auto
+    tuple_transform(FuncT func, TupT& t)
     {
        return  tuple_transform_impl(
                    func,
@@ -106,27 +117,6 @@ namespace tuple_utility {
                        >::value
                    >()
                    );
-    }
-
-    template <typename FuncT, typename TupT, size_t... Is>
-    auto tuple_transform_impl_ptr(FuncT func, TupT & t,
-                              std::index_sequence<Is...>)
-    {
-       //note difference in position of expansion between apply and tuple transform
-       return  std::make_tuple(func(std::get<Is>(t))...);
-    }
-
-    template <typename FuncT, typename TupT>
-    auto
-    tuple_transform_ptr(FuncT func, TupT& t)
-    {
-       return  tuple_transform_impl_ptr(func, t,
-                                    std::make_index_sequence<
-                                    std::tuple_size<
-                                        TupT
-                                        >::value
-                                    >()
-                                    );
     }
 
 }

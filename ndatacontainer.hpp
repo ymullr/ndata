@@ -54,7 +54,7 @@ struct ndatacontainer: indexer<ndims> {
      */
     ndatacontainer(indexer<ndims> idxr, ContainerT data):
         indexer<ndims>(idxr),
-        data_(data)
+        data_(std::move(data))
     { }
 
     T&
@@ -182,9 +182,9 @@ public :
      * used by broadcast
      */
     template<size_t new_ndims>
-    ndatacontainer<ContainerT, T, new_ndims>
+    ndataview<T, new_ndims>
     reshape(vecarray<size_t, new_ndims> new_shape, vecarray<long, new_ndims> new_strides) {
-        return ndatacontainer<ContainerT, T, new_ndims>(indexer<new_ndims>(this->start_index_, new_shape, new_strides), data_);
+        return ndataview<T, new_ndims>(indexer<new_ndims>(this->start_index_, new_shape, new_strides), &data_[0]);
     }
 
 };

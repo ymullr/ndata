@@ -1,6 +1,7 @@
 #include "debug_helpers.hpp"
 
 #include "ndata.hpp"
+#include <memory>
 
 //TODO test dynamic ndarrays
 
@@ -298,25 +299,42 @@ struct TestSuite {
 
         ndataview<float, 2> u2_slice =  u2.slice(Rng(0, Nx), Rng());
 
+        //this one should be uncopyable, good for checking that no parasitic
+        //copy happens in foreach
+        //must be release or double free happens
+        ndatacontainer<
+                std::unique_ptr<float[]>,
+                float,
+                2
+                >
+                u2_slice_unique_view (
+                    u2_slice,
+                    std::unique_ptr<float[]>(&u2_slice.data_[0])
+                    );
+
         nforeach<float>(
             //nforeach takes a tuple of pointers to ndataview ndatacontainer or nvector
-            make_tuple(
-                &ures,
-                &u1,
-                &u2_slice,
-                &u3
+            std::tie( //must use std tie with foreach
+                ures,
+                u1,
+                //u2.slice(Rng(0, Nx), Rng()),
+                u2_slice_unique_view,
+                u3
             ),
             //lambda function must take its arguments as pointers
-            [] (float * res, long * v1, float * v2, std::pair<long, long> * v3) {
-                *res = *v1+*v2+(*v3).first;
+            [] (float &res, long v1, float v2, std::pair<long, long> v3) {
+                res = v1+v2+v3.first;
             }
         );
+
+        //so that the unique pointer will not delete the array itself
+        u2_slice_unique_view.data_.release();
 
         auto u_res_transform = ntransform<float>(
             std::make_tuple(
                 u1,
                 //u2.slice_view(Rng(0, Nx), Rng()),
-                u2.slice(Rng(0, Nx), Rng()),
+                u2_slice,
                 u3
             ),
             [] (long v1, float v2, std::pair<long, long> v3) {

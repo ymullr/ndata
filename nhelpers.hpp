@@ -409,7 +409,7 @@ namespace helpers {
             TupIndexers & tup_ind
             )
     {
-        auto tupind_views = tuple_utility::tuple_transform_ptr(
+        auto tupind_views = tuple_utility::tuple_transform(
                     [] (auto& tupelt) {
                         return tupelt.to_view();
                     },
