@@ -14,10 +14,10 @@ namespace ndata {
 namespace helpers {
 
 
-    using ShapeStridePair = std::pair<size_t, long>;
+    using ShapeStridePair = std::pair<long, long>;
 
     // ( shape[i], strides[i] )
-    template<size_t N> using SliceAcc = vecarray<ShapeStridePair, N>;
+    template<long N> using SliceAcc = vecarray<ShapeStridePair, N>;
 
 
     template <long ... vals>
@@ -49,16 +49,16 @@ namespace helpers {
     auto
     make_vecarray_like_biggest(
                 vecarray<
-                    size_t,
+                    long,
                     std::enable_if<StatSize1!=DYNAMICALLY_SIZED, std::integral_constant<long, StatSize1>>::type::value
                     > v1,
                 vecarray<
-                    size_t,
+                    long,
                     std::enable_if<StatSize2!=DYNAMICALLY_SIZED, std::integral_constant<long, StatSize2>>::type::value
                     > v2
             )
     {
-        return vecarray<size_t,
+        return vecarray<long,
                 (v1.STATIC_SIZE_OR_DYNAMIC >= v2.STATIC_SIZE_OR_DYNAMIC)?
                                 v1.STATIC_SIZE_OR_DYNAMIC :
                                     v2.STATIC_SIZE_OR_DYNAMIC
@@ -75,16 +75,16 @@ namespace helpers {
     auto
     make_vecarray_like_biggest_dyn(
                 vecarray<
-                    size_t,
+                    long,
                     StatSize1//std::enable_if<StatSize1!=DYNAMICALLY_SIZED, std::integral_value<StatSize1>>::type::value
                     > v1,
                 vecarray<
-                    size_t,
+                    long,
                     StatSize2 //std::enable_if<StatSize2!=DYNAMICALLY_SIZED, std::integral_value<StatSize2>>::type::value
                     > v2
             )
     {
-        return vecarray<size_t, ndata::DYNAMICALLY_SIZED> (std::max(v1.size(), v2.size()));
+        return vecarray<long, ndata::DYNAMICALLY_SIZED> (std::max(v1.size(), v2.size()));
     };
 
 
@@ -97,11 +97,11 @@ namespace helpers {
     auto
     make_vecarray_like_biggest(
                 vecarray<
-                    size_t,
+                    long,
                     std::enable_if<StatSize1==DYNAMICALLY_SIZED, std::integral_constant<long, StatSize1>>::type::value
                     > v1,
                 vecarray<
-                    size_t,
+                    long,
                     StatSize2 //std::enable_if<StatSize2!=DYNAMICALLY_SIZED, std::integral_value<StatSize2>>::type::value
                     > v2
             )
@@ -118,11 +118,11 @@ namespace helpers {
     auto
     make_vecarray_like_biggest(
                 vecarray<
-                    size_t,
+                    long,
                     StatSize1
                     > v1,
                 vecarray<
-                    size_t,
+                    long,
                     std::enable_if<StatSize2==DYNAMICALLY_SIZED, std::integral_constant<long, StatSize2>>::type::value
                     > v2
             )

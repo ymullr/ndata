@@ -63,10 +63,10 @@ struct Rng {
  * Helper function allowing the user to create an indexer, dimensionality is infered
  * from the number of arguments.
  */
-template <typename... SizeT>
+template <typename... LongT>
 auto
-make_indexer(size_t shape0, SizeT ... shapen) {
-    return indexer<sizeof...(shapen)+1>(shape0, shapen...);
+make_indexer(long size_0, LongT ... size_n) {
+    return indexer<sizeof...(size_n)+1>(size_0, size_n...);
 }
 
 ///**
@@ -97,13 +97,21 @@ namespace helpers {
 
 }
 
+template<long ndims>
+void
+check_shape(vecarray<long, ndims> shape) {
+    for (size_t i = 0; i < shape.size(); ++i) {
+        assert(shape[i]>=1);
+    }
+}
+
 
 template<long ndims>
 struct indexer {
 
-    template<typename... SizeT>
+    template<typename... LongT>
     explicit
-    indexer(size_t shape0, SizeT... shape):
+    indexer(long shape0, LongT... shape):
         start_index_(0)
     {
         static_assert(
@@ -119,23 +127,29 @@ struct indexer {
         assert(shape0>=0);
 
         //vecarray size 0 for dynamic version is going to be a problem
-        shape_=helpers::array_from_argpack<size_t, 0>(vecarray<size_t, 0> (), shape0, shape...);
+        shape_=helpers::array_from_argpack<long>(vecarray<long, 0> (), shape0, shape...);
+        check_shape(shape_);
         strides_ = calc_strides_from_shape(shape_);
     }
 
     //initialize from shape with default strides
     //you can also pass a vector or array instead, it will autoconvert
-    indexer(vecarray<size_t, ndims> shape):
+    indexer(vecarray<long, ndims> shape):
         start_index_(0),
         shape_(shape),
-        strides_(calc_strides_from_shape(shape)) {
+        strides_(calc_strides_from_shape(shape))
+    {
+        check_shape(shape_);
     }
 
     //construct from members
-    indexer(size_t start_index, vecarray<size_t, ndims> shape, vecarray<long, ndims> strides):
+    indexer(size_t start_index, vecarray<long, ndims> shape, vecarray<long, ndims> strides):
         start_index_(start_index),
         shape_(shape),
-        strides_(strides) { };
+        strides_(strides)
+    {
+        check_shape(shape_);
+    };
 
 
     //empty constructor for later assignment
@@ -156,7 +170,7 @@ struct indexer {
         //looping on array dimensions
         for (size_t i = 0; i < ndindex.size(); ++i) {
             //bound checking when debugging
-            assert(ndindex[i] < shape_[i]);
+            assert(long(ndindex[i]) < shape_[i]);
 
             indexacc+=ndindex[i]*strides_[i];
         }
@@ -217,10 +231,8 @@ struct indexer {
         return  helpers::make_indexer_from_slices_helper(pr);
     }
 
-
-
-    //template<typename... SizeT >
-    //size_t index(size_t i0, SizeT... in){
+    //template<typename... LongT >
+    //size_t index(size_t i0, LongT... in){
     //    static_assert(
     //        ndims != DYNAMICALLY_SIZED,
     //        "This overload is only available when the number of dimensions"
@@ -239,7 +251,7 @@ struct indexer {
         return start_index_;
     }
 
-    vecarray<size_t, ndims> get_shape() {
+    vecarray<long, ndims> get_shape() {
         return shape_;
     }
 
@@ -306,16 +318,16 @@ struct indexer {
     /**
      * Raw pointer version
      */
-    template<typename SizeT>
+    template<typename LongT>
     void
-    increment_ndindex(SizeT * ndindex){
+    increment_ndindex(LongT * ndindex){
         //would also be doable with a bunch of modulo (%) ops but that might be slower/less explicit
         for (long idim = shape_.size()-1; idim >= 0; --idim) {
             //update.back-most dimensional index unless its maxxed
-            if (ndindex[idim] < shape_[idim]-1) {
+            if (long(ndindex[idim]) < shape_[idim]-1) {
                 ndindex[idim]++;
                 return;  //were done
-            } else if (ndindex[idim] == shape_[idim]-1) { //if maxxed
+            } else if (long(ndindex[idim]) == shape_[idim]-1) { //if maxxed
                 ndindex[idim]=0; //reset this dimensional index to 0 
                 //continue loop, skip to next outer dimension
                 //if this is already the outermost dimension then the index is simply reset
@@ -330,12 +342,10 @@ struct indexer {
      *
      * Should be implemented with some modulo ops
      */
-    vecarray<size_t, ndims> 
+    vecarray<size_t, ndims>
     ndindex(size_t flatindex) {
 
-        vecarray<size_t, ndims> ndindex (shape_);
-
-        ndindex.fill(0);
+        vecarray<size_t, ndims> ndindex (shape_.dynsize(), 0);
 
         for (size_t i = 0; i <= flatindex; ++i) {
             increment_ndindex(ndindex);
@@ -349,9 +359,9 @@ struct indexer {
     /**
      * used by broadcast
      */
-    template<size_t new_ndims>
+    template<long new_ndims>
     indexer<new_ndims>
-    reshape(vecarray<size_t, ndims> new_shape, vecarray<long, ndims> new_strides) {
+    reshape(vecarray<long, ndims> new_shape, vecarray<long, ndims> new_strides) {
         return indexer<new_ndims>(start_index_, new_shape, new_strides);
     }
 
@@ -360,13 +370,13 @@ struct indexer {
     size_t start_index_;
 
     //kept for bound checking
-    vecarray<size_t, ndims> shape_; 
+    vecarray<long, ndims> shape_;
 
     vecarray<long, ndims> strides_;
 
     static
     vecarray<long, ndims> 
-    calc_strides_from_shape(vecarray<size_t, ndims> shape) {
+    calc_strides_from_shape(vecarray<long, ndims> shape) {
 
         vecarray<long, ndims> ret (shape.dynsize());
 
@@ -431,6 +441,8 @@ protected:
 
         start_ind += strides_[idim]*reverse_negative_index(idim, range.start);
 
+        assert(start_ind < unsliced_size());
+
         long new_stride = strides_[idim]*range.step;
 
         helpers::ShapeStridePair full_slice = make_pair(
@@ -478,7 +490,7 @@ namespace helpers {
     template <long ndimslices>
     indexer<ndimslices> make_indexer_from_slices_helper(std::pair<size_t, SliceAcc<ndimslices>> pr) {
 
-        vecarray<size_t, ndimslices> shape (pr.second.dynsize());
+        vecarray<long, ndimslices> shape (pr.second.dynsize());
         vecarray<long, ndimslices> strides (pr.second.dynsize());
 
         for (size_t i = 0; i < pr.second.size(); ++i) {

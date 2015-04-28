@@ -21,7 +21,8 @@ set(CMAKE_CXX_COMPILER "/usr/bin/g++-4.9")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_FLAGS} ${CLANG_FLAGS}")
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb3 -O0 -fno-inline -DDEBUG  -Wall -Wextra  -Wno-missing-braces")#-ggdb3 plutot que -g genere et integre les info de debug pour les macros
+#sometimes useful: -Wsign-conversion
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ftrapv -ggdb3 -O0 -fno-inline -DDEBUG  -Wall -Wextra  -Wno-missing-braces ")#-ggdb3 plutot que -g genere et integre les info de debug pour les macros
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")# -ffast-math
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")

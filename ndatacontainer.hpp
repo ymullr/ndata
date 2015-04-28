@@ -119,9 +119,9 @@ public :
      * TODO
      *
      */
-    template<size_t new_ndims>
+    template<long new_ndims>
     ndataview<T, new_ndims>
-    reshape(vecarray<size_t, new_ndims> new_shape, vecarray<long, new_ndims> new_strides) {
+    reshape(vecarray<long, new_ndims> new_shape, vecarray<long, new_ndims> new_strides) {
         return ndataview<T, new_ndims>(indexer<new_ndims>(this->start_index_, new_shape, new_strides), &data_[0]);
     }
 

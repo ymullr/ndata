@@ -43,6 +43,7 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::typ
 
     std::array<T, static_size> stackStorage;
 
+    explicit
     vecarray(long dynamic_size, T init_val = T()) {
         assert(dynamic_size == STATICALLY_SIZED);
 

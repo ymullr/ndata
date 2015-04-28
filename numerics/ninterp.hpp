@@ -172,7 +172,7 @@ struct InterpolateInner<KernT, ContainerT, T, 1> {
 
         T ret = numtype_adapter<T>::ZERO;
 
-        for (size_t i = 0; i < u.get_shape()[0]; ++i) {
+        for (long i = 0; i < u.get_shape()[0]; ++i) {
             float x = float(i)-indexFrac[0];
             float convCoeff = kern.kern(x);
             ret +=  convCoeff * u[i];
@@ -239,7 +239,7 @@ T interpolate (
 
     //now extracting the hypercube from u where the kernel is non-zero
 
-    vecarray<size_t, ndims> unew_shape = shape;
+    vecarray<long, ndims> unew_shape = shape;
 
     for (size_t idim = 0; idim < ndims; ++idim) {
         unew_shape[idim] = i_stops[idim] - i_starts[idim];
@@ -261,7 +261,7 @@ T interpolate (
         vecarray<size_t, ndims> ndi_uold (unew_shape.dynsize());
 
         for (size_t idim = 0; idim < ndims; ++idim) {
-            long iUThisDim=(i_starts[idim]+ndi_unew[idim]);
+            long iUThisDim=(i_starts[idim]+long(ndi_unew[idim]));
 
             switch (overflowBehaviours[idim]) {
                 case CYCLIC:
@@ -283,7 +283,7 @@ T interpolate (
 
             assert(iUThisDim < long(shape[idim]));
             assert(iUThisDim >= 0);
-            ndi_uold[idim] = iUThisDim;
+            ndi_uold[idim] = size_t(iUThisDim);
         }
 
         unew(ndi_unew) = u(ndi_uold); //no stride in uOld either since we grab the last dimension

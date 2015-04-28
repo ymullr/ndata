@@ -153,8 +153,8 @@ struct TestSuite {
         long iy_start = 1;
         nvector<long, 2> usli = u.slice(Rng(), Rng(iy_start, 4));
 
-        for (size_t ix = 0; ix < usli.get_shape()[0]; ++ix) {
-            for (size_t iy = 0; iy < usli.get_shape()[1]; ++iy) {
+        for (long ix = 0; ix < usli.get_shape()[0]; ++ix) {
+            for (long iy = 0; iy < usli.get_shape()[1]; ++iy) {
                 long indval = usli(ix, iy);
                 success = indval == long(ix*Ny+(iy+iy_start));
                 msg.append(MakeString() << usli(ix, iy) << ", ");
