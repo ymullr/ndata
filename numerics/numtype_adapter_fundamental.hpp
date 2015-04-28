@@ -3,6 +3,8 @@
 
 #include <type_traits>
 
+//TODO document
+
 namespace ndata {
 
 template<typename T, typename Enable = void>

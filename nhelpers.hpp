@@ -28,8 +28,8 @@ namespace helpers {
     struct static_max_or_dynamic<val1, val2, vals...> {
 
         static constexpr long value =
-                (val1==DYNAMIC_SIZE or val2==DYNAMIC_SIZE)?
-                        DYNAMIC_SIZE:
+                (val1==DYNAMICALLY_SIZED or val2==DYNAMICALLY_SIZED)?
+                        DYNAMICALLY_SIZED:
                     (val1 >= val2)?
                         static_max_or_dynamic<val1, vals...>::value:
                             static_max_or_dynamic<val2, vals...>::value;
@@ -50,11 +50,11 @@ namespace helpers {
     make_vecarray_like_biggest(
                 vecarray<
                     size_t,
-                    std::enable_if<StatSize1!=DYNAMIC_SIZE, std::integral_constant<long, StatSize1>>::type::value
+                    std::enable_if<StatSize1!=DYNAMICALLY_SIZED, std::integral_constant<long, StatSize1>>::type::value
                     > v1,
                 vecarray<
                     size_t,
-                    std::enable_if<StatSize2!=DYNAMIC_SIZE, std::integral_constant<long, StatSize2>>::type::value
+                    std::enable_if<StatSize2!=DYNAMICALLY_SIZED, std::integral_constant<long, StatSize2>>::type::value
                     > v2
             )
     {
@@ -76,15 +76,15 @@ namespace helpers {
     make_vecarray_like_biggest_dyn(
                 vecarray<
                     size_t,
-                    StatSize1//std::enable_if<StatSize1!=DYNAMIC_SIZE, std::integral_value<StatSize1>>::type::value
+                    StatSize1//std::enable_if<StatSize1!=DYNAMICALLY_SIZED, std::integral_value<StatSize1>>::type::value
                     > v1,
                 vecarray<
                     size_t,
-                    StatSize2 //std::enable_if<StatSize2!=DYNAMIC_SIZE, std::integral_value<StatSize2>>::type::value
+                    StatSize2 //std::enable_if<StatSize2!=DYNAMICALLY_SIZED, std::integral_value<StatSize2>>::type::value
                     > v2
             )
     {
-        return vecarray<size_t, ndata::DYNAMIC_SIZE> (std::max(v1.size(), v2.size()));
+        return vecarray<size_t, ndata::DYNAMICALLY_SIZED> (std::max(v1.size(), v2.size()));
     };
 
 
@@ -98,11 +98,11 @@ namespace helpers {
     make_vecarray_like_biggest(
                 vecarray<
                     size_t,
-                    std::enable_if<StatSize1==DYNAMIC_SIZE, std::integral_constant<long, StatSize1>>::type::value
+                    std::enable_if<StatSize1==DYNAMICALLY_SIZED, std::integral_constant<long, StatSize1>>::type::value
                     > v1,
                 vecarray<
                     size_t,
-                    StatSize2 //std::enable_if<StatSize2!=DYNAMIC_SIZE, std::integral_value<StatSize2>>::type::value
+                    StatSize2 //std::enable_if<StatSize2!=DYNAMICALLY_SIZED, std::integral_value<StatSize2>>::type::value
                     > v2
             )
     {
@@ -123,33 +123,13 @@ namespace helpers {
                     > v1,
                 vecarray<
                     size_t,
-                    std::enable_if<StatSize2==DYNAMIC_SIZE, std::integral_constant<long, StatSize2>>::type::value
+                    std::enable_if<StatSize2==DYNAMICALLY_SIZED, std::integral_constant<long, StatSize2>>::type::value
                     > v2
             )
     {
         return make_vecarray_like_biggest_dyn(v1, v2);
     };
 
-    template<typename ContentT, size_t idim>
-    vecarray<ContentT, idim>
-    array_from_argpack(vecarray<ContentT, idim> acc) {
-        return acc;
-    }
-
-
-    /**
-     * Accumulates the ndimensional indices passed as argument in an array
-     * */
-    template<typename ContentT, size_t idim, typename... ContentTPackT>
-    auto
-    array_from_argpack(
-            vecarray<ContentT, idim> acc,
-            ContentT i,
-            ContentTPackT... rest
-            ) {
-        vecarray<ContentT, idim+1> new_acc = acc.append(i);
-        return array_from_argpack<ContentT, idim+1>(new_acc, rest...);
-    }
 
     template <typename ... Ts>
     struct static_check_valid_indice_types {
@@ -243,12 +223,12 @@ namespace helpers {
         //            or
         //            (
         //                (
-        //                    decltype(shape_v1)::STATIC_SIZE_OR_DYNAMIC == DYNAMIC_SIZE
+        //                    decltype(shape_v1)::STATIC_SIZE_OR_DYNAMIC == DYNAMICALLY_SIZED
         //                    or
-        //                    decltype(shape_v2)::STATIC_SIZE_OR_DYNAMIC == DYNAMIC_SIZE
+        //                    decltype(shape_v2)::STATIC_SIZE_OR_DYNAMIC == DYNAMICALLY_SIZED
         //                )
         //                and
-        //                new_shape.STATIC_SIZE_OR_DYNAMIC == DYNAMIC_SIZE
+        //                new_shape.STATIC_SIZE_OR_DYNAMIC == DYNAMICALLY_SIZED
         //            ),
         //            ""
         //            );
@@ -354,7 +334,7 @@ namespace helpers {
     auto
     broadcast_on_target(
             indexer<ndims> target,
-            tuple<Indexers...> all
+            std::tuple<Indexers...> all
             )
     {
         return tuple_utility::tuple_transform(
@@ -393,7 +373,7 @@ namespace helpers {
         //    >
         auto
         ret = broadcast_on_target(
-            make_indexer(indexer_target),
+            helpers::make_indexer(indexer_target),
             //toproc
             std::tuple_cat(
                 std::make_tuple(h_t.first),

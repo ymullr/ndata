@@ -44,11 +44,11 @@ add_executable(
         indexer_test
         ./tests/indexer_test.cpp
         )
-#
-#add_executable(
-#        interp_test
-#        ./tests/interp_test.cpp
-#	)
+
+add_executable(
+        interp_test
+        ./tests/interp_test.cpp
+        )
 
 #add_executable(
 #    debug_test

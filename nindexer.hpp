@@ -78,12 +78,6 @@ make_indexer(size_t shape0, SizeT ... shapen) {
 //    return indexer<ndims>(start_index, shape, strides);
 //}
 
-template<long ndims>
-auto
-make_indexer(indexer<ndims> idx) {
-    return idx;
-}
-
 
 namespace helpers {
 
@@ -94,6 +88,13 @@ namespace helpers {
     template <long ndimslices>
     indexer<ndimslices> make_indexer_from_slices_helper(std::pair<size_t, SliceAcc<ndimslices>> pr);
 
+    //downcasting helper
+    template<long ndims>
+    indexer<ndims>
+    make_indexer(indexer<ndims> idx) {
+        return idx;
+    }
+
 }
 
 
@@ -101,6 +102,7 @@ template<long ndims>
 struct indexer {
 
     template<typename... SizeT>
+    explicit
     indexer(size_t shape0, SizeT... shape):
         start_index_(0)
     {
@@ -175,7 +177,7 @@ struct indexer {
     template <typename ... IndexT>
     size_t index(IndexT ... indices) {
         static_assert(sizeof...(indices) == ndims, "Number of indices doesn't match dimensionality");
-        static_assert(ndims != DYNAMIC_SIZE, "Please use an overload taking a vecarray with dynamically dimensioned arrays");
+        static_assert(ndims != DYNAMICALLY_SIZED, "Please use an overload taking a vecarray with dynamically dimensioned arrays");
 
         static_assert(
                     helpers::static_check_valid_indice_types<IndexT...>::value,
@@ -190,7 +192,7 @@ struct indexer {
 
         static_assert(
             decltype(pr.second)::STATIC_SIZE_OR_DYNAMIC == 0
-            //decltype(pr.second)::STATIC_SIZE_OR_DYNAMIC == DYNAMIC_SIZE
+            //decltype(pr.second)::STATIC_SIZE_OR_DYNAMIC == DYNAMICALLY_SIZED
                     , "");
 
         assert(pr.first < this->unsliced_size());
@@ -220,7 +222,7 @@ struct indexer {
     //template<typename... SizeT >
     //size_t index(size_t i0, SizeT... in){
     //    static_assert(
-    //        ndims != DYNAMIC_SIZE,
+    //        ndims != DYNAMICALLY_SIZED,
     //        "This overload is only available when the number of dimensions"
     //        " is known at compile time"
     //        );

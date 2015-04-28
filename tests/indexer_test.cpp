@@ -245,7 +245,7 @@ struct TestSuite {
         //zero initialized
         auto u = make_nvector<long>(make_indexer(2, 5));
 
-        auto uview = ndataview<long, 2>(u);
+        auto uview = u.to_view();
 
         for (size_t ix = 0; ix < 2; ++ix) {
             for (size_t iy = 0; iy < 5; ++iy) {

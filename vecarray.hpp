@@ -9,7 +9,16 @@
 
 #include <type_traits>
 
+#include "nhelpers.hpp"
+
 namespace ndata {
+
+
+//base template
+template<class T, long static_size, class Enable=void>
+struct vecarray {
+    static_assert(static_size>=-1, "Wrong static size!");
+};
 
 
 template <long T> using IsMinusOne = std::is_same<std::integral_constant<long, T>, std::integral_constant<long, -1>>;
@@ -18,13 +27,11 @@ template <long T> using IsNotMinusOne = Negate<IsMinusOne<T>>;
 template <long T> using MinusOne = std::enable_if<IsMinusOne<T>::value, std::integral_constant<long, T>>;
 template <long T> using NotMinusOne = std::enable_if<IsNotMinusOne<T>::value, std::integral_constant<long, T>>;
 
-const long DYNAMIC_SIZE = -1;
+//special value to pass as static_size template argument when a dynamicv size is wanted
+constexpr long DYNAMICALLY_SIZED = -1;
 
-//base template
-template<class T, long static_size, class Enable=void>
-struct vecarray {
-    static_assert(static_size>=-1, "Wrong static size!");
-};
+//special value to pass as dynamic_size parameter to vecarray constructor when a dynamic vecarray is wanted
+constexpr long STATICALLY_SIZED = -2;
 
 //specialization static vecarray
 template<class T, long static_size>
@@ -36,19 +43,13 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::typ
 
     std::array<T, static_size> stackStorage;
 
-    //provided for compatibility with dynamic version
-    vecarray(long dynamic_size) {
-        assert(dynamic_size == -1);
-    }
+    vecarray(long dynamic_size, T init_val = T()) {
+        assert(dynamic_size == STATICALLY_SIZED);
 
-    vecarray(long dynamic_size, std::vector<T> drop_last) {
-        assert(dynamic_size == -1);
-        assert(drop_last.size() <= static_size);
-
-        //drop_last members with content of the vector
-        //imitates the behaviour of drop_lastializer lists
-        for (size_t i = 0; i < drop_last.size(); ++i) {
-            stackStorage[i] = drop_last[i];
+        //data members with content of the vector
+        //imitates the behaviour of dataializer lists
+        for (size_t i = 0; i < static_size; ++i) {
+            stackStorage[i] = init_val;
         }
     }
 
@@ -58,7 +59,7 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::typ
 
     vecarray(std::vector<T> ini) {
         //static_assert(static_size == 0, "This constructor always produce a dynamic vecarray");
-        assert(ini.size() <= static_size);
+        assert(ini.size() == static_size);
         for (size_t i = 0; i < ini.size(); ++i) {
             stackStorage[i]=ini[i];
         }
@@ -67,8 +68,8 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::typ
     //overloaded to avoid ambiguity btw vector and array
     vecarray(std::initializer_list<T> iniArr)
     {
-        assert(iniArr.size() == static_size);// "Size of drop_lastializer list doesn't match");
-        //static_assert(iniArr.size() == static_size, "");// "Size of drop_lastializer list doesn't match");
+        assert(iniArr.size() == static_size);// "Size of dataializer list doesn't match");
+        //static_assert(iniArr.size() == static_size, "");// "Size of dataializer list doesn't match");
 
         size_t i = 0;
         for (T val: iniArr) {
@@ -77,7 +78,7 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::typ
         }
     }
 
-    //empty drop_lastializer for later assignment
+    //empty dataializer for later assignment
     vecarray() {};
 
     size_t size() {
@@ -87,7 +88,7 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::typ
     /**
      * For compatibility with dynarray.
      */
-    constexpr long dynsize () { return -1;}
+    constexpr long dynsize () { return STATICALLY_SIZED;}
 
     T& operator[](size_t index) {
         assert(index<size());
@@ -146,7 +147,7 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::typ
         return new_vecarray;
     }
 
-    T back() {
+    T& back() {
         return operator[](size()-1);
     }
 
@@ -156,9 +157,9 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::typ
  * Specialization for a dynamic vecarray
  */
 template<class T, long static_size>
-struct vecarray<T, static_size, typename std::enable_if<(static_size == DYNAMIC_SIZE)>::type > {
+struct vecarray<T, static_size, typename std::enable_if<(static_size == DYNAMICALLY_SIZED)>::type > {
 
-    static constexpr long STATIC_SIZE_OR_DYNAMIC = DYNAMIC_SIZE;
+    static constexpr long STATIC_SIZE_OR_DYNAMIC = DYNAMICALLY_SIZED;
 
     std::vector<T> heapStorage;
 
@@ -167,17 +168,16 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size == DYNAMIC_
         assert(dynamic_size>=0);
     }
 
-    vecarray(long dynamic_size, std::vector<T> drop_last) {
+    vecarray(long dynamic_size, T init_val = T()) {
 
         heapStorage = std::vector<T>(dynamic_size);
-        assert(drop_last.size() <= dynamic_size);
 
         assert(dynamic_size>=0);
 
-        //drop_last members with content of the vector
-        //imitates the behaviour of drop_lastializer lists
-        for (size_t i = 0; i < drop_last.size(); ++i) {
-            heapStorage[i] = drop_last[i];
+        //data members with content of the vector
+        //imitates the behaviour of dataializer lists
+        for (size_t i = 0; i < dynamic_size; ++i) {
+            heapStorage[i] = init_val;
         }
     }
 
@@ -196,7 +196,7 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size == DYNAMIC_
         }
     }
 
-    //empty drop_lastializer for later assignment
+    //empty dataializer for later assignment
     vecarray() {};
 
     size_t size() {
@@ -216,7 +216,7 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size == DYNAMIC_
         }
     }
 
-    vecarray<T, DYNAMIC_SIZE>
+    vecarray<T, DYNAMICALLY_SIZED>
     reverse () {
         vecarray<T, 0> new_vecarray (size());
         size_t vecsize = new_vecarray.size();
@@ -236,9 +236,9 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size == DYNAMIC_
      *
      * Dynamic version
      */
-    vecarray<T, DYNAMIC_SIZE>
+    vecarray<T, DYNAMICALLY_SIZED>
     append (T val) {
-        vecarray<T, DYNAMIC_SIZE> new_vecarray (size()+1);
+        vecarray<T, DYNAMICALLY_SIZED> new_vecarray (size()+1);
 
         for (size_t i = 0; i < size(); ++i) {
             new_vecarray[i] = this[i];
@@ -252,13 +252,13 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size == DYNAMIC_
     /**
      * returns all elements of the vecarray but the last
      */
-    vecarray<T, DYNAMIC_SIZE>
+    vecarray<T, DYNAMICALLY_SIZED>
     drop_back () {
         if (size()>0){
             throw(std::underflow_error("this.size() is already 0"));
         }
 
-        vecarray<T, DYNAMIC_SIZE> new_vecarray;
+        vecarray<T, DYNAMICALLY_SIZED> new_vecarray;
 
         for (size_t i = 0; i < new_vecarray.size(); ++i) {
             new_vecarray[i] = operator[](i);
@@ -272,6 +272,41 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size == DYNAMIC_
     }
 
 };
+
+namespace helpers {
+
+    template<typename ContentT, long idim>
+    vecarray<ContentT, idim>
+    array_from_argpack(vecarray<ContentT, idim> acc) {
+        return acc;
+    }
+
+
+    template<typename ContentT, long idim, typename... ContentTPackT>
+    auto
+    array_from_argpack(
+            vecarray<ContentT, idim> acc,
+            ContentT i,
+            ContentTPackT... rest
+            ) {
+        vecarray<ContentT, idim+1> new_acc = acc.append(i);
+        return array_from_argpack<ContentT, idim+1>(new_acc, rest...);
+    }
+}
+
+
+template <typename T, typename ... Ts>
+auto
+make_vecarray(T val1, Ts ... valn) {
+    constexpr long static_size = sizeof...(valn)+1;
+    vecarray<T, static_size> ret = helpers::array_from_argpack(
+                vecarray<T, 0>(),
+                val1, valn...
+                );
+    return ret;
+}
+
+
 
 } //end namespace
 

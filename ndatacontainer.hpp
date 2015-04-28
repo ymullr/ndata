@@ -46,7 +46,6 @@ struct ndatacontainer: indexer<ndims> {
 
     //static constexpr long STATIC_SIZE_OR_DYNAMIC = ndims;
 
-
     /**
      * @brief Construct from indexer and data
      * @param idxr
@@ -61,28 +60,6 @@ struct ndatacontainer: indexer<ndims> {
     operator[](size_t i) {
         return data_[i];
     }
-
-    //template <typename... SizeT>
-    //T&
-    //val(SizeT... indices) {
-    //    return data_[indexer<ndims>::index(indices...)];
-    //}
-
-    //
-    ///**
-    // * Returns a new ndindexer with eventually a smaller number of dimensions,
-    // * The new ndindexer computes indices matching the requested slice of the array.
-    // */
-    //template <typename... DimSliceT>
-    //auto
-    //slice(DimSliceT ... slice_or_index) {
-    //    //use slice method of the parent class and use it to own_data this.data_
-    //    //and return a new slice
-    //    return  indexer<ndims>::slice(
-    //                slice_or_index...
-    //            ).template own_data<ContainerT, T>(data_);
-    //}
-
 
 public :
 
@@ -105,52 +82,12 @@ public :
         return data_[index];
     }
 
-    ///**
-    // *
-    // * Returns a new ndindexer with eventually a smaller number of dimensions,
-    // * The new ndindexer computes indices matching the requested slice of the array.
-    // *
-    // */
-    //template <typename... DimSliceT>
-    //auto
-    //slice(Rng index_range,  DimSliceT ... slice_or_index)  {
-    //    return helpers::make_indexer_from_slices_helper(
-    //            slice_rec<0, 0>(
-    //                start_index_,
-    //                helpers::SliceAcc<0>(),
-    //                index_range,
-    //                slice_or_index...
-    //                )
-    //            );
-    //}
-
-
-
-    //
-    //**
-    // * Returns a new ndindexer with eventually a smaller number of dimensions,
-    // * The new ndindexer computes indices matching the requested slice of the array.
-    // *
-    // * Unlike the slice(...) method, slice_view only returns an ndataview which only
-    // * holds a pointer to its data.
-    // */
-    //template <typename... DimSliceT>
-    //auto
-    //slice_view(DimSliceT ... slice_or_index) {
-    //    //use slice method of the parent class and use it to own_data this.data_
-    //    //and return a new slice
-    //    ndataview<T, ndims> ret (
-    //                indexer<ndims>::slice(slice_or_index...),
-    //                &data_[0]
-    //    );
-    //    return ret;
-    //}
 
     template <typename ContainerT_rhs, typename T_rhs, long ndims_rhs>
     void
     assign(ndatacontainer<ContainerT_rhs, T_rhs, ndims_rhs> rhs) {
 
-        static_assert(ndims_rhs == ndims or ndims_rhs == DYNAMIC_SIZE, "");
+        static_assert(ndims_rhs == ndims or ndims_rhs == DYNAMICALLY_SIZED, "");
 
         auto ndi = this->ndindex(0);
         for (size_t i = 0; i < this->size(); ++i) {
@@ -159,17 +96,15 @@ public :
         }
     }
 
-
-    //default conversion operator to a view
-    operator ndataview<T, ndims>() {
-        //use slice method of the parent class and use it to own_data this.data_
-        //and return a new slice
-        return ndataview<T, ndims>(*this, &data_[0]);
-    }
+    //operator ndataview<T, ndims>() {
+    //    //use slice method of the parent class and use it to own_data this.data_
+    //    //and return a new slice
+    //    return ndataview<T, ndims>(*this, &data_[0]);
+    //}
 
     //convenience function to call default conversion without specifying template parameters
     auto to_view() {
-        return ndataview<T, ndims>(*this);
+        return ndataview<T, ndims>(*this, &data_[0]);
     }
 
     void fill(T val) {
@@ -179,7 +114,10 @@ public :
     }
 
     /**
-     * used by broadcast
+     * Used by broadcast
+     *
+     * TODO
+     *
      */
     template<size_t new_ndims>
     ndataview<T, new_ndims>

@@ -61,7 +61,7 @@ struct TestSuite {
         const float initVal = 1;
 
         vector<float> uvec (Nn, initVal);
-        nvector<float, 1> u (make_indexer(1), uvec);
+        nvector<float, 1> u (make_indexer(Nn), uvec);
 
         float start_ifrac = -1.9;
 
@@ -72,10 +72,10 @@ struct TestSuite {
             float i_frac = i; 
 
             float out = interpolate<KernT>(
-                    u,
-                    i_frac,
-                    OverflowBehaviour::STRETCH
-                    );
+                u,
+                i_frac,
+                OverflowBehaviour::STRETCH
+            );
 
             output.append(MakeString()<< out<<", ");
 
@@ -102,10 +102,10 @@ struct TestSuite {
             float i_frac = i;  
 
             float out = interpolate<KernT>(
-                    u,
-                    i_frac,
-                    OverflowBehaviour::ZERO
-                    );
+                u,
+                i_frac,
+                OverflowBehaviour::ZERO
+            );
 
             if(
                     (i == 0      and out != 0)
@@ -122,7 +122,7 @@ struct TestSuite {
     static
     TestResult increasing_field_1D(OverflowBehaviour ob=OverflowBehaviour::STRETCH) {
   
-        vector<float> u (Nn);
+        nvector<float, 1> u (make_indexer(Nn), 0);
         float increment = 1;
         for (size_t i = 0; i < Nn; ++i)
         {
@@ -142,8 +142,7 @@ struct TestSuite {
             float i_frac = i ;
 
             float out = interpolate<KernT>(
-                    Nn,
-                    &u[0],
+                    u,
                     i_frac,
                     ob
                     //OverflowBehaviourT
@@ -206,7 +205,7 @@ struct TestSuite {
   
         size_t Nn = 8;
 
-        vector<float> u (Nn);
+        nvector<float, 1> u (make_indexer(Nn));
         float valEven = 1, valOdd = 2;
 
         for (size_t i = 0; i < Nn; ++i)
@@ -223,16 +222,14 @@ struct TestSuite {
             float i_frac = i; 
 
             float val = interpolate<KernT>(
-                    Nn,
-                    &u[0],
+                    u,
                     i_frac,
                     OverflowBehaviour::STRETCH
                     );
 
 
             float valhalf = interpolate<KernT>(
-                    Nn,
-                    &u[0],
+                    u,
                     i_frac+0.5,
                     OverflowBehaviour::STRETCH
                     );
@@ -256,7 +253,7 @@ struct TestSuite {
     }
 
     static
-    TestResult cyclic_equal_3D3C() {
+    TestResult cyclic_equal_3D() {
   
         size_t Nn = 10;
 
@@ -273,31 +270,37 @@ struct TestSuite {
             u.increment_ndindex(ndind);
         }
 
-        vector<float> values (Nn*4);
 
         DECLARE_TESTRESULT(aggreg_equal, retMsg);
 
+        const size_t ntraversals = 2;
+        const size_t nvalues = Nn*4;
+
+        nvector<float, 2> values (make_indexer(ntraversals, nvalues));
+
         bool cycle_equal = true;
 
-        for (size_t itraversal = 0; itraversal < 2; ++itraversal) {
-            for (size_t i = 0; i < values.size(); ++i) {
+        for (size_t itraversal = 0; itraversal < ntraversals; ++itraversal) {
+            for (size_t i = 0; i < nvalues; ++i) {
 
                 float xfrac =
                         itraversal * (Nn)
-                        + i/float(values.size()) * (Nn-1.f);
+                        + i/float(nvalues) * (Nn-1.f);
 
                 float val = interpolate<KernT>(
                     u,
-                    {xfrac, 4.5, 4.5},
-                    {
+                    make_vecarray(xfrac, 4.5f, 4.5f),
+                    make_vecarray(
                         OverflowBehaviour::CYCLIC,
                         OverflowBehaviour::CYCLIC,
                         OverflowBehaviour::STRETCH
-                    }
+                    )
                 );
 
-                if (itraversal != 0) {
-                        float diff = val-values[i];
+                values(itraversal, i) = val;
+
+                if (itraversal > 0) {
+                        float diff = values(itraversal, i)-values(itraversal-1, i);
                         if(
                             fabs(diff) > 1e-5f
                           ) {
@@ -306,51 +309,48 @@ struct TestSuite {
                 } 
 
 
-                values[i] = val;
             }
         }
 
-        for (size_t iv = 0; iv < values.size(); ++iv) {
-            retMsg.append(MakeString() << values[iv]
-                    << ", ");
+
+        for (size_t i = 0; i < nvalues; ++i) {
+            for (size_t itraversal = 0; itraversal < ntraversals; ++itraversal) {
+                retMsg.append(MakeString() << values(itraversal, i) << ", ");
+            }
+            retMsg.append("\n");
         }
+
 
         RETURN_TESTRESULT(cycle_equal, retMsg);
     }
 
-    template<size_t ndims, size_t ncpt>
+    template<size_t ndims>
     static
     TestResult stable_derivative_NDNC() {
   
         size_t Nn = 10;
 
-        vector<size_t> vecshape (ndims, Nn);
-        vector<size_t> fullshape (ndims, Nn);
-        fullshape.push_back(ncpt);
+        indexer<ndims> vecindexr (vector<size_t> (ndims, Nn));
 
-        vector<OverflowBehaviour> ovfl (ndims-1, OverflowBehaviour::CYCLIC);
-        ovfl.push_back(OverflowBehaviour::STRETCH);
+        vecarray<OverflowBehaviour, ndims> ovfl (STATICALLY_SIZED, OverflowBehaviour::CYCLIC);
+        ovfl.back()=OverflowBehaviour::STRETCH;
 
-        indexer<ndims+1> uind (fullshape) ;
+        nvector<float, ndims> u (vecindexr, 0.f);
 
-        size_t u_size = uind.size();
-        vector<float> u (u_size);
-
-        vector<size_t> ndind (uind.get_shape().size(), 0);
+        vecarray<size_t, ndims> ndind (u.ndindex(0));
 
         for (size_t i = 0; i < u.size(); ++i) {
             //u[i] = sqrt(
-            //              ndind[0]*ndind[0] 
-            //            + ndind[1]*ndind[1] 
-            //            + ndind[2]*ndind[2] 
+            //              ndind[0]*ndind[0]
+            //            + ndind[1]*ndind[1]
+            //            + ndind[2]*ndind[2]
             //    );
             u[i] = ndind[0];
-            uind.increment_ndindex(ndind);
+            u.increment_ndindex(ndind);
         }
 
-        indexer<2> valuesInd (Nn*4, ncpt);
+        nvector<float, 1> values (make_indexer(Nn*4));
 
-        vector<float> values (0);
 
         DECLARE_TESTRESULT(aggreg_equal, retMsg);
 
@@ -360,53 +360,44 @@ struct TestSuite {
 
             float xfrac = i/float(values.size()) * (Nn-1.f);
 
-            vector<float> indx (ndims, 3.5);
+            vecarray<float, ndims> indx (std::vector<float>(ndims, 3.5));
             indx[0] = xfrac;
 
-            array<float, ncpt> val = interpolate<KernT, ndims, ncpt>(
-                    vecshape,
-                    &u[0],
-                    indx,
-                    ovfl
-                    );
+            float val = interpolate<KernT>(
+                        u,
+                        indx,
+                        ovfl
+                        );
 
-            for (size_t ic = 0; ic < ncpt; ++ic) {
-                values.push_back(val[ic]);
-            }
+            values(i)=val;
 
             //test on derivatives
             //only test away from cyclic boundaries
             if(     xfrac >= KernT::ONESIDEDWIDTH+2
                     and xfrac <= (Nn-1)-KernT::ONESIDEDWIDTH
-              ) {
+                    ) {
 
-                for (size_t ic = 0; ic < ncpt; ++ic) {
 
-                    float d1 =
-                        values[valuesInd.index(i, ic)]
-                        - values[valuesInd.index(i-1, ic)],
+                float d1 =
+                        values(i)
+                        - values(i-1),
                         d2 =
-                            values[valuesInd.index(i-1, ic)]
-                            - values[valuesInd.index(i-2, ic)];
+                        values(i-1)
+                        - values(i-2);
 
-                    if(d1 < 0 or d2 < 0) {
-                        increasing = false;
-                    }
+                if(d1 < 0 or d2 < 0) {
+                    increasing = false;
+                }
 
 
-                    if (fabs(d2-d1) > 1e-4*d1) {
-                        stable_derivative =false;
-                    }
+                if (fabs(d2-d1) > 1e-4*d1) {
+                    stable_derivative =false;
                 }
             }
-
         }
 
         for (size_t iv = 0; iv < values.size(); ++iv) {
-            for (size_t ic = 0; ic < ncpt; ++ic) {
-                retMsg.append(MakeString() << values[valuesInd.index(iv, ic)] << ", "); 
-            }
-
+            retMsg.append(MakeString() << values(iv) << ", ");
             retMsg.append("\n");
         }
 
@@ -427,14 +418,14 @@ struct TestSuite {
         //TEST(simple_equalities_1D()         , success_bool, msg);
         //TEST(constant_field_3D()            , success_bool, msg);
         //TEST(increasing_field_3D()          , success_bool, msg);
-        //TEST(cyclic_equal_3D3C()              , success_bool, msg);
+        TEST(cyclic_equal_3D()              , success_bool, msg);
 
         //yeah.. that macro doesn't like multiple template arguments... 
         //wrapping it in a closure
-        auto stable_derivative_2D = [] () {return stable_derivative_NDNC<2,1>();};
-        TEST(stable_derivative_2D()       , success_bool, msg);
-        auto stable_derivative_3D = [] () {return stable_derivative_NDNC<3,1>();};
-        TEST(stable_derivative_3D()       , success_bool, msg);
+        //auto stable_derivative_2D = [] () {return stable_derivative_NDNC<2>();};
+        //TEST(stable_derivative_2D()       , success_bool, msg);
+        //auto stable_derivative_3D = [] () {return stable_derivative_NDNC<3>();};
+        //TEST(stable_derivative_3D()       , success_bool, msg);
 
 
         RETURN_TESTRESULT(success_bool, msg);
@@ -450,7 +441,7 @@ TestResult TestSuite<KernNearestNeighbor>::run_all_tests() {
     TEST(constant_field_3D() , success_bool, msg);
     TEST(zero_boundary_1D()  , success_bool, msg);
     TEST(increasing_field_3D()          , success_bool, msg);
-    TEST(cyclic_equal_3D3C()              , success_bool, msg);
+    TEST(cyclic_equal_3D()              , success_bool, msg);
 
     RETURN_TESTRESULT(success_bool, msg);
 }
@@ -461,7 +452,7 @@ int main(int argc, char *argv[])
     DECLARE_TESTRESULT(success_bool, msg);
 
     //TEST(TestSuite<KernNearestNeighbor>::run_all_tests(), success_bool, msg);
-    TEST(TestSuite<KernLinear>::run_all_tests()         , success_bool, msg);
+    //TEST(TestSuite<KernLinear>::run_all_tests()         , success_bool, msg);
     TEST(TestSuite<KernCubic>::run_all_tests()          , success_bool, msg);
 
     cout<<endl<<msg<<endl;

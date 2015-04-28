@@ -5,12 +5,12 @@ namespace ndata {
 
 namespace helpers {
 
+template<long ndims>
+indexer<ndims>
+make_indexer(indexer<ndims> idx);
+
 
 } //end namespace helpers
-
-template<long ndims>
-auto
-make_indexer(indexer<ndims> idx);
 
 } //end namespace ndata
 

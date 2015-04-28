@@ -7,18 +7,45 @@
 namespace ndata {
 
 
-
 //forward declaration
 template<typename T, long ndims>
 auto //nvector<T, somedim>
 make_nvector(ndatacontainer<std::vector<T>, T, ndims> idxr);
 
+/**
+ * Basically the same thing as anndatacontainer<std::vector<T>, T, ndims>, but has the nice property
+ * of self-adjusting the size of the underlying std::vector when copy constructed
+ */
 template<typename T, long ndims>
 struct nvector: ndatacontainer<std::vector<T>, T, ndims>  {
 
+    /**
+     * @brief construct from an indexer and initial value to which the elements of the vector are initialized
+     * @param idxr
+     * @param data
+     */
+    nvector(
+            indexer<ndims> idxr,
+            T initial_value = T()
+            ):
+        ndatacontainer<std::vector<T>, T, ndims>(idxr.get_shape(), std::vector<T>(idxr.size(), initial_value))
+    { }
+
+
 
     /**
-     * @brief construct from an indexer and associated (pointer to) data
+     * @brief Construct from indexer and data as a vector
+     * @param idxr
+     * @param data
+     */
+    nvector(indexer<ndims> idxr, std::vector<T> data):
+        nvector(idxr, &data[0])
+    {
+        assert(data.size() == idxr.unsliced_size());
+    }
+
+    /**
+     * @brief construct from an indexer and associated (pointer to) data.
      * @param idxr
      * @param data
      */
@@ -35,18 +62,6 @@ struct nvector: ndatacontainer<std::vector<T>, T, ndims>  {
                     arg_data_view
                     );
     }
-
-    /**
-     * @brief construct from an indexer and initial value to which the elements of the vector are initialized
-     * @param idxr
-     * @param data
-     */
-    nvector(
-            indexer<ndims> idxr,
-            T initial_value = T()
-            ):
-        ndatacontainer<std::vector<T>, T, ndims>(idxr.get_shape(), std::vector<T>(idxr.size(), initial_value))
-    { }
 
 
     /**

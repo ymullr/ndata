@@ -98,7 +98,7 @@ struct KernCubic {
 };
 
 
-template<class KernT, class T, long ndims>
+template<class KernT, class ContainerT, class T, long ndims>
 struct InterpolateInner {
 
     static
@@ -109,67 +109,54 @@ struct InterpolateInner {
     {
         static_assert(ndims > 1, "Dynamic case not implemented");
         
-        //uNew loses the.back dimension compared to u
+        //u_new loses the.back dimension compared to u
         //the.back dimension is the one on which the interpolation is performed
-        //
-        //the other dimensions are reduced to a number of values matching the kernel's width
-        auto unewShape = u.get_shape().drop_back();
+        nvector<T, ndims-1> u_new (u.get_shape().drop_back(), 0);
 
-        indexer<ndims-1> unewIndexer (unewShape);
+        auto ndi_unew = u_new.ndindex(0);
 
-        size_t unew_nvecs = unewIndexer.size();
-
-        auto uNew = nvector<T, ndims-1>(unew_nvecs, {0});
-
-        //multidimensional index (VectorT stride ignored) in uNew
-        auto ndindex_unew = uNew.make_zero_ndindex();
-
-        //iterating on all the vectors values of the new array uNew
+        //iterating on all the values of the new array u_new
         //also means iterating on all dimensions (but the last) of the old array
         //that is we iterate on all the 1D columns of the old array
         //
         //iunew_flat is the flattened multidimensional index (with VectorT stride)
-        for (size_t iunew_flat = 0; iunew_flat < unew_nvecs; ++iunew_flat) {
+        for (size_t iunew_flat = 0; iunew_flat < u_new.size(); ++iunew_flat) {
 
-            //compute the matching flatened multidimensional index from the
+            //setting the matching flatened multidimensional index from the
             //start of the current column in the old u array
-            size_t iu0 = 0;
-            for (size_t idim = 0; idim < ndims-1; ++idim) {
-                iu0 += ndindex_unew[idim]*u.shape.back();
+            //size_t iu0 = 0;
+            auto ndi_u = ndi_unew.append(0);
+
+            //get a slice from u matching the missing dimension of u_new
+            nvector<T, 1> u_col (make_indexer(u.get_shape().back()));
+            for (size_t iCol = 0; iCol < u_col.size(); ++iCol) {
+                u_col(iCol) = u(ndi_u); //no stride in uOld either since we grab the.back dimension
+                ndi_u.back()++;
             }
 
-            nvector<T, 1> uCol (
-                        {u.shape.back()}
-                    );
-
-            for (size_t iCol = 0; iCol < uCol.size(); ++iCol) {
-                uCol[iCol] = u[iu0+iCol]; //no stride in uOld either since we grab the.back dimension
-            }
-
-            //update uNew
+            //update u_new
             //recursive call, this one doesn't have subrecursion since ndims == 1
-            uNew[iunew_flat] = InterpolateInner<KernT, T, 1>::interpolateInner(
-                uCol,
+            u_new(ndi_unew) = InterpolateInner<KernT, ContainerT, T, 1>::interpolateInner(
+                u_col,
                 {indexFrac.back()}
             );
 
-            unewIndexer.increment_ndindex(ndindex_unew);
+            u_new.increment_ndindex(ndi_unew);
         }
 
         //recurse with one less dimension
         //will terminate when ndims = 1 (see partially specialized template under)
-        indexFrac.pop_back();
-        return InterpolateInner<KernT, T, ndims-1>::interpolateInner(unewShape, uNew, indexFrac);
+        return InterpolateInner<KernT, ContainerT, T, ndims-1>::interpolateInner(u_new, indexFrac.drop_back());
     }
 };
 
-template <class KernT, typename T>
-struct InterpolateInner<KernT, T, 1> {
+template <class KernT, typename ContainerT, typename T>
+struct InterpolateInner<KernT, ContainerT, T, 1> {
 
     static 
     T
     interpolateInner(
-            ndataview<T, 1> u,
+            ndatacontainer<ContainerT, T, 1> u,
             vecarray<float, 1> indexFrac
             )
     {
@@ -185,7 +172,7 @@ struct InterpolateInner<KernT, T, 1> {
 
         T ret = numtype_adapter<T>::ZERO;
 
-        for (size_t i = 0; i < u.shape(0); ++i) {
+        for (size_t i = 0; i < u.get_shape()[0]; ++i) {
             float x = float(i)-indexFrac[0];
             float convCoeff = kern.kern(x);
             ret +=  convCoeff * u[i];
@@ -208,7 +195,6 @@ T interpolate (
         vecarray<OverflowBehaviour, ndims> overflowBehaviours
         )
 {
-
     auto shape = u.get_shape();
 
     assert(
@@ -216,8 +202,8 @@ T interpolate (
         and overflowBehaviours.size() == shape.size()
         );
 
-    vecarray<long, ndims> iStarts, iStops;
-    iStarts = iStops = vecarray<long, ndims>(shape.dynsize());
+    vecarray<long, ndims> i_starts, i_stops;
+    i_starts = i_stops = vecarray<long, ndims>(shape.dynsize());
 
     for (size_t i = 0; i < shape.size(); ++i) {
 
@@ -229,18 +215,18 @@ T interpolate (
 
         long kernWidth = KernT::ONESIDEDWIDTH*2;
 
-        iStarts[i] = floor(indexFrac[i])-long(KernT::ONESIDEDWIDTH)+1;
-        iStops[i] = iStarts[i] + kernWidth;
+        i_starts[i] = floor(indexFrac[i])-long(KernT::ONESIDEDWIDTH)+1;
+        i_stops[i] = i_starts[i] + kernWidth;
 
         switch (ob) {
             case ZERO:
-                iStarts[i] = std::max(0l, iStarts[i]);
-                iStops[i] = std::min(iStops[i], long(shape[i]));
+                i_starts[i] = std::max(0l, i_starts[i]);
+                i_stops[i] = std::min(i_stops[i], long(shape[i]));
 
                 //early return in case the intersect btw the kernel and the field is empty
-                if(iStarts[i] >= iStops[i]) return numtype_adapter<T>::ZERO;
+                if(i_starts[i] >= i_stops[i]) return numtype_adapter<T>::ZERO;
 
-                assert(iStarts[i] >= 0 and iStops[i] <= long(shape[i])); //this is not true for other overflow behaviours
+                assert(i_starts[i] >= 0 and i_stops[i] <= long(shape[i])); //this is not true for other overflow behaviours
                 break;
             default:
                 //nothing
@@ -248,36 +234,34 @@ T interpolate (
         }
 
         //at least one value in each dimension
-        assert(iStarts[i] < iStops[i]); 
+        assert(i_starts[i] < i_stops[i]);
     }
 
     //now extracting the hypercube from u where the kernel is non-zero
 
-    vecarray<size_t, ndims> unewShape = shape;
+    vecarray<size_t, ndims> unew_shape = shape;
 
     for (size_t idim = 0; idim < ndims; ++idim) {
-        unewShape[idim] = iStops[idim] - iStarts[idim];
+        unew_shape[idim] = i_stops[idim] - i_starts[idim];
     }
 
-    nvector<T, ndims> unew (unewShape);
-    unew.fill(numtype_adapter<T>::ZERO);
+    nvector<T, ndims> unew (unew_shape, numtype_adapter<T>::ZERO);
 
-    vecarray<size_t, ndims> ndindex_unew = unew.ndindex(0);
+    vecarray<size_t, ndims> ndi_unew = unew.ndindex(0);
 
-    //iterating on all the values of the new array uNew
-    //and their atching values from the old array
+    //iterating on all the values of the new array u_new
+    //and their matching values from the old array
     //
     //i is the flattened index in unew
     for (size_t i = 0; i < unew.size(); ++i) {
 
-        //compute the multidimensional index for the current column in the u array
-
+        //compute the multidimensional index for the current value in the old u array
         //ndi_uold is the multidimensional index in u, which corresponds to i in unew
         //the overflowBehaviour logic comes here in play
-        vecarray<size_t, ndims> ndi_uold = shape;
+        vecarray<size_t, ndims> ndi_uold (unew_shape.dynsize());
 
         for (size_t idim = 0; idim < ndims; ++idim) {
-            long iUThisDim=(iStarts[idim]+ndindex_unew[idim]);
+            long iUThisDim=(i_starts[idim]+ndi_unew[idim]);
 
             switch (overflowBehaviours[idim]) {
                 case CYCLIC:
@@ -302,21 +286,21 @@ T interpolate (
             ndi_uold[idim] = iUThisDim;
         }
 
-        unew[i] = u.ndindex(ndi_uold); //no stride in uOld either since we grab the last dimension
+        unew(ndi_unew) = u(ndi_uold); //no stride in uOld either since we grab the last dimension
 
         //update the multidimensional index to match the flat one for the next iteration
         //needed to locate matching values in the old u array
-        unew.increment_ndindex(ndindex_unew);
+        unew.increment_ndindex(ndi_unew);
     }
 
     //adjust indexfrac for new reduced array size
     for (size_t i = 0; i < indexFrac.size(); ++i) {
-        indexFrac[i] = indexFrac[i] - iStarts[i];
+        indexFrac[i] = indexFrac[i] - i_starts[i];
     }
 
-    assert(indexFrac.size() == unewShape.size() );
+    assert(indexFrac.size() == unew_shape.size() );
 
-    return InterpolateInner<KernT, T, ndims>::interpolateInner(
+    return InterpolateInner<KernT, ContainerT, T, ndims>::interpolateInner(
             unew,
             indexFrac
     );
@@ -351,8 +335,8 @@ T interpolate (
         ) {
     return interpolate<KernT>(
         u,
-        {indexFrac},
-        {overflowBehaviour}
+        vecarray<float, 1>({indexFrac}),
+        vecarray<OverflowBehaviour, 1>({overflowBehaviour})
         );
 }
 
