@@ -10,7 +10,7 @@
 #include <math.h>
 #include <cassert>
 #include "ndata.hpp"
-#include "numerics/numtype_adapter_fundamental.hpp"
+#include "ndata_numerics/numtype_adapter_fundamental.hpp"
 
 namespace ndata {
 
