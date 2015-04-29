@@ -9,8 +9,6 @@
 
 #include <type_traits>
 
-#include "nhelpers.hpp"
-
 namespace ndata {
 
 
@@ -308,7 +306,9 @@ make_vecarray(T val1, Ts ... valn) {
 }
 
 
+#include "ndata/vecarray_helpers.hpp"
 
 } //end namespace
+
 
 #endif /* end of include guard: VECARRAY_HPP_EPBF1RNR */

@@ -10,7 +10,7 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 #including script for handling find_package on FFTW3 OpenMP and TINYCC
 #set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake_modules/")
 
-#find_package(OpenMP REQUIRED) //not available with clang
+find_package(OpenMP) #not available with clang
 
 #comment one
 set(GCC_FLAGS "-std=c++14")#libc++ must be installed (clang standard lib)
@@ -19,10 +19,10 @@ set(CMAKE_CXX_COMPILER "/usr/bin/g++-4.9")
 #set(CMAKE_CXX_COMPILER "/usr/bin/clang++-3.5")
 #set(CLANG_FLAGS "-std=c++14 -stdlib=libc++")#libc++ must be installed (clang standard lib)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_FLAGS} ${CLANG_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_FLAGS} ${CLANG_FLAGS} ${OpenMP_CXX_FLAGS}")
 
 #sometimes useful: -Wsign-conversion
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ftrapv -ggdb3 -O0 -fno-inline -DDEBUG  -Wall -Wextra  -Wno-missing-braces ")#-ggdb3 plutot que -g genere et integre les info de debug pour les macros
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb3 -O0 -fno-inline -DDEBUG  -Wall -Wextra  -Wno-missing-braces ")#-ggdb3 plutot que -g genere et integre les info de debug pour les macros
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")# -ffast-math
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")

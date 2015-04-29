@@ -1,4 +1,4 @@
-#include "numerics/ninterp.hpp"
+#include "ndata/numerics/ninterp.hpp"
 #include "nindexer.hpp"
 
 #include <iostream>
@@ -7,7 +7,6 @@
 #include <tuple>
 
 #include <tests/debug_helpers.hpp>
-#include "numerics/ninterp.hpp"
 
 using namespace ndata;
 
@@ -29,9 +28,8 @@ struct TestSuite {
     TestResult constant_field_3D() {
  
         indexer<3> uind (Nn, Nn, Nn);
-        nvector<float, 3> u (uind);
-        const float initVal = 1;
-        u.fill(initVal);
+        const float init_val = 1;
+        nvector<float, 3> u (uind, init_val);
         float start_ifrac = -1.9;
 
         DECLARE_TESTRESULT(allCorrect, output);
@@ -46,7 +44,7 @@ struct TestSuite {
 
             output.append(MakeString()<<out<<", ");
 
-            if (fabs(out - initVal) > initVal*1e-5) {
+            if (fabs(out - init_val) > init_val*1e-5) {
                 allCorrect = false;
             }  
         }
@@ -58,9 +56,9 @@ struct TestSuite {
     static
     TestResult constant_field_1D() {
 
-        const float initVal = 1;
+        const float init_val = 1;
 
-        nvector<float, 1> u (make_indexer(Nn), initVal);
+        nvector<float, 1> u (make_indexer(Nn), init_val);
 
         float start_ifrac = -1.9;
 
@@ -78,7 +76,7 @@ struct TestSuite {
 
             output.append(MakeString()<< out<<", ");
 
-            if (fabs(out - initVal) > initVal*1e-5) {
+            if (fabs(out - init_val) > init_val*1e-5) {
                 allCorrect = false;
             }  
         }
@@ -89,9 +87,8 @@ struct TestSuite {
     static
     TestResult zero_boundary_1D() {
 
-        nvector<float, 1> u (make_indexer(Nn));
-        const float initVal = 1;
-        u.fill(initVal);
+        const float init_val = 1;
+        nvector<float, 1> u (make_indexer(Nn), init_val);
         float start_ifrac = -1.9;
 
         DECLARE_TESTRESULT(success_bool, output);
@@ -161,7 +158,7 @@ struct TestSuite {
     static
     TestResult increasing_field_3D() {
   
-        nvector<float, 3> u (make_indexer(Nn, Nn, Nn));
+        nvector<float, 3> u (make_indexer(Nn, Nn, Nn), 0);
 
         float increment = 1;
         for (size_t i = 0; i < u.size(); ++i) {
@@ -204,7 +201,7 @@ struct TestSuite {
   
         size_t Nn = 8;
 
-        nvector<float, 1> u (make_indexer(Nn));
+        nvector<float, 1> u (make_indexer(Nn), 0);
         float valEven = 1, valOdd = 2;
 
         for (size_t i = 0; i < Nn; ++i)
@@ -256,7 +253,7 @@ struct TestSuite {
   
         size_t Nn = 10;
 
-        nvector<float, 3> u (make_indexer(Nn, Nn, Nn));
+        nvector<float, 3> u (make_indexer(Nn, Nn, Nn), 0);
 
         vecarray<size_t, 3> ndind = u.ndindex(0);
 
@@ -276,7 +273,7 @@ struct TestSuite {
         const size_t nsteps = Nn*4;
         const size_t nvalues_eff = 3;
 
-        nvector<float, 2> values (make_indexer(ntraversals, nvalues_eff));
+        nvector<float, 2> values (make_indexer(ntraversals, nvalues_eff), 0);
 
         for (size_t itraversal = 0; itraversal < ntraversals; ++itraversal) {
             for (size_t i = 0; i < nvalues_eff; ++i) {
@@ -347,7 +344,7 @@ struct TestSuite {
             u.increment_ndindex(ndind);
         }
 
-        nvector<float, 1> values (make_indexer(Nn*4));
+        nvector<float, 1> values (make_indexer(Nn*4), 0);
 
 
         DECLARE_TESTRESULT(aggreg_equal, retMsg);

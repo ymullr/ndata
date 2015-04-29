@@ -6,7 +6,8 @@
 #include "vecarray.hpp"
 #include "ndata.hpp"
 #include "nindexer.hpp"
-#include "nhelpers.hpp"
+#include "ndata/helpers.hpp"
+#include "ndata/loops.hpp"
 
 namespace ndata {
 
@@ -56,12 +57,16 @@ struct ndatacontainer: indexer<ndims> {
         data_(std::move(data))
     { }
 
+    /**
+     * @brief empty constructor for later assignment
+     */
+    ndatacontainer() { }
+
+
     T&
     operator[](size_t i) {
         return data_[i];
     }
-
-public :
 
     /**
      * Returns a view
@@ -83,17 +88,54 @@ public :
     }
 
 
-    template <typename ContainerT_rhs, typename T_rhs, long ndims_rhs>
+    /**
+     * @brief elementwise copy of the values of rhs to the internal data. Doesn't perform broadcasting,
+     * use assign_transform if you want to benefit from broadcasting
+     */
+    template <int loop_type = SERIAL, typename ContainerT_rhs, typename T_rhs, long ndims_rhs>
     void
     assign(ndatacontainer<ContainerT_rhs, T_rhs, ndims_rhs> rhs) {
-
         static_assert(ndims_rhs == ndims or ndims_rhs == DYNAMICALLY_SIZED, "");
 
-        auto ndi = this->ndindex(0);
-        for (size_t i = 0; i < this->size(); ++i) {
-            this->operator()(ndi) = rhs(ndi);
-            this->increment_ndindex(ndi);
+        for (size_t i = 0; i < this->get_shape().size(); ++i) {
+            assert(rhs.get_shape()[i] == this->get_shape()[i]);
         }
+
+        nforeach<loop_type>(
+                    std::tie(*this, rhs),
+                    [] (T& this_val, T_rhs rhs_val) {
+                        this_val = rhs_val;
+                    }
+            );
+    }
+
+    /**
+     * @brief equivalent to calling .assign(ntransform(...)) but skips the extra temporary
+     */
+    template <int loop_type = SERIAL, typename... Ndatacontainer, typename FuncT>
+    void
+    assign_transform(std::tuple<Ndatacontainer...> ndata_tup, FuncT func)  {
+
+        //static_assert(ndims_rhs == ndims or ndims_rhs == DYNAMICALLY_SIZED, "");
+
+        auto ndata_tuple_bcviews = helpers::broadcast_views(ndata_tup);
+
+        nforeach_views<loop_type>(
+                    std::tuple_cat(
+                        std::make_tuple(this->to_view()),
+                        ndata_tuple_bcviews
+                        ),
+                    [func] (T& this_val, auto ... rhs_vals) {
+                        this_val = func(rhs_vals...);
+                    }
+            );
+    }
+
+
+    template <typename... Ndatacontainer, typename FuncT>
+    void
+    assign_transform_parallel(std::tuple<Ndatacontainer...> ndata_tup, FuncT func)  {
+        assign_transform<PARALLEL>(ndata_tup, func);
     }
 
     //operator ndataview<T, ndims>() {
@@ -107,11 +149,11 @@ public :
         return ndataview<T, ndims>(*this, &data_[0]);
     }
 
-    void fill(T val) {
-        for (size_t i = 0; i < this->size(); ++i) {
-            operator[](i) = val;
-        }
-    }
+    //void fill(T val) {
+    //    for (size_t i = 0; i < this->size(); ++i) {
+    //        operator[](i) = val;
+    //    }
+    //}
 
     /**
      * Used by broadcast

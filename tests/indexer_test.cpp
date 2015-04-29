@@ -4,6 +4,7 @@
 #include <memory>
 
 //TODO test dynamic ndarrays
+//TODO test assign and parallel ntransform
 
 using namespace std;
 using namespace ndata;
@@ -156,7 +157,12 @@ struct TestSuite {
         for (long ix = 0; ix < usli.get_shape()[0]; ++ix) {
             for (long iy = 0; iy < usli.get_shape()[1]; ++iy) {
                 long indval = usli(ix, iy);
-                success = indval == long(ix*Ny+(iy+iy_start));
+                if (
+                        not
+                        indval == long(ix*Ny+(iy+iy_start))
+                        ){
+                    success = false;
+                }
                 msg.append(MakeString() << usli(ix, iy) << ", ");
             }
             msg.append("\n");
@@ -299,9 +305,9 @@ struct TestSuite {
 
         ndataview<float, 2> u2_slice =  u2.slice(Rng(0, Nx), Rng());
 
-        //this one should be uncopyable, good for checking that no parasitic
+        //this one should be uncopyable, good for checking that no unwanted
         //copy happens in foreach
-        //must be release or double free happens
+        //must be released via .release()
         ndatacontainer<
                 std::unique_ptr<float[]>,
                 float,
@@ -312,7 +318,7 @@ struct TestSuite {
                     std::unique_ptr<float[]>(&u2_slice.data_[0])
                     );
 
-        nforeach<float>(
+        nforeach(
             //nforeach takes a tuple of pointers to ndataview ndatacontainer or nvector
             std::tie( //must use std tie with foreach
                 ures,
@@ -342,26 +348,49 @@ struct TestSuite {
             }
         );
 
+
+        auto u_res_transform_parallel = ntransform<float, ndata::PARALLEL>(
+            std::make_tuple(
+                u1,
+                u2_slice,
+                u3
+            ),
+            [] (long v1, float v2, std::pair<long, long> v3) {
+                return v1+v2+v3.first;
+            }
+        );
+
         string msg_foreach ("");
         string msg_transform ("");
+        string msg_transform_par ("");
         for (size_t ix = 0; ix < Nx ; ++ix) {
             for (size_t iy = 0; iy < Ny ; ++iy) {
                 if (
-                    not (ures(ix, iy) == u_res_transform(ix, iy))
+                    not (
+                            ures(ix, iy)
+                            == u_res_transform(ix, iy)
+                            and
+                            ures(ix, iy)
+                            == u_res_transform_parallel(ix, iy)
+                            )
                 )
                 {
                     sb = false;
                 }
                 msg_foreach.append(MakeString() << ures(ix, iy) << ", ");
                 msg_transform.append(MakeString() << u_res_transform(ix, iy) << ", ");
+                msg_transform_par.append(MakeString() << u_res_transform_parallel(ix, iy) << ", ");
             }
-            msg_transform.append("\n");
             msg_foreach.append("\n");
+            msg_transform.append("\n");
+            msg_transform_par.append("\n");
         }
 
+        msg.append(msg_foreach);
+        msg.append("\n");
         msg.append(msg_transform);
         msg.append("\n");
-        msg.append(msg_foreach);
+        msg.append(msg_transform_par);
         RETURN_TESTRESULT(sb, msg)
     }
 

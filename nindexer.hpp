@@ -9,8 +9,7 @@
 
 #include "vecarray.hpp"
 #include "ndata.hpp"
-#include "nhelpers.hpp"
-
+#include "ndata/helpers.hpp"
 
 namespace ndata {
 
@@ -97,13 +96,13 @@ namespace helpers {
 
 }
 
-template<long ndims>
-void
-check_shape(vecarray<long, ndims> shape) {
-    for (size_t i = 0; i < shape.size(); ++i) {
-        assert(shape[i]>=1);
-    }
-}
+//template<long ndims>
+//void
+//check_shape(vecarray<long, ndims> shape) {
+//    for (size_t i = 0; i < shape.size(); ++i) {
+//        assert(shape[i]>=1);
+//    }
+//}
 
 
 template<long ndims>
@@ -112,7 +111,8 @@ struct indexer {
     template<typename... LongT>
     explicit
     indexer(long shape0, LongT... shape):
-        start_index_(0)
+        start_index_(0),
+        shape_(helpers::array_from_argpack<long>(vecarray<long, 0> (), shape0, shape...))
     {
         static_assert(
             ndims != 0,
@@ -127,8 +127,7 @@ struct indexer {
         assert(shape0>=0);
 
         //vecarray size 0 for dynamic version is going to be a problem
-        shape_=helpers::array_from_argpack<long>(vecarray<long, 0> (), shape0, shape...);
-        check_shape(shape_);
+        //check_shape(shape_);
         strides_ = calc_strides_from_shape(shape_);
     }
 
@@ -139,7 +138,7 @@ struct indexer {
         shape_(shape),
         strides_(calc_strides_from_shape(shape))
     {
-        check_shape(shape_);
+        //check_shape(shape_);
     }
 
     //construct from members
@@ -148,7 +147,7 @@ struct indexer {
         shape_(shape),
         strides_(strides)
     {
-        check_shape(shape_);
+        //check_shape(shape_);
     };
 
 
@@ -271,17 +270,6 @@ struct indexer {
     }
 
     /**
-     * Underlying container size, bigger than size() if sliced
-     */
-    size_t unsliced_size(){
-        size_t acc=0;
-        for(size_t i=0;i<shape_.size();i++){
-            acc+=shape_[i]*std::abs(strides_[i]);
-        }
-        return acc;
-    }
-
-    /**
      * For a given ndarray, this will increments the dimensional indices for
      * each dimension in the correct order.
      *
@@ -394,9 +382,6 @@ struct indexer {
         return ret;
     }
 
-
-protected:
-
     /**
      * An actual index is given instead of a slice, only one element is thus
      * included and the ndindexer will have one less dimension.
@@ -445,7 +430,7 @@ protected:
 
         long new_stride = strides_[idim]*range.step;
 
-        helpers::ShapeStridePair full_slice = make_pair(
+        helpers::ShapeStridePair full_slice = std::make_pair(
             labs(reverse_negative_index(idim, range.stop) - reverse_negative_index(idim, range.start))
                 /labs(range.step),
             new_stride
@@ -476,8 +461,24 @@ protected:
         return (ind>=0)? ind : long(shape_[idim])+(ind)+1;
     }
 
-    //done handling slice signatures
 
+ private:
+
+    /**
+     * Underlying container size, bigger than size() if sliced
+     *
+     * not 100% exhaustive
+     */
+    size_t unsliced_size(){
+        size_t acc=0;
+        for(size_t i=0;i<shape_.size();i++){
+            acc+=shape_[i]*std::abs(strides_[i]);
+        }
+
+        //start_index necessary if the slice has an "outer stride"
+        //in the container
+        return acc+start_index_;
+    }
 
 };
 

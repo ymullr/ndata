@@ -6,6 +6,9 @@
 
 namespace ndata {
 
+enum UNINITIALIZED { };
+
+//constexpr enum ValueInitialization UNINITIALIZED = ValueInitialization::UNINITIALIZED;
 
 //forward declaration
 template<typename T, long ndims>
@@ -22,7 +25,9 @@ struct nvector: ndatacontainer<std::vector<T>, T, ndims>  {
     /**
      * @brief construct from an indexer and initial value to which the elements of the vector are initialized
      * @param idxr
-     * @param data
+     * @param initial_value must be specified to avoid ambiguity with nvector(ndatacontainer<...> ).
+     *  See nvector(indexer<...>, ValueInitialization) to leave internal data uninitialized
+     *  (actually makes no difference with std::vector as ContainerT)
      */
     nvector(
             indexer<ndims> idxr,
@@ -31,6 +36,17 @@ struct nvector: ndatacontainer<std::vector<T>, T, ndims>  {
         ndatacontainer<std::vector<T>, T, ndims>(idxr.get_shape(), std::vector<T>(idxr.size(), initial_value))
     { }
 
+    /**
+     * @brief construct from an indexer and initial value to which the elements of the vector are initialized
+     * @param idxr
+     * @param data
+     */
+    nvector(
+            indexer<ndims> idxr,
+            UNINITIALIZED
+            ):
+        ndatacontainer<std::vector<T>, T, ndims>(idxr.get_shape(), std::vector<T>(idxr.size()))
+    { }
 
 
     /**
@@ -40,9 +56,7 @@ struct nvector: ndatacontainer<std::vector<T>, T, ndims>  {
      */
     nvector(indexer<ndims> idxr, std::vector<T> data):
         nvector(idxr, &data[0])
-    {
-        assert(data.size() == idxr.unsliced_size());
-    }
+    { }
 
     /**
      * @brief construct from an indexer and associated (pointer to) data.
@@ -55,6 +69,7 @@ struct nvector: ndatacontainer<std::vector<T>, T, ndims>  {
             T_rhs* data
             ):
         nvector(idxr)
+        //nvector(idxr, 0)
     {
         ndataview<T_rhs, ndims> arg_data_view (idxr, data);
 
@@ -62,7 +77,6 @@ struct nvector: ndatacontainer<std::vector<T>, T, ndims>  {
                     arg_data_view
                     );
     }
-
 
     /**
      * @brief construct from indexer and data perform elementwise copy of data passed as argument
@@ -81,24 +95,8 @@ struct nvector: ndatacontainer<std::vector<T>, T, ndims>  {
             )
     { }
 
-    //TODO? resize() function which would reallocate data and remove unreachable elements
-    //to be used after some slicing
-
-    ///**
-    // * Returns a new ndindexer with eventually a smaller number of dimensions,
-    // * The new ndindexer computes indices matching the requested slice of the array.
-    // */
-    //template <typename... DimSliceT>
-    //auto
-    //slice(DimSliceT ... slice_or_index) {
-    //    //use slice method of the parent class and use it to view this.data_
-    //    //and return a new slice
-    //    return make_nvector(
-    //        ndatacontainer<std::vector<T>, T, ndims>::slice(
-    //        slice_or_index...
-    //        )
-    //    );
-    //}
+    //empty constructor for later assignment
+    nvector(){};
 
 };
 
@@ -115,7 +113,7 @@ make_nvector(indexer<ndims> idxr, T initial_value = T()) {
 template<typename T, long ndims>
 auto //nvector<T, somedim>
 make_nvector(indexer<ndims> idxr, std::vector<T> data) {
-    nvector<T, ndims> ret (data, idxr);
+    nvector<T, ndims> ret (idxr, data);
     return ret;
 }
 

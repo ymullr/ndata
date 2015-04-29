@@ -10,7 +10,7 @@
 #include <math.h>
 #include <cassert>
 #include "ndata.hpp"
-#include "ndata_numerics/numtype_adapter_fundamental.hpp"
+#include "ndata/numerics/numtype_adapter_fundamental.hpp"
 
 namespace ndata {
 
@@ -98,12 +98,12 @@ struct KernCubic {
 };
 
 
-template<class KernT, class ContainerT, class T, long ndims>
+template<class KernT, long ndims, class ContainerT, class T>
 struct InterpolateInner {
 
     static
     T interpolateInner(
-            nvector<T, ndims> u,
+            ndatacontainer<ContainerT, T, ndims> u,
             vecarray<float, ndims> indexFrac
             )
     {
@@ -128,7 +128,7 @@ struct InterpolateInner {
             auto ndi_u = ndi_unew.append(0);
 
             //get a slice from u matching the missing dimension of u_new
-            nvector<T, 1> u_col (make_indexer(u.get_shape().back()));
+            nvector<T, 1> u_col (make_indexer(u.get_shape().back()), 0);
             for (size_t iCol = 0; iCol < u_col.size(); ++iCol) {
                 u_col(iCol) = u(ndi_u); //no stride in uOld either since we grab the.back dimension
                 ndi_u.back()++;
@@ -136,9 +136,9 @@ struct InterpolateInner {
 
             //update u_new
             //recursive call, this one doesn't have subrecursion since ndims == 1
-            u_new(ndi_unew) = InterpolateInner<KernT, ContainerT, T, 1>::interpolateInner(
+            u_new(ndi_unew) = InterpolateInner<KernT, 1, ContainerT, T>::interpolateInner(
                 u_col,
-                {indexFrac.back()}
+                make_vecarray(indexFrac.back())
             );
 
             u_new.increment_ndindex(ndi_unew);
@@ -146,12 +146,12 @@ struct InterpolateInner {
 
         //recurse with one less dimension
         //will terminate when ndims = 1 (see partially specialized template under)
-        return InterpolateInner<KernT, ContainerT, T, ndims-1>::interpolateInner(u_new, indexFrac.drop_back());
+        return InterpolateInner<KernT, ndims-1, std::vector<T>, T>::interpolateInner(u_new, indexFrac.drop_back());
     }
 };
 
 template <class KernT, typename ContainerT, typename T>
-struct InterpolateInner<KernT, ContainerT, T, 1> {
+struct InterpolateInner<KernT, 1, ContainerT, T> {
 
     static 
     T
@@ -182,7 +182,7 @@ struct InterpolateInner<KernT, ContainerT, T, 1> {
     }
 };
 
-template<class KernT, typename ContainerT, typename T, long ndims>
+template<class KernT, long ndims, typename ContainerT, typename T>
 T interpolate (
         //flattened array of VectorT
         //TODO Note on VectorT packing/padding/casting
@@ -300,7 +300,7 @@ T interpolate (
 
     assert(indexFrac.size() == unew_shape.size() );
 
-    return InterpolateInner<KernT, ContainerT, T, ndims>::interpolateInner(
+    return InterpolateInner<KernT, ndims, std::vector<T>, T>::interpolateInner(
             unew,
             indexFrac
     );
@@ -311,7 +311,7 @@ T interpolate (
 //-----------------------------------------------------------------------------
 
 //Only one OverflowBehaviour specified for all dimensions
-template<class KernT, typename ContainerT, class T, long ndims>
+template<class KernT, long ndims, typename ContainerT, class T>
 T interpolate (
         ndatacontainer<ContainerT, T, ndims> u,
         vecarray<float, ndims> indexFrac,

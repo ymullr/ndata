@@ -31,12 +31,12 @@ namespace ndata {
 
 }
 
-#include "ndata_forward_declarations.hpp"
-#include "nhelpers.hpp"
+#include "ndata/forward_declarations.hpp"
+#include "ndata/helpers.hpp"
 #include "nindexer.hpp"
 #include "ndatacontainer.hpp"
 #include "nvector.hpp"
-#include "ndata_functions.hpp"
+#include "ndata/loops.hpp"
 
 
 #endif /* end of include guard: NDATA_HPP_VFUXJBDN */ 
