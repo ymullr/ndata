@@ -6,7 +6,7 @@
 #include <array>
 #include <tuple>
 
-#include <tests/debug_helpers.hpp>
+#include <ndata/debug_helpers.hpp>
 
 using namespace ndata;
 

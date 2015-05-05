@@ -120,7 +120,7 @@ struct ndatacontainer: indexer<ndims> {
 
         auto ndata_tuple_bcviews = helpers::broadcast_views(ndata_tup);
 
-        nforeach_views<loop_type>(
+        nforeach_base<loop_type>(
                     std::tuple_cat(
                         std::make_tuple(this->to_view()),
                         ndata_tuple_bcviews

@@ -6,22 +6,7 @@
 
 namespace tuple_utility {
 
-    //from http://en.cppreference.com/w/cpp/experimental/apply
-    //namespace detail {
-    //    template <typename F, typename... Ts, std::size_t... I>
-    //    auto apply_impl(F f, std::tuple<Ts...> t, std::index_sequence<I...>) {
-    //      return f(std::get<I>(t)...);
-    //    }
-    //} // namespace detail
-
-    //template <typename F, class Tuple>
-    //auto apply(F f, Tuple t)
-    //{
-    //    return detail::apply_impl(f, t,
-    //        std::make_index_sequence<std::tuple_size<decltype(t)>::value>());
-    //}
-
-    //http://stackoverflow.com/questions/10626856/how-to-split-a-tuple
+    //from http://stackoverflow.com/questions/10626856/how-to-split-a-tuple
     template <typename T , typename... Ts >
     auto head(std::tuple<T,Ts...> & t )
     {
@@ -57,10 +42,10 @@ namespace tuple_utility {
         //        decltype(tail(t))
         //        >
         //        ret =
-                return split_ht_impl(
-                    std::make_index_sequence<sizeof...(Ts) - 1u>(),
-                    std::move(t)
-                    );
+        return split_ht_impl(
+            std::make_index_sequence<sizeof...(Ts) - 1u>(),
+            std::move(t)
+            );
         //return ret;
     }
 
@@ -117,6 +102,23 @@ namespace tuple_utility {
                        >::value
                    >()
                    );
+    }
+
+    //tuple zip implementation from from http://stackoverflow.com/a/11322096
+    template <typename ...A, typename ...B,
+              std::size_t ...S>
+    auto zip_helper(std::tuple<A...> t1, std::tuple<B...> t2, std::index_sequence<S...> s)
+    -> decltype(std::make_tuple(std::make_tuple(std::get<S>(t1),std::get<S>(t2))...))
+    {
+        return std::make_tuple( std::make_tuple( std::get<S>(t1), std::get<S>(t2) )...);
+    }
+
+    template <typename ...A, typename ...B>
+    auto zip(std::tuple<A...> t1, std::tuple<B...> t2)
+    //-> decltype(zip_helper(t1, t2, typename gens<sizeof...(A)>::type() ))
+    {
+        static_assert(sizeof...(A) == sizeof...(B), "The tuple sizes must be the same");
+        return zip_helper( t1, t2, std::make_index_sequence<sizeof...(A)>() );
     }
 
 }

@@ -135,7 +135,7 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::typ
      */
     vecarray<T, static_size-1>
     drop_back () {
-        static_assert(static_size>0, "woops already empty");
+        static_assert(static_size!=0, "woops already empty");
 
         vecarray<T, static_size-1> new_vecarray;
 
@@ -145,6 +145,23 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::typ
 
         return new_vecarray;
     }
+
+    /**
+     * returns all elements of the vecarray but the first
+     */
+    vecarray<T, static_size-1>
+    drop_front () {
+        static_assert(static_size!=0, "woops already empty");
+
+        vecarray<T, static_size-1> new_vecarray;
+
+        for (size_t i = 0; i < new_vecarray.size(); ++i) {
+            new_vecarray[i] = operator[](i+1);
+        }
+
+        return new_vecarray;
+    }
+
 
     T& back() {
         return operator[](size()-1);
@@ -253,14 +270,32 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size == DYNAMICA
      */
     vecarray<T, DYNAMICALLY_SIZED>
     drop_back () {
-        if (size()>0){
+        if (size()==0){
             throw(std::underflow_error("this.size() is already 0"));
         }
 
-        vecarray<T, DYNAMICALLY_SIZED> new_vecarray;
+        vecarray<T, DYNAMICALLY_SIZED> new_vecarray (dynsize()-1);
 
         for (size_t i = 0; i < new_vecarray.size(); ++i) {
             new_vecarray[i] = operator[](i);
+        }
+
+        return new_vecarray;
+    }
+
+    /**
+     * returns all elements of the vecarray but the first
+     */
+    vecarray<T, DYNAMICALLY_SIZED>
+    drop_front () {
+        if(size()==0){
+            throw(std::underflow_error("this.size() is already 0"));
+        }
+
+        vecarray<T, DYNAMICALLY_SIZED> new_vecarray (dynsize()-1);
+
+        for (size_t i = 0; i < new_vecarray.size(); ++i) {
+            new_vecarray[i] = operator[](i+1);
         }
 
         return new_vecarray;

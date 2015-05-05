@@ -20,61 +20,207 @@ namespace ndata {
         SERIAL=0,
         PARALLEL=1;
 
+    namespace helpers {
+
+        template <
+            int loop_type,
+            long idim,
+            long ndims
+        >
+        struct dim_loop_recur {
+
+            template <
+                typename FuncT,
+                typename ... Ts,
+                typename ... VecarrayLong
+            >
+            static
+            void
+            do_it(
+                    std::tuple<Ts*...> tup_ndata_ptrs, //pointers to data
+                    FuncT  func,
+                    vecarray<long, ndims-idim>  shape, //only "remaining" dimensions
+                    std::tuple<
+                        VecarrayLong...
+                        > arr_strides
+                    )
+            {
+                static_assert(std::tuple_size<decltype(tup_ndata_ptrs)>() == std::tuple_size<decltype(arr_strides)>(), "");
+                static_assert(idim<ndims, "");
+                static_assert(ndims!=DYNAMICALLY_SIZED, "not implemented");
+
+                //            if (loop_type == SERIAL) {
+
+                for (size_t i = 0; i < shape[0]; ++i) {
+
+                    auto tup_current_stride = tuple_utility::tuple_transform(
+                                [] (vecarray<long, ndims-idim> strides) {return strides[0];},
+                arr_strides
+                        );
+
+                auto tup_strides_tail = tuple_utility::tuple_transform(
+                            [] (vecarray<long, ndims-idim> strides) {return strides.drop_front();},
+                        arr_strides
+                        );
+
+                auto tup_tup_ndata_ptr_stride = tuple_utility::zip(
+                            tup_ndata_ptrs,
+                            tup_current_stride
+                            );
+
+                //add current index and stride to the data pointers
+                std::tuple<Ts*...> new_ndata_ptrs = tuple_utility::tuple_transform(
+                            [i] (auto tup_ndata_ptr_stride) {
+                    auto ndata_ptr = std::get<0>(tup_ndata_ptr_stride);
+                    long strd = std::get<1>(tup_ndata_ptr_stride);
+                    return ndata_ptr+i*strd; },
+                tup_tup_ndata_ptr_stride
+                );
+
+                //run loop on next dimensions
+                dim_loop_recur<SERIAL, idim+1, ndims>::do_it(
+                            new_ndata_ptrs,
+                            func,
+                            shape.drop_front(),
+                            tup_strides_tail
+                            );
+            }
+        }
+
+        //            } else {
+        //
+        //#pragma omp parallel for schedule(static)
+        //                for (size_t i = 0; i < shape[0]; ++i) {
+        //                    //add current index and stride to the data pointers
+        //                    std::tuple<Ts*...> new_ndata_ptrs = tuple_utility::tuple_transform(
+        //                                [i, arr_strides] (Ts* ndata_ptr) { return ndata_ptr+i*arr_strides[0]; },
+        //                                baseline_indexes
+        //                            );
+        //
+        //                    //run loop on next dimensions
+        //                    dim_loop_recur<SERIAL>(
+        //                            new_ndata_ptrs,
+        //                            func,
+        //                            shape.drop_front(),
+        //                            arr_strides.drop_fron();
+        //                        );
+        //                }
+        //            }
+
+        };
+
+        //recursion termination idim == ndims
+        template <
+            int loop_type,
+            long ndims
+        >
+        struct dim_loop_recur<loop_type, ndims, ndims> {
+
+
+            template <
+                    typename FuncT,
+                    typename ... Ts,
+                    typename ... VecarrayLong
+                    >
+            static
+            void
+            do_it(
+                    std::tuple<Ts*...> tup_ndata_ptrs, //pointers to data
+                    FuncT func,
+                    vecarray<long, 0> shape, //no remaining dimensions (last reached)
+                    std::tuple<
+                    VecarrayLong... //no remaining dimensions (last reached)
+                    >
+                    arr_strides
+                    )
+            {
+                //static_assert(idim==ndims, "");
+                //apply the function to the scalars pointed by tup_ndata_ptrs
+                tuple_utility::apply(func, tup_ndata_ptrs);
+            };
+        };
+
+
+
+    }
+
 
     template <
             int loop_type = SERIAL,
-            long ndims,
+            long ... ndims,
             typename ... Ts,
             typename FuncT
             >
     void
-    nforeach_views(std::tuple<ndataview<Ts, ndims>...> ndata_views, FuncT func)  {
+    nforeach_base(std::tuple<ndataview<Ts, ndims>...> ndata_views, FuncT func)  {
 
-        //broadcast arguments against each others
-        //all broadcasted indexers should have the same shape
-        //let's get the first
-        auto& idxr = std::get<0>(ndata_views);
+        ////let's get the first
+        //auto& idxr = std::get<0>(ndata_views);
 
-        if (loop_type == SERIAL or NDATA_OMP_GET_NUM_THREADS() == 1) {
+        //if (loop_type == SERIAL or NDATA_OMP_GET_NUM_THREADS() == 1) {
 
-            auto ndindex = idxr.ndindex(0);
+        //    auto ndindex = idxr.ndindex(0);
 
-            for (size_t i = 0; i < idxr.size(); ++i) {
-                //TODO auto infer tuple<T&...> and get rid of pointers in apply signature (aliasing?)
-                //transform tuple of Ndatacontainer to tuple of refs to scalar values for current ndindex
-                auto tuple_params_scalar = tuple_utility::tuple_transform([ndindex] (auto & A) {
-                    return &A(ndindex);
-                }, ndata_views);
+        //    for (size_t i = 0; i < idxr.size(); ++i) {
+        //        //TODO auto infer tuple<T&...> and get rid of pointers in apply signature (aliasing?)
+        //        //transform tuple of Ndatacontainer to tuple of refs to scalar values for current ndindex
+        //        auto tuple_params_scalar = tuple_utility::tuple_transform([ndindex] (auto & A) {
+        //            return &A(ndindex); //        }, ndata_views);
 
-                tuple_utility::apply(func, tuple_params_scalar);
+        //        tuple_utility::apply(func, tuple_params_scalar);
 
-                idxr.increment_ndindex(ndindex);
-            }
+        //        idxr.increment_ndindex(ndindex);
+        //    }
 
-        } else {
+        //} else {
 
-#pragma omp parallel for schedule(static)
-            for (size_t i_start=0; i_start<idxr.size(); i_start+= idxr.size()/NDATA_OMP_GET_NUM_THREADS()) {
+        //#pragma omp parallel for schedule(static)
+        //    for (size_t i_start=0; i_start<idxr.size(); i_start+= idxr.size()/NDATA_OMP_GET_NUM_THREADS()) {
 
-                //our multidimensional index
-                auto ndindex = idxr.ndindex(i_start);
+        //        //our multidimensional index
+        //        auto ndindex = idxr.ndindex(i_start);
 
-                for (size_t i = 0; i < idxr.size()/NDATA_OMP_GET_NUM_THREADS(); ++i) {
-                        //TODO
-                        //transform tuple of Ndatacontainer to tuple of refs to scalar values for current ndindex
-                        //infer ref types tuple<T&...> and get rid of raw pointers in apply signature (also : what of issues with pointer aliasing?)
-                        //here auto is std::tuple<T*...>
-                        //problem is T& decay to T with auto
-                        auto tuple_params_scalar = tuple_utility::tuple_transform([ndindex] (auto & A) {
-                            return &A(ndindex);
-                        }, ndata_views);
+        //        for (size_t i = 0; i < idxr.size()/NDATA_OMP_GET_NUM_THREADS(); ++i) {
+        //                //TODO
+        //                //transform tuple of Ndatacontainer to tuple of refs to scalar values for current ndindex
+        //                //infer ref types tuple<T&...> and get rid of raw pointers in apply signature (also : what of issues with pointer aliasing?)
+        //                //here auto is std::tuple<T*...>
+        //                //problem is T& decay to T with auto
+        //                auto tuple_params_scalar = tuple_utility::tuple_transform([ndindex] (auto & A) {
+        //                    return &A(ndindex);
+        //                }, ndata_views);
 
-                        tuple_utility::apply(func, tuple_params_scalar);
+        //                tuple_utility::apply(func, tuple_params_scalar);
 
-                        idxr.increment_ndindex(ndindex);
-                 }
-            }
-        }
+        //                idxr.increment_ndindex(ndindex);
+        //         }
+        //    }
+        //}
+
+        //get pointers to first element of data
+        std::tuple<Ts*...> tup_ndata_ptrs = tuple_utility::tuple_transform(
+                    [] (auto ndv) {return ndv.data_+ndv.get_start_index();},
+                    ndata_views
+                );
+
+        //all containers have been broadcasted and have the same shape at this point
+        auto shape = std::get<0>(ndata_views).get_shape();
+
+        //std::tuple<
+        //        vecarray<long, ndims>
+        //    >
+        auto
+        strides = tuple_utility::tuple_transform(
+                    [] (auto ndv) {return ndv.get_strides();},
+                    ndata_views
+                );
+
+        helpers::dim_loop_recur<loop_type, 0, shape.STATIC_SIZE_OR_DYNAMIC>::do_it(
+                    tup_ndata_ptrs,
+                    func,
+                    shape,
+                    strides
+                    );
 
     }
 
@@ -82,16 +228,30 @@ namespace ndata {
     void
     nforeach(std::tuple<Ndatacontainer&...> ndata_tup_refs, FuncT func)  {
         auto ndata_views = helpers::broadcast_views(ndata_tup_refs);
-        nforeach_views<loop_type>(ndata_views, func);
+        nforeach_base<loop_type>(ndata_views, func);
     }
+
+    template <int loop_type = SERIAL , typename FuncT, typename... Ts, long ndims>
+    void
+    nforeach(std::tuple<ndataview<Ts, ndims>...> ndata_tup_refs, FuncT func)  {
+        auto ndata_views = helpers::broadcast(ndata_tup_refs);
+        nforeach_base<loop_type>(ndata_views, func);
+    }
+
 
     template <typename FuncT, typename... Ndatacontainer>
     void
     nforeach_parallel(std::tuple<Ndatacontainer&...> ndata_tup_refs, FuncT func)  {
         auto ndata_views = helpers::broadcast_views(ndata_tup_refs);
-        nforeach_views<PARALLEL>(ndata_views, func);
+        nforeach_base<PARALLEL>(ndata_views, func);
     }
 
+    template <typename FuncT, typename... Ts, long ndims>
+    void
+    nforeach_parallel(std::tuple<ndataview<Ts, ndims>...> ndata_tup_refs, FuncT func)  {
+        auto ndata_views = helpers::broadcast(ndata_tup_refs);
+        nforeach_base<PARALLEL>(ndata_views, func);
+    }
 
     //TODO make this able to infer Tret
     template <typename Tret, int loop_type = SERIAL, typename FuncT, typename... Ndatacontainer>
@@ -107,7 +267,7 @@ namespace ndata {
         auto retshape = std::get<0>(ndata_tuple_bcviews).get_shape();
         nvector<Tret, retshape.STATIC_SIZE_OR_DYNAMIC> ret (std::get<0>(ndata_tuple_bcviews), 0);
 
-        nforeach_views<loop_type>(
+        nforeach_base<loop_type>(
                     std::tuple_cat(
                         std::make_tuple(ret.to_view()),
                         ndata_tuple_bcviews
