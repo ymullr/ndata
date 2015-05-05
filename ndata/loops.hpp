@@ -49,64 +49,53 @@ namespace ndata {
                 static_assert(idim<ndims, "");
                 static_assert(ndims!=DYNAMICALLY_SIZED, "not implemented");
 
-                //            if (loop_type == SERIAL) {
+                std::function<void(size_t)> loop_inner_block (
+                            [&] (size_t i) {
+                                auto tup_current_stride = tuple_utility::tuple_transform(
+                                            [] (vecarray<long, ndims-idim> strides) {return strides[0];},
+                                            arr_strides
+                                        );
 
-                for (size_t i = 0; i < shape[0]; ++i) {
+                                auto tup_strides_tail = tuple_utility::tuple_transform(
+                                            [] (vecarray<long, ndims-idim> strides) {return strides.drop_front();},
+                                            arr_strides
+                                        );
 
-                    auto tup_current_stride = tuple_utility::tuple_transform(
-                                [] (vecarray<long, ndims-idim> strides) {return strides[0];},
-                arr_strides
-                        );
+                                auto tup_tup_ndata_ptr_stride = tuple_utility::zip(
+                                            tup_ndata_ptrs,
+                                            tup_current_stride
+                                        );
 
-                auto tup_strides_tail = tuple_utility::tuple_transform(
-                            [] (vecarray<long, ndims-idim> strides) {return strides.drop_front();},
-                        arr_strides
-                        );
+                                //add current index and stride to the data pointers
+                                std::tuple<Ts*...> new_ndata_ptrs = tuple_utility::tuple_transform(
+                                            [i] (auto tup_ndata_ptr_stride) {
+                                    auto ndata_ptr = std::get<0>(tup_ndata_ptr_stride);
+                                    long strd = std::get<1>(tup_ndata_ptr_stride);
+                                    return ndata_ptr+i*strd; },
+                                tup_tup_ndata_ptr_stride
+                                );
 
-                auto tup_tup_ndata_ptr_stride = tuple_utility::zip(
-                            tup_ndata_ptrs,
-                            tup_current_stride
-                            );
-
-                //add current index and stride to the data pointers
-                std::tuple<Ts*...> new_ndata_ptrs = tuple_utility::tuple_transform(
-                            [i] (auto tup_ndata_ptr_stride) {
-                    auto ndata_ptr = std::get<0>(tup_ndata_ptr_stride);
-                    long strd = std::get<1>(tup_ndata_ptr_stride);
-                    return ndata_ptr+i*strd; },
-                tup_tup_ndata_ptr_stride
+                                //run loop on next dimensions
+                                dim_loop_recur<SERIAL, idim+1, ndims>::do_it(
+                                            new_ndata_ptrs,
+                                            func,
+                                            shape.drop_front(),
+                                            tup_strides_tail
+                                            );
+                            }
                 );
 
-                //run loop on next dimensions
-                dim_loop_recur<SERIAL, idim+1, ndims>::do_it(
-                            new_ndata_ptrs,
-                            func,
-                            shape.drop_front(),
-                            tup_strides_tail
-                            );
+                if (loop_type == SERIAL) {
+                    for (size_t i = 0; i < shape[0]; ++i) {
+                        loop_inner_block(i);
+                    }
+                } else {
+#pragma omp parallel for schedule(static)
+                    for (size_t i = 0; i < shape[0]; ++i) {
+                        loop_inner_block(i);
+                    }
+                }
             }
-        }
-
-        //            } else {
-        //
-        //#pragma omp parallel for schedule(static)
-        //                for (size_t i = 0; i < shape[0]; ++i) {
-        //                    //add current index and stride to the data pointers
-        //                    std::tuple<Ts*...> new_ndata_ptrs = tuple_utility::tuple_transform(
-        //                                [i, arr_strides] (Ts* ndata_ptr) { return ndata_ptr+i*arr_strides[0]; },
-        //                                baseline_indexes
-        //                            );
-        //
-        //                    //run loop on next dimensions
-        //                    dim_loop_recur<SERIAL>(
-        //                            new_ndata_ptrs,
-        //                            func,
-        //                            shape.drop_front(),
-        //                            arr_strides.drop_fron();
-        //                        );
-        //                }
-        //            }
-
         };
 
         //recursion termination idim == ndims
