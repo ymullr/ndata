@@ -22,10 +22,11 @@ This library should be considered under development, the API may change and the 
 
 1. Clone this reposiory with `git clone https://github.com/ymullr/ndata`
 2. Add the new ndata directory the the include paths of your project. All the code is header only, except the tests.
-3. Make sure you have the option -std=C++14 in your compiler flags. If you are using GCC, version >= 4.9 is required.
+3. Make sure you have the option -std=c++14 in your compiler flags. If you are using GCC, version >= 4.9 is required.
 4. Start working.
 
-If you want to create a new project using cmake to build your project, the CMakeLists.cmake file provided to compile the tests may be a good starting point.
+If you want to create a new project and use cmake as your build tool, the CMakeLists.cmake file provided to compile the 
+tests may be a good starting point.
 
 ## Exemples
 
