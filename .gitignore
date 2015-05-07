@@ -2,3 +2,4 @@ html/
 latex/
 CMakeLists.txt.user
 build_reserved/
+doc/
