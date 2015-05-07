@@ -1,6 +1,7 @@
 #ifndef VECARRAY_HELPERS_HPP_POIQTBTA
 #define VECARRAY_HELPERS_HPP_POIQTBTA
 
+namespace ndata {
 namespace helpers {
 
     template <long ... vals>
@@ -67,7 +68,7 @@ namespace helpers {
                     > v2
             )
     {
-        return vecarray<long, ndata::DYNAMICALLY_SIZED> (std::max(v1.size(), v2.size()));
+        return vecarray<long, DYNAMICALLY_SIZED> (std::max(v1.size(), v2.size()));
     };
 
 
@@ -119,5 +120,6 @@ namespace helpers {
     };
 
 } //end namespace helpers
+} //end namespace ndata
 
 #endif /* end of include guard: VECARRAY_HELPERS_HPP_POIQTBTA */

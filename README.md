@@ -31,31 +31,31 @@ If you want to create a new project using cmake to build your project, the CMake
 
 Import the library and namespace
 
-```
+~~~
 #include "ndata.hpp"
 using namespace std;
 using namespace ndata;
-```
+~~~
 
 The basic multidimensional container is called an nvector. it can be built from an indexer object and some data.
 
 Let's create a 2D nvector of long integers initialized at 0 called u1. This one has a shape equal to (5, 2) :
 
-```
+~~~
 //The size of our arrays on x and y axis
 size_t Nx = 5, Ny = 2;
 nvector<long, 2> u1 (indexer<2>(Nx, Ny), 0l);
-```
+~~~
 
 This syntax requires a bit of repetition of the template parameters, so some helper functions for creating nvectors are provided, in the same spirit as std::make_tuple. Here is an alternative way to declare and initialize u1 by using those functions :
 
-```
+~~~
 auto u1 = make_nvector<long>(make_indexer(Nx, Ny), 0l);
-```
+~~~
 
 Now let's create another 2D nvector of std::pair<long, long> and set the value of the elements of both arrays by using nested for loops :
 
-```
+~~~
 auto u2 = make_nvector<std::pair<long, long>>(make_indexer(Nx, Ny));
 
 //two dimensions, two loops
@@ -68,20 +68,20 @@ for (size_t ix = 0; ix < Nx ; ++ix) {
         u2(ix, iy) = make_pair(1,1);
     }
 }
-```
+~~~
 
 Using nested for loops is OK, but it gets quite cumbersome when the number of dimensions increases. To alleviate this problem, we can use the nforeach function.
 
 The nforeach function takes a tuple of nvector references and a function operating on the elements of the nvectors. The function is then called once for each set of matching elements in the nvectors. 
 
-```
+~~~
 nforeach(
     std::tie(u1, u2),
     [] (long & s1, pair<long, long> s2) { //C++11 lambda function syntax
         s1=s1+s2.first;
     }
 );
-```
+~~~
 
 After this loop, all the values in u1 have increased by one. Note that the lambda function takes its first argument by reference, otherwise it wouldn't have been able to update the original values in u1.
 

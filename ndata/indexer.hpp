@@ -1,3 +1,4 @@
+/*! \file */
 #ifndef NDINDEXER_HPP_9FICI4GD
 #define NDINDEXER_HPP_9FICI4GD
 
@@ -23,35 +24,33 @@ static const long END = -1;
 
 
 /**
- * A range object to pass to ndindexer.slice
- *
- * CamelCased to make it stand out!
+ * @brief A index-range object to used for slicing arrays
  */
-struct Rng {
+struct range {
     long start;
     long stop;
     long step;
 
-    Rng ():
+    range ():
     start(0),
     stop(END),
     step(1)
     {};
 
     explicit
-    Rng (long index):
+    range (long index):
     start(index),
     stop(index+1),
     step(1)
     { };
 
-    Rng (long start, long stop):
+    range (long start, long stop):
     start(start),
     stop(stop),
     step(1)
     { };
 
-    Rng (long start, long stop, long step):
+    range (long start, long stop, long step):
     start(start),
     stop(stop),
     step(step)
@@ -59,7 +58,7 @@ struct Rng {
 };
 
 /**
- * Helper function allowing the user to create an indexer, dimensionality is infered
+ * @brief Helper function allowing the user to create an indexer, dimensionality is infered
  * from the number of arguments.
  */
 template <typename... LongT>
@@ -105,6 +104,10 @@ namespace helpers {
 //}
 
 
+/**
+ * @brief An indexer object constructed with a given shape can compute the "flat" index
+ *  for an element in a contiguous memory array from a set of indexes along each dimension.
+ */
 template<long ndims>
 struct indexer {
 
@@ -215,7 +218,7 @@ struct indexer {
 
 
     /**
-     * index_or_range may be a long or Rng
+     * index_or_range may be a long or range
      */
     template <typename... IndexOrRangeT>
     auto
@@ -416,7 +419,7 @@ struct indexer {
     slice_rec(
             size_t start_ind,
             helpers::SliceAcc<ndimslices> slices,
-            Rng range,
+            range range,
             SliceIndex... slice_or_index
             ) //-> decltype(slice_rec<idim+1, ndimsslices>(size_t, SlicesT<ndimslices>, SliceIndex...))
     {

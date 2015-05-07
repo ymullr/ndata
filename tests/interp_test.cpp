@@ -1,5 +1,5 @@
-#include "ndata/numerics/ninterp.hpp"
-#include "nindexer.hpp"
+#include "ndata/numerics/interp.hpp"
+#include "ndata/indexer.hpp"
 
 #include <iostream>
 #include <string>
@@ -9,6 +9,7 @@
 #include <ndata/debug_helpers.hpp>
 
 using namespace ndata;
+using namespace ndata::interp;
 
 
 float linerp(float a, float b, float x) {
@@ -39,7 +40,7 @@ struct TestSuite {
             float out = interpolate<KernT>(
                     u,
                     {2, i, 2},
-                    OverflowBehaviour::STRETCH
+                    overflow_behaviour::STRETCH
                     );
 
             output.append(MakeString()<<out<<", ");
@@ -71,7 +72,7 @@ struct TestSuite {
             float out = interpolate<KernT>(
                 u,
                 i_frac,
-                OverflowBehaviour::STRETCH
+                overflow_behaviour::STRETCH
             );
 
             output.append(MakeString()<< out<<", ");
@@ -100,7 +101,7 @@ struct TestSuite {
             float out = interpolate<KernT>(
                 u,
                 i_frac,
-                OverflowBehaviour::ZERO
+                overflow_behaviour::ZERO
             );
 
             if(
@@ -116,7 +117,7 @@ struct TestSuite {
     }
 
     static
-    TestResult increasing_field_1D(OverflowBehaviour ob=OverflowBehaviour::STRETCH) {
+    TestResult increasing_field_1D(overflow_behaviour ob=overflow_behaviour::STRETCH) {
   
         nvector<float, 1> u (make_indexer(Nn), 0);
         float increment = 1;
@@ -180,7 +181,7 @@ struct TestSuite {
             float out = interpolate<KernT>(
                     u,
                     {i_frac, i_frac, i_frac},
-                    OverflowBehaviour::STRETCH
+                    overflow_behaviour::STRETCH
                     );
 
             retMsg.append(MakeString() << out << ", "); 
@@ -220,14 +221,14 @@ struct TestSuite {
             float val = interpolate<KernT>(
                     u,
                     i_frac,
-                    OverflowBehaviour::STRETCH
+                    overflow_behaviour::STRETCH
                     );
 
 
             float valhalf = interpolate<KernT>(
                     u,
                     i_frac+0.5,
-                    OverflowBehaviour::STRETCH
+                    overflow_behaviour::STRETCH
                     );
 
             retMsg.append(MakeString() << val << ", " << valhalf << ", "); 
@@ -286,9 +287,9 @@ struct TestSuite {
                     u,
                     make_vecarray(xfrac, 4.5f, 4.5f),
                     make_vecarray(
-                        OverflowBehaviour::CYCLIC,
-                        OverflowBehaviour::CYCLIC,
-                        OverflowBehaviour::CYCLIC
+                        overflow_behaviour::CYCLIC,
+                        overflow_behaviour::CYCLIC,
+                        overflow_behaviour::CYCLIC
                     )
                 );
 
@@ -327,8 +328,8 @@ struct TestSuite {
 
         indexer<ndims> vecindexr (vecarray<long, ndims>(STATICALLY_SIZED, Nn));
 
-        vecarray<OverflowBehaviour, ndims> ovfl (STATICALLY_SIZED, OverflowBehaviour::CYCLIC);
-        ovfl.back()=OverflowBehaviour::STRETCH;
+        vecarray<overflow_behaviour, ndims> ovfl (STATICALLY_SIZED, overflow_behaviour::CYCLIC);
+        ovfl.back()=overflow_behaviour::STRETCH;
 
         nvector<float, ndims> u (vecindexr, 0.f);
 
@@ -408,7 +409,7 @@ struct TestSuite {
         TEST(constant_field_1D()            , success_bool, msg);
         TEST(zero_boundary_1D()             , success_bool, msg);
         TEST(increasing_field_1D()          , success_bool, msg);
-        TEST(increasing_field_1D(OverflowBehaviour::CYCLIC)
+        TEST(increasing_field_1D(overflow_behaviour::CYCLIC)
                 , success_bool, msg);
         TEST(simple_equalities_1D()         , success_bool, msg);
         TEST(constant_field_3D()            , success_bool, msg);
@@ -429,7 +430,7 @@ struct TestSuite {
 
 //specialization disabling some tests with nearest neighbor
 template<>
-TestResult TestSuite<KernNearestNeighbor>::run_all_tests() {
+TestResult TestSuite<kern_nearest_neighbor>::run_all_tests() {
     DECLARE_TESTRESULT(success_bool, msg);
 
     TEST(constant_field_1D() , success_bool, msg);
@@ -446,9 +447,9 @@ int main(int argc, char *argv[])
 {
     DECLARE_TESTRESULT(success_bool, msg);
 
-    TEST(TestSuite<KernNearestNeighbor>::run_all_tests(), success_bool, msg);
-    TEST(TestSuite<KernLinear>::run_all_tests()         , success_bool, msg);
-    TEST(TestSuite<KernCubic>::run_all_tests()          , success_bool, msg);
+    TEST(TestSuite<kern_nearest_neighbor>::run_all_tests(), success_bool, msg);
+    TEST(TestSuite<kern_linear>::run_all_tests()         , success_bool, msg);
+    TEST(TestSuite<kern_cubic>::run_all_tests()          , success_bool, msg);
 
     cout<<endl<<msg<<endl;
 

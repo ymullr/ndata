@@ -4,7 +4,7 @@
 #include <tuple>
 #include <utility>
 
-namespace tuple_utility {
+namespace tuple_utilities {
 
     //from http://stackoverflow.com/questions/10626856/how-to-split-a-tuple
     template <typename T , typename... Ts >

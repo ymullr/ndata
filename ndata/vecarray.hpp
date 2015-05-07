@@ -340,10 +340,9 @@ make_vecarray(T val1, Ts ... valn) {
     return ret;
 }
 
-
-#include "ndata/vecarray_helpers.hpp"
-
 } //end namespace
 
+
+#include "ndata/vecarray_helpers.hpp"
 
 #endif /* end of include guard: VECARRAY_HPP_EPBF1RNR */

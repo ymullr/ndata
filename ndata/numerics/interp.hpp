@@ -1,3 +1,4 @@
+/*! \file Contains looping constructs for ndatacontainers */
 #ifndef NDINTERP_HPP_CUZ3R9SV
 #define NDINTERP_HPP_CUZ3R9SV
 
@@ -13,6 +14,7 @@
 #include "ndata/numerics/numtype_adapter_fundamental.hpp"
 
 namespace ndata {
+namespace interp {
 
 //-----------------------------------------------------------------------------
 //	HELPERS
@@ -38,14 +40,16 @@ NumT clamp(NumT x, NumT min, NumT max)
 //-----------------------------------------------------------------------------
 
 
-enum OverflowBehaviour {
+enum overflow_behaviour {
     ZERO,
     STRETCH,
     CYCLIC
 };
 
-//triangular kernel reproducing linear interpolation
-struct KernLinear {
+/**
+ * Linear interpolation kernel
+ */
+struct kern_linear {
     float kern(float x) {
         assert(fabs(x)<=ONESIDEDWIDTH);
         return float(1)-fabs(x);
@@ -55,7 +59,10 @@ struct KernLinear {
 };
 
 //triangular kernel reproducing linear interpolation
-struct KernNearestNeighbor {
+/**
+ * nearest-neighbor kernel
+ */
+struct kern_nearest_neighbor {
 
     float kern(float x) {
         assert(fabs(x)<=ONESIDEDWIDTH);
@@ -66,11 +73,13 @@ struct KernNearestNeighbor {
 };
 
 
-//Approximated tricubic interpolation with Keys' convolution kernel
-//(cf wikipedia bicubic interpolation, convolution version)
-//R. Keys, (1981). "Cubic convolution interpolation for digital image processing".
-//IEEE Transactions on Acoustics, Speech, and Signal Processing 29 (6): 1153–1160.
-struct KernCubic {
+/**
+ * Approximated tricubic interpolation with Keys' convolution kernel
+ * (cf wikipedia bicubic interpolation, convolution version)
+ * R. Keys, (1981). "Cubic convolution interpolation for digital image processing".
+ * IEEE Transactions on Acoustics, Speech, and Signal Processing 29 (6): 1153–1160.
+ */
+struct kern_cubic {
     float kern(float x) {
 
         assert(fabs(x)<=ONESIDEDWIDTH);
@@ -99,12 +108,12 @@ struct KernCubic {
 
 
 template<class KernT, long ndims, class ContainerT, class T>
-struct InterpolateInner {
+struct interpolate_inner {
 
     static
-    T interpolateInner(
+    T do_it(
             ndatacontainer<ContainerT, T, ndims> u,
-            vecarray<float, ndims> indexFrac
+            vecarray<float, ndims> index_frac
             )
     {
         static_assert(ndims > 1, "Dynamic case not implemented");
@@ -136,9 +145,9 @@ struct InterpolateInner {
 
             //update u_new
             //recursive call, this one doesn't have subrecursion since ndims == 1
-            u_new(ndi_unew) = InterpolateInner<KernT, 1, ContainerT, T>::interpolateInner(
+            u_new(ndi_unew) = interpolate_inner<KernT, 1, ContainerT, T>::do_it(
                 u_col,
-                make_vecarray(indexFrac.back())
+                make_vecarray(index_frac.back())
             );
 
             u_new.increment_ndindex(ndi_unew);
@@ -146,23 +155,23 @@ struct InterpolateInner {
 
         //recurse with one less dimension
         //will terminate when ndims = 1 (see partially specialized template under)
-        return InterpolateInner<KernT, ndims-1, std::vector<T>, T>::interpolateInner(u_new, indexFrac.drop_back());
+        return interpolate_inner<KernT, ndims-1, std::vector<T>, T>::do_it(u_new, index_frac.drop_back());
     }
 };
 
 template <class KernT, typename ContainerT, typename T>
-struct InterpolateInner<KernT, 1, ContainerT, T> {
+struct interpolate_inner<KernT, 1, ContainerT, T> {
 
     static 
     T
-    interpolateInner(
+    do_it(
             ndatacontainer<ContainerT, T, 1> u,
-            vecarray<float, 1> indexFrac
+            vecarray<float, 1> index_frac
             )
     {
         assert(
                 u.get_shape().size() == 1
-            and indexFrac.size() == 1
+            and index_frac.size() == 1
               );
 
         //termination condition
@@ -170,10 +179,10 @@ struct InterpolateInner<KernT, 1, ContainerT, T> {
         //... easy
         KernT kern;
 
-        T ret = numtype_adapter<T>::ZERO;
+        T ret = helpers::numtype_adapter<T>::ZERO;
 
         for (long i = 0; i < u.get_shape()[0]; ++i) {
-            float x = float(i)-indexFrac[0];
+            float x = float(i)-index_frac[0];
             float convCoeff = kern.kern(x);
             ret +=  convCoeff * u[i];
         }
@@ -182,6 +191,10 @@ struct InterpolateInner<KernT, 1, ContainerT, T> {
     }
 };
 
+/**
+ * Interpolate one value among a regularly sampled grid of data. The position must be passed as a
+ * fraction of an index on each dimension.
+ */
 template<class KernT, long ndims, typename ContainerT, typename T>
 T interpolate (
         //flattened array of VectorT
@@ -190,16 +203,16 @@ T interpolate (
         //sampling is "normalized" by delta so it is expressed in terms of a fraction of
         //the sourceField indices instead of a real position
         //[ndims]
-        vecarray<float, ndims> indexFrac,
+        vecarray<float, ndims> index_frac,
         //[from 1 to ndims]
-        vecarray<OverflowBehaviour, ndims> overflowBehaviours
+        vecarray<overflow_behaviour, ndims> overflow_behaviours
         )
 {
     auto shape = u.get_shape();
 
     assert(
-            indexFrac.size() == shape.size()
-        and overflowBehaviours.size() == shape.size()
+            index_frac.size() == shape.size()
+        and overflow_behaviours.size() == shape.size()
         );
 
     vecarray<long, ndims> i_starts, i_stops;
@@ -207,15 +220,15 @@ T interpolate (
 
     for (size_t i = 0; i < shape.size(); ++i) {
 
-        OverflowBehaviour ob = overflowBehaviours[i];
+        overflow_behaviour ob = overflow_behaviours[i];
 
-        if (ob == OverflowBehaviour::STRETCH) {
-            indexFrac[i] = clamp(indexFrac[i], float(0), float(shape[i])-1);
+        if (ob == overflow_behaviour::STRETCH) {
+            index_frac[i] = clamp(index_frac[i], float(0), float(shape[i])-1);
         }
 
         long kernWidth = KernT::ONESIDEDWIDTH*2;
 
-        i_starts[i] = floor(indexFrac[i])-long(KernT::ONESIDEDWIDTH)+1;
+        i_starts[i] = floor(index_frac[i])-long(KernT::ONESIDEDWIDTH)+1;
         i_stops[i] = i_starts[i] + kernWidth;
 
         switch (ob) {
@@ -224,7 +237,7 @@ T interpolate (
                 i_stops[i] = std::min(i_stops[i], long(shape[i]));
 
                 //early return in case the intersect btw the kernel and the field is empty
-                if(i_starts[i] >= i_stops[i]) return numtype_adapter<T>::ZERO;
+                if(i_starts[i] >= i_stops[i]) return helpers::numtype_adapter<T>::ZERO;
 
                 assert(i_starts[i] >= 0 and i_stops[i] <= long(shape[i])); //this is not true for other overflow behaviours
                 break;
@@ -245,7 +258,7 @@ T interpolate (
         unew_shape[idim] = i_stops[idim] - i_starts[idim];
     }
 
-    nvector<T, ndims> unew (unew_shape, numtype_adapter<T>::ZERO);
+    nvector<T, ndims> unew (unew_shape, helpers::numtype_adapter<T>::ZERO);
 
     vecarray<size_t, ndims> ndi_unew = unew.ndindex(0);
 
@@ -263,7 +276,7 @@ T interpolate (
         for (size_t idim = 0; idim < ndims; ++idim) {
             long iUThisDim=(i_starts[idim]+long(ndi_unew[idim]));
 
-            switch (overflowBehaviours[idim]) {
+            switch (overflow_behaviours[idim]) {
                 case CYCLIC:
                     iUThisDim = iUThisDim%shape[idim];
                     if(iUThisDim < 0) {
@@ -294,15 +307,15 @@ T interpolate (
     }
 
     //adjust indexfrac for new reduced array size
-    for (size_t i = 0; i < indexFrac.size(); ++i) {
-        indexFrac[i] = indexFrac[i] - i_starts[i];
+    for (size_t i = 0; i < index_frac.size(); ++i) {
+        index_frac[i] = index_frac[i] - i_starts[i];
     }
 
-    assert(indexFrac.size() == unew_shape.size() );
+    assert(index_frac.size() == unew_shape.size() );
 
-    return InterpolateInner<KernT, ndims, std::vector<T>, T>::interpolateInner(
+    return interpolate_inner<KernT, ndims, std::vector<T>, T>::do_it(
             unew,
-            indexFrac
+            index_frac
     );
 }
 
@@ -310,19 +323,19 @@ T interpolate (
 //	NOW A BUNCH OF OVERLOADS FOR DEALING WITH SIMPLER CASES
 //-----------------------------------------------------------------------------
 
-//Only one OverflowBehaviour specified for all dimensions
+//Only one overflow_behaviour specified for all dimensions
 template<class KernT, long ndims, typename ContainerT, class T>
 T interpolate (
         ndatacontainer<ContainerT, T, ndims> u,
-        vecarray<float, ndims> indexFrac,
-        OverflowBehaviour overflowBehaviour = OverflowBehaviour::STRETCH
+        vecarray<float, ndims> index_frac,
+        overflow_behaviour overflowBehaviour = overflow_behaviour::STRETCH
         ) {
-    vecarray<OverflowBehaviour, ndims> overflowBehaviours (indexFrac.dynsize());
-    overflowBehaviours.fill(overflowBehaviour);
+    vecarray<overflow_behaviour, ndims> overflow_behaviours (index_frac.dynsize());
+    overflow_behaviours.fill(overflowBehaviour);
     return interpolate<KernT>(
         u,
-        indexFrac,
-        overflowBehaviours
+        index_frac,
+        overflow_behaviours
         );
 }
 
@@ -330,13 +343,13 @@ T interpolate (
 template<class KernT, typename ContainerT, class T>
 T interpolate (
         ndatacontainer<ContainerT, T, 1> u,
-        float indexFrac,
-        OverflowBehaviour overflowBehaviour = OverflowBehaviour::STRETCH
+        float index_frac,
+        overflow_behaviour overflowBehaviour = overflow_behaviour::STRETCH
         ) {
     return interpolate<KernT>(
         u,
-        vecarray<float, 1>({indexFrac}),
-        vecarray<OverflowBehaviour, 1>({overflowBehaviour})
+        vecarray<float, 1>({index_frac}),
+        vecarray<overflow_behaviour, 1>({overflowBehaviour})
         );
 }
 
@@ -352,15 +365,16 @@ vecarray<float, ndims> position_to_ifrac(
         and origin.size()==steps.size()
         );
 
-    vecarray<float, ndims> indexFrac = position;
+    vecarray<float, ndims> index_frac = position;
 
-    for (size_t i = 0; i < indexFrac.size(); ++i) {
-        indexFrac[i] = (position[i] - origin[i]) / steps[i];
+    for (size_t i = 0; i < index_frac.size(); ++i) {
+        index_frac[i] = (position[i] - origin[i]) / steps[i];
     }
 
-    return indexFrac;
+    return index_frac;
 }
 
-}
+}//end namespace interp
+}//end namespace ndata
 
 #endif /* end of include guard: NDINTERP_HPP_CUZ3R9SV */

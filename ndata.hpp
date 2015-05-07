@@ -7,7 +7,7 @@
 
 namespace ndata {
 
-    struct Rng;
+    struct range;
 
     template <long ndims>
     struct indexer;
@@ -33,9 +33,9 @@ namespace ndata {
 
 #include "ndata/forward_declarations.hpp"
 #include "ndata/helpers.hpp"
-#include "nindexer.hpp"
-#include "ndatacontainer.hpp"
-#include "nvector.hpp"
+#include "ndata/indexer.hpp"
+#include "ndata/ndatacontainer.hpp"
+#include "ndata/nvector.hpp"
 #include "ndata/loops.hpp"
 
 

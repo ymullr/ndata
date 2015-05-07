@@ -6,6 +6,7 @@
 //TODO document
 
 namespace ndata {
+namespace helpers {
 
 template<typename T, typename Enable = void>
 struct numtype_adapter {
@@ -25,6 +26,7 @@ struct numtype_adapter<
 
 };
 
-}
+} //end namespace ndata
+} //end namespace helpers
 
-#endif /* end of include guard: NUMTYPE_ADAPTERS_FUNDAMENTAL_HPP_H0TGUOAB */ 
+#endif /* end of include guard: NUMTYPE_ADAPTERS_FUNDAMENTAL_HPP_H0TGUOAB */

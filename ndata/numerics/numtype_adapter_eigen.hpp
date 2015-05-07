@@ -4,6 +4,7 @@
 #include <numerics/numtype_adapters_fundamental.hpp>
 
 namespace ndata {
+namespace helpers {
 
 template <typename EigenT>
 using DerivedOf = std::result_of<EigenT.derived>::type
@@ -26,7 +27,8 @@ struct numtype_adapter<
 
 };
 
-}
+} //end namespace ndata
+} //end namespace helpers
 
 
 

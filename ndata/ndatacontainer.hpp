@@ -1,3 +1,4 @@
+/*! \file */
 #ifndef NDVIEW_HPP_1LWJBSCE
 #define NDVIEW_HPP_1LWJBSCE
 
@@ -5,7 +6,7 @@
 
 #include "vecarray.hpp"
 #include "ndata.hpp"
-#include "nindexer.hpp"
+#include "ndata/indexer.hpp"
 #include "ndata/helpers.hpp"
 #include "ndata/loops.hpp"
 

@@ -3,14 +3,13 @@
 
 #include <cstdlib>
 #include <utility>
-#include "tuple_utility.hpp"
+#include "tuple_utilities.hpp"
 #include <exception>
 #include <type_traits>
 
 #include "vecarray.hpp"
 
 namespace ndata {
-
 namespace helpers {
 
 
@@ -71,7 +70,7 @@ namespace helpers {
     template <typename Indexer, typename ... Indexers>
     auto
     broadcast_left(Indexer v1, std::tuple<Indexers...> t) {
-        auto h_t = tuple_utility::split_ht(std::move(t));
+        auto h_t = tuple_utilities::split_ht(std::move(t));
         auto v2 = h_t.first;
         auto tuple_rest = h_t.second;
 
@@ -193,8 +192,8 @@ namespace helpers {
     //        //this is the pack from which elements to be processed are taken, function returns when empty
     //        std::tuple<IndexersToProcess...> toproc
     //        ) {
-    //    auto proc_head = tuple_utility::head(toproc);
-    //    auto proc_tail = tuple_utility::tail(toproc);
+    //    auto proc_head = tuple_utilities::head(toproc);
+    //    auto proc_tail = tuple_utilities::tail(toproc);
 
     //    auto processed_indexer =
     //            broadcast_left(
@@ -222,7 +221,7 @@ namespace helpers {
             std::tuple<Indexers...> all
             )
     {
-        return tuple_utility::tuple_transform(
+        return tuple_utilities::tuple_transform(
                 [target] (auto&& tup) {
                     return broadcast_left(
                                 tup,
@@ -237,14 +236,14 @@ namespace helpers {
     template <typename ... Indexers>
     auto //std::tuple<Indexers...> tuple of indexers
     broadcast(std::tuple<Indexers...> tup_ind) {
-        auto h_t = tuple_utility::split_ht(std::move(tup_ind));
+        auto h_t = tuple_utilities::split_ht(std::move(tup_ind));
 
         //indexer<helpers::static_max_or_dynamic<
         //        decltype(Indexers::shape_)::STATIC_SIZE_OR_DYNAMIC...>::value>
         auto
             indexer_target = broadcast_left(
-                //tuple_utility::head(tup_ind),
-                //tuple_utility::tail(tup_ind)
+                //tuple_utilities::head(tup_ind),
+                //tuple_utilities::tail(tup_ind)
                 h_t.first,
                 h_t.second
                 );
@@ -274,7 +273,7 @@ namespace helpers {
             TupIndexers & tup_ind
             )
     {
-        auto tupind_views = tuple_utility::tuple_transform(
+        auto tupind_views = tuple_utilities::tuple_transform(
                     [] (auto& tupelt) {
                         return tupelt.to_view();
                     },

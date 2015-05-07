@@ -1,3 +1,4 @@
+/*! \file Contains looping constructs for ndatacontainers */
 #ifndef NDATA_FUNCTIONS_HPP_J3F2DFOA
 #define NDATA_FUNCTIONS_HPP_J3F2DFOA
 
@@ -5,7 +6,7 @@
 #include <tuple>
 #include "ndata/helpers.hpp"
 #include <utility>
-#include "tuple_utility.hpp"
+#include "tuple_utilities.hpp"
 
 #ifdef _OPENMP
    #include <omp.h>
@@ -51,23 +52,23 @@ namespace ndata {
 
                 std::function<void(size_t)> loop_inner_block (
                             [&] (size_t i) {
-                                auto tup_current_stride = tuple_utility::tuple_transform(
+                                auto tup_current_stride = tuple_utilities::tuple_transform(
                                             [] (vecarray<long, ndims-idim> strides) {return strides[0];},
                                             arr_strides
                                         );
 
-                                auto tup_strides_tail = tuple_utility::tuple_transform(
+                                auto tup_strides_tail = tuple_utilities::tuple_transform(
                                             [] (vecarray<long, ndims-idim> strides) {return strides.drop_front();},
                                             arr_strides
                                         );
 
-                                auto tup_tup_ndata_ptr_stride = tuple_utility::zip(
+                                auto tup_tup_ndata_ptr_stride = tuple_utilities::zip(
                                             tup_ndata_ptrs,
                                             tup_current_stride
                                         );
 
                                 //add current index and stride to the data pointers
-                                std::tuple<Ts*...> new_ndata_ptrs = tuple_utility::tuple_transform(
+                                std::tuple<Ts*...> new_ndata_ptrs = tuple_utilities::tuple_transform(
                                             [i] (auto tup_ndata_ptr_stride) {
                                     auto ndata_ptr = std::get<0>(tup_ndata_ptr_stride);
                                     long strd = std::get<1>(tup_ndata_ptr_stride);
@@ -125,7 +126,7 @@ namespace ndata {
             {
                 //static_assert(idim==ndims, "");
                 //apply the function to the scalars pointed by tup_ndata_ptrs
-                tuple_utility::apply(func, tup_ndata_ptrs);
+                tuple_utilities::apply(func, tup_ndata_ptrs);
             };
         };
 
@@ -153,10 +154,10 @@ namespace ndata {
         //    for (size_t i = 0; i < idxr.size(); ++i) {
         //        //TODO auto infer tuple<T&...> and get rid of pointers in apply signature (aliasing?)
         //        //transform tuple of Ndatacontainer to tuple of refs to scalar values for current ndindex
-        //        auto tuple_params_scalar = tuple_utility::tuple_transform([ndindex] (auto & A) {
+        //        auto tuple_params_scalar = tuple_utilities::tuple_transform([ndindex] (auto & A) {
         //            return &A(ndindex); //        }, ndata_views);
 
-        //        tuple_utility::apply(func, tuple_params_scalar);
+        //        tuple_utilities::apply(func, tuple_params_scalar);
 
         //        idxr.increment_ndindex(ndindex);
         //    }
@@ -175,11 +176,11 @@ namespace ndata {
         //                //infer ref types tuple<T&...> and get rid of raw pointers in apply signature (also : what of issues with pointer aliasing?)
         //                //here auto is std::tuple<T*...>
         //                //problem is T& decay to T with auto
-        //                auto tuple_params_scalar = tuple_utility::tuple_transform([ndindex] (auto & A) {
+        //                auto tuple_params_scalar = tuple_utilities::tuple_transform([ndindex] (auto & A) {
         //                    return &A(ndindex);
         //                }, ndata_views);
 
-        //                tuple_utility::apply(func, tuple_params_scalar);
+        //                tuple_utilities::apply(func, tuple_params_scalar);
 
         //                idxr.increment_ndindex(ndindex);
         //         }
@@ -187,7 +188,7 @@ namespace ndata {
         //}
 
         //get pointers to first element of data
-        std::tuple<Ts*...> tup_ndata_ptrs = tuple_utility::tuple_transform(
+        std::tuple<Ts*...> tup_ndata_ptrs = tuple_utilities::tuple_transform(
                     [] (auto ndv) {return ndv.data_+ndv.get_start_index();},
                     ndata_views
                 );
@@ -199,7 +200,7 @@ namespace ndata {
         //        vecarray<long, ndims>
         //    >
         auto
-        strides = tuple_utility::tuple_transform(
+        strides = tuple_utilities::tuple_transform(
                     [] (auto ndv) {return ndv.get_strides();},
                     ndata_views
                 );

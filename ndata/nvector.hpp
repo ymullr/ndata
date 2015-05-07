@@ -1,8 +1,9 @@
+/*! \file */
 #ifndef NVECTOR_HPP_B0EOQJGU
 #define NVECTOR_HPP_B0EOQJGU
 
 #include <vector>
-#include "ndatacontainer.hpp"
+#include "ndata/ndatacontainer.hpp"
 
 namespace ndata {
 
@@ -16,8 +17,10 @@ auto //nvector<T, somedim>
 make_nvector(ndatacontainer<std::vector<T>, T, ndims> idxr);
 
 /**
- * Basically the same thing as anndatacontainer<std::vector<T>, T, ndims>, but has the nice property
- * of self-adjusting the size of the underlying std::vector when copy constructed
+ * @brief A n-dimensional container using std::vector from the STL.
+ *
+ * In addition to the methods inherited from ndatacontainer<std::vector<T>, T, ndims>, it has the property
+ * of re-adjusting the size of the underlying std::vector when copy constructed.
  */
 template<typename T, long ndims>
 struct nvector: ndatacontainer<std::vector<T>, T, ndims>  {
@@ -79,11 +82,7 @@ struct nvector: ndatacontainer<std::vector<T>, T, ndims>  {
     }
 
     /**
-     * @brief construct from indexer and data perform elementwise copy of data passed as argument
-     *  to the inner vector container only the elements reachable vie the indexer slice are
-     *  copied the inner container may be smaller than the copied from data
-     * @param idxr
-     * @param data
+     * @brief construct from an ndatacontainer, copying its data.
      */
     template <typename ContainerT_rhs, typename T_rhs>
     nvector(
