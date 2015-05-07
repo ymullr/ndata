@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.6"/>
-<title>My Project: vecarray.hpp File Reference</title>
+<title>Ndata: ndata/vecarray.hpp File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -22,8 +22,9 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">My Project
+   <div id="projectname">Ndata
    </div>
+   <div id="projectbrief">Header only C++ template library for working with n-dimensional arrays of arbitrary data</div>
   </td>
  </tr>
  </tbody>
@@ -37,7 +38,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="annotated.html"><span>Classes</span></a></li>
       <li class="current"><a href="files.html"><span>Files</span></a></li>
       <li>
@@ -69,7 +69,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Macros</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&#160;</span>Macros</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -78,6 +78,10 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </iframe>
 </div>
 
+<div id="nav-path" class="navpath">
+  <ul>
+<li class="navelem"><a class="el" href="dir_8a1c2c4cc48c49b276c0593436c9d54d.html">ndata</a></li>  </ul>
+</div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
@@ -96,7 +100,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <code>#include &lt;initializer_list&gt;</code><br/>
 <code>#include &lt;exception&gt;</code><br/>
 <code>#include &lt;type_traits&gt;</code><br/>
-<code>#include &quot;ndata/vecarray_helpers.hpp&quot;</code><br/>
+<code>#include &quot;<a class="el" href="vecarray__helpers_8hpp_source.html">ndata/vecarray_helpers.hpp</a>&quot;</code><br/>
 </div>
 <p><a href="vecarray_8hpp_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -106,22 +110,10 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structndata_1_1vecarray_1_1type.html">ndata::vecarray&lt; T, static_size, Enable &gt;::type</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structndata_1_1vecarray_3_01T_00_01static__size_00_01typename_01std_1_1enable__if_3_07static__si03e54e386f9b0f01f534b5eff2689df9.html">ndata::vecarray&lt; T, static_size, typename std::enable_if&lt;(static_size==DYNAMICALLY_SIZED)&gt;::type &gt;</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structndata_1_1helpers_1_1static__max__or__dynamic.html">ndata::helpers::static_max_or_dynamic&lt; vals &gt;</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structndata_1_1helpers_1_1static__max__or__dynamic_3_01val1_00_01val2_00_01vals_8_8_8_4.html">ndata::helpers::static_max_or_dynamic&lt; val1, val2, vals...&gt;</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structndata_1_1helpers_1_1static__max__or__dynamic_3_01val1_01_4.html">ndata::helpers::static_max_or_dynamic&lt; val1 &gt;</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structndata_1_1helpers_1_1static__check__valid__indice__types.html">ndata::helpers::static_check_valid_indice_types&lt; Ts &gt;</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
 Namespaces</h2></td></tr>
 <tr class="memitem:namespacendata"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacendata.html">ndata</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:namespacendata_1_1helpers"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacendata_1_1helpers.html">ndata::helpers</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
@@ -144,27 +136,9 @@ Typedefs</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a2abb6caed3d28281c0ae836485998552"><td class="memTemplParams" colspan="2">template&lt;typename ContentT , long idim&gt; </td></tr>
-<tr class="memitem:a2abb6caed3d28281c0ae836485998552"><td class="memTemplItemLeft" align="right" valign="top">vecarray&lt; ContentT, idim &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacendata_1_1helpers.html#a2abb6caed3d28281c0ae836485998552">ndata::helpers::array_from_argpack</a> (vecarray&lt; ContentT, idim &gt; acc)</td></tr>
-<tr class="separator:a2abb6caed3d28281c0ae836485998552"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a99fa444d15e30282743af6f600c4891c"><td class="memTemplParams" colspan="2">template&lt;typename ContentT , long idim, typename... ContentTPackT&gt; </td></tr>
-<tr class="memitem:a99fa444d15e30282743af6f600c4891c"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacendata_1_1helpers.html#a99fa444d15e30282743af6f600c4891c">ndata::helpers::array_from_argpack</a> (vecarray&lt; ContentT, idim &gt; acc, ContentT i, ContentTPackT...rest)</td></tr>
-<tr class="separator:a99fa444d15e30282743af6f600c4891c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9b5342ec4863a11ad4136a9c9ee86380"><td class="memTemplParams" colspan="2">template&lt;typename T , typename... Ts&gt; </td></tr>
 <tr class="memitem:a9b5342ec4863a11ad4136a9c9ee86380"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacendata.html#a9b5342ec4863a11ad4136a9c9ee86380">ndata::make_vecarray</a> (T val1, Ts...valn)</td></tr>
 <tr class="separator:a9b5342ec4863a11ad4136a9c9ee86380"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a53f1b59e88c0d4b6d5459db3a88a389f"><td class="memTemplParams" colspan="2">template&lt;long StatSize1, long StatSize2&gt; </td></tr>
-<tr class="memitem:a53f1b59e88c0d4b6d5459db3a88a389f"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacendata_1_1helpers.html#a53f1b59e88c0d4b6d5459db3a88a389f">ndata::helpers::make_vecarray_like_biggest</a> (vecarray&lt; long, std::enable_if&lt; StatSize1!=DYNAMICALLY_SIZED, std::integral_constant&lt; long, StatSize1 &gt;&gt;::type::value &gt; v1, vecarray&lt; long, std::enable_if&lt; StatSize2!=DYNAMICALLY_SIZED, std::integral_constant&lt; long, StatSize2 &gt;&gt;::type::value &gt; v2)</td></tr>
-<tr class="separator:a53f1b59e88c0d4b6d5459db3a88a389f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae4d84120b82e547c615de24dcbdb19b6"><td class="memTemplParams" colspan="2">template&lt;long StatSize1, long StatSize2&gt; </td></tr>
-<tr class="memitem:ae4d84120b82e547c615de24dcbdb19b6"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacendata_1_1helpers.html#ae4d84120b82e547c615de24dcbdb19b6">ndata::helpers::make_vecarray_like_biggest_dyn</a> (vecarray&lt; long, StatSize1 &gt; v1, vecarray&lt; long, StatSize2 &gt; v2)</td></tr>
-<tr class="separator:ae4d84120b82e547c615de24dcbdb19b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abaf7cfc38a901db0c8ce44bb926a7bfb"><td class="memTemplParams" colspan="2">template&lt;long StatSize1, long StatSize2&gt; </td></tr>
-<tr class="memitem:abaf7cfc38a901db0c8ce44bb926a7bfb"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacendata_1_1helpers.html#abaf7cfc38a901db0c8ce44bb926a7bfb">ndata::helpers::make_vecarray_like_biggest</a> (vecarray&lt; long, std::enable_if&lt; StatSize1==DYNAMICALLY_SIZED, std::integral_constant&lt; long, StatSize1 &gt;&gt;::type::value &gt; v1, vecarray&lt; long, StatSize2 &gt; v2)</td></tr>
-<tr class="separator:abaf7cfc38a901db0c8ce44bb926a7bfb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2848209d653e15763e987c90c3f8cda8"><td class="memTemplParams" colspan="2">template&lt;long StatSize1, long StatSize2&gt; </td></tr>
-<tr class="memitem:a2848209d653e15763e987c90c3f8cda8"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacendata_1_1helpers.html#a2848209d653e15763e987c90c3f8cda8">ndata::helpers::make_vecarray_like_biggest</a> (vecarray&lt; long, StatSize1 &gt; v1, vecarray&lt; long, std::enable_if&lt; StatSize2==DYNAMICALLY_SIZED, std::integral_constant&lt; long, StatSize2 &gt;&gt;::type::value &gt; v2)</td></tr>
-<tr class="separator:a2848209d653e15763e987c90c3f8cda8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
 Variables</h2></td></tr>
@@ -176,7 +150,7 @@ Variables</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu May 7 2015 15:32:48 for My Project by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu May 7 2015 19:59:57 for Ndata by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

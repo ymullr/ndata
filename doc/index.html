@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.6"/>
-<title>My Project: Main Page</title>
+<title>Ndata: Main Page</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -22,8 +22,9 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">My Project
+   <div id="projectname">Ndata
    </div>
+   <div id="projectbrief">Header only C++ template library for working with n-dimensional arrays of arbitrary data</div>
   </td>
  </tr>
  </tbody>
@@ -37,7 +38,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li class="current"><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
       <li>
@@ -64,7 +64,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Macros</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&#160;</span>Macros</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -75,13 +75,76 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 <div class="header">
   <div class="headertitle">
-<div class="title">My Project Documentation</div>  </div>
+<div class="title">Ndata Documentation</div>  </div>
 </div><!--header-->
 <div class="contents">
-</div><!-- contents -->
+<div class="textblock"><h5>Ndata is a C++ template library for working with n-dimensional arrays of arbitrary data.</h5>
+<p>It is aimed at being lightweight, fast, and easy to integrate into your own projects. It offers an interface that will be familiar to users of Python/numpy or Matlab for indexing and slicing multidimensional arrays with any number of dimensions.</p>
+<p>Here is a short feature list:</p>
+<ul>
+<li>Header only.</li>
+<li>Low buy-in cost. You can use the indexing logic with your own containers and data type, and do not have to design around the provided data structures.</li>
+<li>Efficient memory contiguous storage, compatible with most popular numerical libraries.</li>
+<li>Bound checking when compiled in debug mode. Makes debugging a lot easier.</li>
+<li>Compile time checking of arrays dimensionality. Makes debugging a lot less necessary.</li>
+<li>N-dimensional loop constructs for iterating over multidimensional arrays. Also available in multithreaded flavor with OpenMP.</li>
+<li>Array shape broadcasting, in the same way that numpy does it. More details <a href="http://wiki.scipy.org/EricsBroadcastingDoc">here</a>.</li>
+</ul>
+<p>Not a feature : linear algebra. If you are looking for a good linear algebra library, have a look at <a href="http://eigen.tuxfamily.org/index.php?title=Main_Page">Eigen</a>.</p>
+<p>If, however, you would need to make computations with n-dimensional arrays of matrices and vectors, then you can use Eigen AND Ndata, as they play very well together.</p>
+<p>This library should be considered under development, the API may change and the documentation may be lacking. It is however quite useable already.</p>
+<h2>How to use</h2>
+<ol type="1">
+<li>Clone this reposiory with <code>git clone <a href="https://github.com/ymullr/ndata">https://github.com/ymullr/ndata</a></code></li>
+<li>Add the new ndata directory the the include paths of your project. All the code is header only, except the tests.</li>
+<li>Make sure you have the option -std=C++14 in your compiler flags. If you are using GCC, version &gt;= 4.9 is required.</li>
+<li>Start working.</li>
+</ol>
+<p>If you want to create a new project using cmake to build your project, the CMakeLists.cmake file provided to compile the tests may be a good starting point.</p>
+<h2>Exemples</h2>
+<p>Import the library and namespace</p>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &quot;<a class="code" href="ndata_8hpp.html">ndata.hpp</a>&quot;</span></div>
+<div class="line"><span class="keyword">using namespace </span>std;</div>
+<div class="line"><span class="keyword">using namespace </span>ndata;</div>
+</div><!-- fragment --><p>The basic multidimensional container is called an nvector. it can be built from an indexer object and some data.</p>
+<p>Let's create a 2D nvector of long integers initialized at 0 called u1. This one has a shape equal to (5, 2) :</p>
+<div class="fragment"><div class="line"><span class="comment">//The size of our arrays on x and y axis</span></div>
+<div class="line"><span class="keywordtype">size_t</span> Nx = 5, Ny = 2;</div>
+<div class="line">nvector&lt;long, 2&gt; u1 (indexer&lt;2&gt;(Nx, Ny), 0l);</div>
+</div><!-- fragment --><p>This syntax requires a bit of repetition of the template parameters, so some helper functions for creating nvectors are provided, in the same spirit as std::make_tuple. Here is an alternative way to declare and initialize u1 by using those functions :</p>
+<div class="fragment"><div class="line"><span class="keyword">auto</span> u1 = make_nvector&lt;long&gt;(make_indexer(Nx, Ny), 0l);</div>
+</div><!-- fragment --><p>Now let's create another 2D nvector of std::pair&lt;long, long&gt; and set the value of the elements of both arrays by using nested for loops :</p>
+<div class="fragment"><div class="line"><span class="keyword">auto</span> u2 = make_nvector&lt;std::pair&lt;long, long&gt;&gt;(make_indexer(Nx, Ny));</div>
+<div class="line"></div>
+<div class="line"><span class="comment">//two dimensions, two loops</span></div>
+<div class="line"><span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> ix = 0; ix &lt; Nx ; ++ix) {</div>
+<div class="line">    <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> iy = 0; iy &lt; Ny ; ++iy) {</div>
+<div class="line">        <span class="comment">//to reference an element of an ndimensional array,</span></div>
+<div class="line">        <span class="comment">//we use the paren operator &quot;()&quot;, or function call syntax,</span></div>
+<div class="line">        <span class="comment">//and pass ix the x-axis index and iy the y-axis index</span></div>
+<div class="line">        u1(ix ,iy) = ix*Ny + iy;</div>
+<div class="line">        u2(ix, iy) = make_pair(1,1);</div>
+<div class="line">    }</div>
+<div class="line">}</div>
+</div><!-- fragment --><p>Using nested for loops is OK, but it gets quite cumbersome when the number of dimensions increases. To alleviate this problem, we can use the nforeach function.</p>
+<p>The nforeach function takes a tuple of nvector references and a function operating on the elements of the nvectors. The function is then called once for each set of matching elements in the nvectors.</p>
+<div class="fragment"><div class="line"><a class="code" href="namespacendata.html#a73a3db99acf62f3fd8b588753d00cc91">nforeach</a>(</div>
+<div class="line">    std::tie(u1, u2),</div>
+<div class="line">    [] (<span class="keywordtype">long</span> &amp; s1, pair&lt;long, long&gt; s2) { <span class="comment">//C++11 lambda function syntax</span></div>
+<div class="line">        s1=s1+s2.first;</div>
+<div class="line">    }</div>
+<div class="line">);</div>
+</div><!-- fragment --><p>After this loop, all the values in u1 have increased by one. Note that the lambda function takes its first argument by reference, otherwise it wouldn't have been able to update the original values in u1.</p>
+<p>You can look at the tests for more exemples.</p>
+<p>Other interesting functionalities are : array slicing, reshaping, elementwise assignment, ntransform loops and broadcasting.</p>
+<h2>Numerical algorithms</h2>
+<p>Some implementations of numerical algorithms can be found in the ndata/numerics/ directory. At the moment there are only functions to perform n-dimensional interpolations of various kinds : nearest neighbor, n-linear, and cubic.</p>
+<h2>API Reference</h2>
+<p>Doxygen generated API documentation <a href="http://ymullr.github.io/ndata/doc/index.html">may be found here</a> </p>
+</div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu May 7 2015 15:32:48 for My Project by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu May 7 2015 19:59:57 for Ndata by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

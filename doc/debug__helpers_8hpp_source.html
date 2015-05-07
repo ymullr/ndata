@@ -130,25 +130,22 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;<span class="preprocessor">    \</span></div>
 <div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;<span class="preprocessor"></span></div>
 <div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;<span class="preprocessor"></span></div>
-<div class="line"><a name="l00054"></a><span class="lineno"><a class="line" href="classMakeString.html">   54</a></span>&#160;<span class="keyword">class </span><a class="code" href="classMakeString.html">MakeString</a> {</div>
+<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;<span class="keyword">class </span>MakeString {</div>
 <div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;    <span class="keyword">public</span>:</div>
-<div class="line"><a name="l00056"></a><span class="lineno"><a class="line" href="classMakeString.html#a81b5bb4a52ad4612c9e6a8620e4a8691">   56</a></span>&#160;        std::stringstream <a class="code" href="classMakeString.html#a81b5bb4a52ad4612c9e6a8620e4a8691">stream</a>;</div>
-<div class="line"><a name="l00057"></a><span class="lineno"><a class="line" href="classMakeString.html#a944c57a36c5bd339c31dfb1a357533dd">   57</a></span>&#160;        <span class="keyword">operator</span> std::string()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> stream.str(); }</div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;        std::stringstream stream;</div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;        <span class="keyword">operator</span> std::string()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> stream.str(); }</div>
 <div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;</div>
 <div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;        <span class="keyword">template</span>&lt;<span class="keyword">class</span> T&gt;</div>
-<div class="line"><a name="l00060"></a><span class="lineno"><a class="line" href="classMakeString.html#aeb221267ada17c228248324c5837e8b9">   60</a></span>&#160;        <a class="code" href="classMakeString.html">MakeString</a>&amp; <a class="code" href="classMakeString.html#aeb221267ada17c228248324c5837e8b9">operator&lt;&lt;</a>(T <span class="keyword">const</span>&amp; VAR) { stream &lt;&lt; VAR; <span class="keywordflow">return</span> *<span class="keyword">this</span>; }</div>
+<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;        MakeString&amp; operator&lt;&lt;(T <span class="keyword">const</span>&amp; VAR) { stream &lt;&lt; VAR; <span class="keywordflow">return</span> *<span class="keyword">this</span>; }</div>
 <div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;};</div>
 <div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;</div>
 <div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;</div>
 <div class="line"><a name="l00064"></a><span class="lineno"><a class="line" href="debug__helpers_8hpp.html#ae443a870c9cbb7a3aa963adba12620f4">   64</a></span>&#160;<span class="keyword">typedef</span> pair&lt;bool, string&gt; <a class="code" href="debug__helpers_8hpp.html#ae443a870c9cbb7a3aa963adba12620f4">TestResult</a>;</div>
 <div class="ttc" id="debug__helpers_8hpp_html_ae443a870c9cbb7a3aa963adba12620f4"><div class="ttname"><a href="debug__helpers_8hpp.html#ae443a870c9cbb7a3aa963adba12620f4">TestResult</a></div><div class="ttdeci">pair&lt; bool, string &gt; TestResult</div><div class="ttdef"><b>Definition:</b> debug_helpers.hpp:64</div></div>
-<div class="ttc" id="classMakeString_html_a81b5bb4a52ad4612c9e6a8620e4a8691"><div class="ttname"><a href="classMakeString.html#a81b5bb4a52ad4612c9e6a8620e4a8691">MakeString::stream</a></div><div class="ttdeci">std::stringstream stream</div><div class="ttdef"><b>Definition:</b> debug_helpers.hpp:56</div></div>
-<div class="ttc" id="classMakeString_html"><div class="ttname"><a href="classMakeString.html">MakeString</a></div><div class="ttdef"><b>Definition:</b> debug_helpers.hpp:54</div></div>
-<div class="ttc" id="classMakeString_html_aeb221267ada17c228248324c5837e8b9"><div class="ttname"><a href="classMakeString.html#aeb221267ada17c228248324c5837e8b9">MakeString::operator&lt;&lt;</a></div><div class="ttdeci">MakeString &amp; operator&lt;&lt;(T const &amp;VAR)</div><div class="ttdef"><b>Definition:</b> debug_helpers.hpp:60</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu May 7 2015 19:53:50 for Ndata by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu May 7 2015 19:59:57 for Ndata by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

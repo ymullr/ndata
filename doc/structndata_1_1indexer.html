@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.6"/>
-<title>My Project: ndata::indexer&lt; ndims &gt; Struct Template Reference</title>
+<title>Ndata: ndata::indexer&lt; ndims &gt; Struct Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -22,8 +22,9 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">My Project
+   <div id="projectname">Ndata
    </div>
+   <div id="projectbrief">Header only C++ template library for working with n-dimensional arrays of arbitrary data</div>
   </td>
  </tr>
  </tbody>
@@ -37,7 +38,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
       <li>
@@ -71,7 +71,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Macros</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&#160;</span>Macros</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -97,7 +97,10 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!--header-->
 <div class="contents">
 
-<p><code>#include &lt;<a class="el" href="ndata_8hpp_source.html">ndata.hpp</a>&gt;</code></p>
+<p>An indexer object constructed with a given shape can compute the "flat" index for an element in a contiguous memory array from a set of indexes along each dimension.  
+ <a href="structndata_1_1indexer.html#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="indexer_8hpp_source.html">indexer.hpp</a>&gt;</code></p>
 <div class="dynheader">
 Inheritance diagram for ndata::indexer&lt; ndims &gt;:</div>
 <div class="dyncontent">
@@ -106,7 +109,7 @@ Inheritance diagram for ndata::indexer&lt; ndims &gt;:</div>
   <map id="ndata::indexer&lt; ndims &gt;_map" name="ndata::indexer&lt; ndims &gt;_map">
 <area href="structndata_1_1ndatacontainer.html" alt="ndata::ndatacontainer&lt; ContainerT, T, ndims &gt;" shape="rect" coords="0,56,303,80"/>
 <area href="structndata_1_1ndatacontainer.html" alt="ndata::ndatacontainer&lt; std::vector&lt; T &gt;, T, ndims &gt;" shape="rect" coords="313,56,616,80"/>
-<area href="structndata_1_1nvector.html" alt="ndata::nvector&lt; T, ndims &gt;" shape="rect" coords="313,112,616,136"/>
+<area href="structndata_1_1nvector.html" title="A n-dimensional container using std::vector from the STL. " alt="ndata::nvector&lt; T, ndims &gt;" shape="rect" coords="313,112,616,136"/>
 </map>
  </div></div>
 <table class="memberdecls">
@@ -154,14 +157,14 @@ Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
 <tr class="memitem:a7defbf404c6377d018b6f47c7436255a"><td class="memTemplParams" colspan="2">template&lt;size_t idim, long ndimslices, typename IntegerType , typename std::enable_if&lt; std::is_integral&lt; IntegerType &gt;::value, IntegerType &gt;::type *  = nullptr, typename... SliceIndex&gt; </td></tr>
-<tr class="memitem:a7defbf404c6377d018b6f47c7436255a"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structndata_1_1indexer.html#a7defbf404c6377d018b6f47c7436255a">slice_rec</a> (size_t start_ind, helpers::SliceAcc&lt; ndimslices &gt; slices, IntegerType <a class="el" href="structndata_1_1indexer.html#a5127039f0299f632293dca80821c60e9">index</a>, SliceIndex...slice_or_index)</td></tr>
+<tr class="memitem:a7defbf404c6377d018b6f47c7436255a"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structndata_1_1indexer.html#a7defbf404c6377d018b6f47c7436255a">slice_rec</a> (size_t start_ind, <a class="el" href="structndata_1_1vecarray.html">helpers::SliceAcc</a>&lt; ndimslices &gt; slices, IntegerType <a class="el" href="structndata_1_1indexer.html#a5127039f0299f632293dca80821c60e9">index</a>, SliceIndex...slice_or_index)</td></tr>
 <tr class="separator:a7defbf404c6377d018b6f47c7436255a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8a56eaee88c448719669e8a880caaf48"><td class="memTemplParams" colspan="2">template&lt;size_t idim, long ndimslices, typename... SliceIndex&gt; </td></tr>
-<tr class="memitem:a8a56eaee88c448719669e8a880caaf48"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structndata_1_1indexer.html#a8a56eaee88c448719669e8a880caaf48">slice_rec</a> (size_t start_ind, helpers::SliceAcc&lt; ndimslices &gt; slices, <a class="el" href="structndata_1_1Rng.html">Rng</a> range, SliceIndex...slice_or_index)</td></tr>
-<tr class="separator:a8a56eaee88c448719669e8a880caaf48"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a07d09450911ac6189bc6befd2c4ffbdb"><td class="memTemplParams" colspan="2">template&lt;size_t idim, long ndimslices, typename... SliceIndex&gt; </td></tr>
+<tr class="memitem:a07d09450911ac6189bc6befd2c4ffbdb"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structndata_1_1indexer.html#a07d09450911ac6189bc6befd2c4ffbdb">slice_rec</a> (size_t start_ind, <a class="el" href="structndata_1_1vecarray.html">helpers::SliceAcc</a>&lt; ndimslices &gt; slices, <a class="el" href="structndata_1_1range.html">range</a> <a class="el" href="structndata_1_1range.html">range</a>, SliceIndex...slice_or_index)</td></tr>
+<tr class="separator:a07d09450911ac6189bc6befd2c4ffbdb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ade11c6b42bb478d00a709aa1fff74b6f"><td class="memTemplParams" colspan="2">template&lt;size_t idim, long ndimslices&gt; </td></tr>
 <tr class="memitem:ade11c6b42bb478d00a709aa1fff74b6f"><td class="memTemplItemLeft" align="right" valign="top">std::pair&lt; size_t, <br class="typebreak"/>
-helpers::SliceAcc&lt; ndimslices &gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structndata_1_1indexer.html#ade11c6b42bb478d00a709aa1fff74b6f">slice_rec</a> (size_t start_ind, helpers::SliceAcc&lt; ndimslices &gt; slices)</td></tr>
+<a class="el" href="structndata_1_1vecarray.html">helpers::SliceAcc</a>&lt; ndimslices &gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structndata_1_1indexer.html#ade11c6b42bb478d00a709aa1fff74b6f">slice_rec</a> (size_t start_ind, <a class="el" href="structndata_1_1vecarray.html">helpers::SliceAcc</a>&lt; ndimslices &gt; slices)</td></tr>
 <tr class="separator:ade11c6b42bb478d00a709aa1fff74b6f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4a2acd3877329ab2fe9dae2893980663"><td class="memItemLeft" align="right" valign="top">long&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structndata_1_1indexer.html#a4a2acd3877329ab2fe9dae2893980663">reverse_negative_index</a> (size_t idim, long ind)</td></tr>
 <tr class="separator:a4a2acd3877329ab2fe9dae2893980663"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -180,7 +183,12 @@ Protected Attributes</h2></td></tr>
 <tr class="memitem:a4bef9f55f5f73002ac1d4a3adbd85c8d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structndata_1_1vecarray.html">vecarray</a>&lt; long, ndims &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structndata_1_1indexer.html#a4bef9f55f5f73002ac1d4a3adbd85c8d">strides_</a></td></tr>
 <tr class="separator:a4bef9f55f5f73002ac1d4a3adbd85c8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><h3>template&lt;long ndims&gt;<br/>
+struct ndata::indexer&lt; ndims &gt;</h3>
+
+<p>An indexer object constructed with a given shape can compute the "flat" index for an element in a contiguous memory array from a set of indexes along each dimension. </p>
+</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a class="anchor" id="a740c89df53b4899456e436d6caad5140"></a>
 <div class="memitem">
 <div class="memproto">
@@ -589,7 +597,7 @@ template&lt;typename... IndexOrRangeT&gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>index_or_range may be a long or <a class="el" href="structndata_1_1Rng.html">Rng</a> </p>
+<p>index_or_range may be a long or range </p>
 
 </div>
 </div>
@@ -741,7 +749,7 @@ template&lt;size_t idim, long ndimslices, typename IntegerType , typename std::e
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">helpers::SliceAcc&lt; ndimslices &gt;&#160;</td>
+          <td class="paramtype"><a class="el" href="structndata_1_1vecarray.html">helpers::SliceAcc</a>&lt; ndimslices &gt;&#160;</td>
           <td class="paramname"><em>slices</em>, </td>
         </tr>
         <tr>
@@ -773,7 +781,7 @@ template&lt;size_t idim, long ndimslices, typename IntegerType , typename std::e
 
 </div>
 </div>
-<a class="anchor" id="a8a56eaee88c448719669e8a880caaf48"></a>
+<a class="anchor" id="a07d09450911ac6189bc6befd2c4ffbdb"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
@@ -793,13 +801,13 @@ template&lt;size_t idim, long ndimslices, typename... SliceIndex&gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">helpers::SliceAcc&lt; ndimslices &gt;&#160;</td>
+          <td class="paramtype"><a class="el" href="structndata_1_1vecarray.html">helpers::SliceAcc</a>&lt; ndimslices &gt;&#160;</td>
           <td class="paramname"><em>slices</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="structndata_1_1Rng.html">Rng</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="structndata_1_1range.html">range</a>&#160;</td>
           <td class="paramname"><em>range</em>, </td>
         </tr>
         <tr>
@@ -835,7 +843,7 @@ template&lt;size_t idim, long ndimslices&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::pair&lt;size_t, helpers::SliceAcc&lt;ndimslices&gt; &gt; <a class="el" href="structndata_1_1indexer.html">ndata::indexer</a>&lt; ndims &gt;::slice_rec </td>
+          <td class="memname">std::pair&lt;size_t, <a class="el" href="structndata_1_1vecarray.html">helpers::SliceAcc</a>&lt;ndimslices&gt; &gt; <a class="el" href="structndata_1_1indexer.html">ndata::indexer</a>&lt; ndims &gt;::slice_rec </td>
           <td>(</td>
           <td class="paramtype">size_t&#160;</td>
           <td class="paramname"><em>start_ind</em>, </td>
@@ -843,7 +851,7 @@ template&lt;size_t idim, long ndimslices&gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">helpers::SliceAcc&lt; ndimslices &gt;&#160;</td>
+          <td class="paramtype"><a class="el" href="structndata_1_1vecarray.html">helpers::SliceAcc</a>&lt; ndimslices &gt;&#160;</td>
           <td class="paramname"><em>slices</em>&#160;</td>
         </tr>
         <tr>
@@ -928,14 +936,13 @@ template&lt;long ndims&gt; </div>
 
 </div>
 </div>
-<hr/>The documentation for this struct was generated from the following files:<ul>
-<li><a class="el" href="ndata_8hpp_source.html">ndata.hpp</a></li>
-<li><a class="el" href="nindexer_8hpp_source.html">nindexer.hpp</a></li>
+<hr/>The documentation for this struct was generated from the following file:<ul>
+<li>ndata/<a class="el" href="indexer_8hpp_source.html">indexer.hpp</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu May 7 2015 15:32:48 for My Project by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu May 7 2015 19:59:57 for Ndata by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

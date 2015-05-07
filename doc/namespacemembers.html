@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.6"/>
-<title>My Project: Namespace Members</title>
+<title>Ndata: Namespace Members</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -22,8 +22,9 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">My Project
+   <div id="projectname">Ndata
    </div>
+   <div id="projectbrief">Header only C++ template library for working with n-dimensional arrays of arbitrary data</div>
   </td>
  </tr>
  </tbody>
@@ -37,7 +38,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li class="current"><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
       <li>
@@ -60,7 +60,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   </div>
   <div id="navrow2" class="tabs2">
     <ul class="tablist">
-      <li><a href="namespaces.html"><span>Namespace&#160;List</span></a></li>
       <li class="current"><a href="namespacemembers.html"><span>Namespace&#160;Members</span></a></li>
     </ul>
   </div>
@@ -71,6 +70,22 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       <li><a href="namespacemembers_vars.html"><span>Variables</span></a></li>
       <li><a href="namespacemembers_type.html"><span>Typedefs</span></a></li>
       <li><a href="namespacemembers_enum.html"><span>Enumerations</span></a></li>
+      <li><a href="namespacemembers_eval.html"><span>Enumerator</span></a></li>
+    </ul>
+  </div>
+  <div id="navrow4" class="tabs3">
+    <ul class="tablist">
+      <li><a href="#index_c"><span>c</span></a></li>
+      <li><a href="#index_d"><span>d</span></a></li>
+      <li><a href="#index_e"><span>e</span></a></li>
+      <li><a href="#index_i"><span>i</span></a></li>
+      <li><a href="#index_m"><span>m</span></a></li>
+      <li><a href="#index_n"><span>n</span></a></li>
+      <li><a href="#index_o"><span>o</span></a></li>
+      <li><a href="#index_p"><span>p</span></a></li>
+      <li><a href="#index_s"><span>s</span></a></li>
+      <li><a href="#index_u"><span>u</span></a></li>
+      <li class="current"><a href="#index_z"><span>z</span></a></li>
     </ul>
   </div>
 </div><!-- top -->
@@ -79,7 +94,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Macros</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&#160;</span>Macros</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -89,15 +104,35 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div>
 
 <div class="contents">
-<div class="textblock">Here is a list of all namespace members with links to the namespace documentation for each member:</div><ul>
-<li>array_from_argpack()
-: <a class="el" href="namespacendata_1_1helpers.html#a2abb6caed3d28281c0ae836485998552">ndata::helpers</a>
+<div class="textblock">Here is a list of all namespace members with links to the namespace documentation for each member:</div>
+
+<h3><a class="anchor" id="index_c"></a>- c -</h3><ul>
+<li>clamp()
+: <a class="el" href="namespacendata_1_1interp.html#a7b47e500bd2809c5c149f8b5be3d68cc">ndata::interp</a>
 </li>
+<li>CYCLIC
+: <a class="el" href="namespacendata_1_1interp.html#aa8b043d5cc1b2a7933a4de84400ecad3a9d0f4386411db398772f3485ffee78dc">ndata::interp</a>
+</li>
+</ul>
+
+
+<h3><a class="anchor" id="index_d"></a>- d -</h3><ul>
 <li>DYNAMICALLY_SIZED
 : <a class="el" href="namespacendata.html#acff63851f243a79e2870ccd505d0c4ed">ndata</a>
 </li>
+</ul>
+
+
+<h3><a class="anchor" id="index_e"></a>- e -</h3><ul>
 <li>END
 : <a class="el" href="namespacendata.html#aa8ccbc3cadf79a8da97e74fb59564e79">ndata</a>
+</li>
+</ul>
+
+
+<h3><a class="anchor" id="index_i"></a>- i -</h3><ul>
+<li>interpolate()
+: <a class="el" href="namespacendata_1_1interp.html#abc767ce6054e43fdfd5d29604532fe91">ndata::interp</a>
 </li>
 <li>IsMinusOne
 : <a class="el" href="namespacendata.html#aba307b4e0321a0b0b238a541941db5b2">ndata</a>
@@ -105,51 +140,102 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>IsNotMinusOne
 : <a class="el" href="namespacendata.html#aaf41ac4bf41a0af568d16a1a128466ad">ndata</a>
 </li>
+</ul>
+
+
+<h3><a class="anchor" id="index_m"></a>- m -</h3><ul>
 <li>make_indexer()
-: <a class="el" href="namespacendata_1_1helpers.html#a57027ef1236bd40f9eeebe1bf78eeb58">ndata::helpers</a>
-, <a class="el" href="namespacendata.html#aa89c050779e29aa97ae07ef140c30012">ndata</a>
-</li>
-<li>make_indexer_from_slices_helper()
-: <a class="el" href="namespacendata_1_1helpers.html#ab53bb255ec2ebbb13c308efab1553edc">ndata::helpers</a>
+: <a class="el" href="namespacendata.html#aa89c050779e29aa97ae07ef140c30012">ndata</a>
 </li>
 <li>make_ndatacontainer()
 : <a class="el" href="namespacendata.html#a0b5f86b372314b4881ab2e00a9dae85d">ndata</a>
 </li>
 <li>make_nvector()
-: <a class="el" href="namespacendata.html#aa8350b89ca84b95f4feb6f16dfef3466">ndata</a>
+: <a class="el" href="namespacendata.html#af8bd6f535c1c8365138b6a14cdb79f54">ndata</a>
 </li>
 <li>make_vecarray()
 : <a class="el" href="namespacendata.html#a9b5342ec4863a11ad4136a9c9ee86380">ndata</a>
 </li>
-<li>make_vecarray_like_biggest()
-: <a class="el" href="namespacendata_1_1helpers.html#a2848209d653e15763e987c90c3f8cda8">ndata::helpers</a>
-</li>
-<li>make_vecarray_like_biggest_dyn()
-: <a class="el" href="namespacendata_1_1helpers.html#ae4d84120b82e547c615de24dcbdb19b6">ndata::helpers</a>
-</li>
 <li>MinusOne
 : <a class="el" href="namespacendata.html#a83c542d2c52d1cae886f09c45b4a09cb">ndata</a>
 </li>
+</ul>
+
+
+<h3><a class="anchor" id="index_n"></a>- n -</h3><ul>
 <li>ndataview
 : <a class="el" href="namespacendata.html#a9509cde739d951a8ee1272930715d893">ndata</a>
 </li>
 <li>Negate
 : <a class="el" href="namespacendata.html#a43a43b9ab791991294570c9e9b300fe6">ndata</a>
 </li>
+<li>nforeach()
+: <a class="el" href="namespacendata.html#a031e5ec8bf08b1be84bebb0fda839181">ndata</a>
+</li>
+<li>nforeach_base()
+: <a class="el" href="namespacendata.html#aad1d5a03e1dbac9d194e0f60b127130c">ndata</a>
+</li>
+<li>nforeach_parallel()
+: <a class="el" href="namespacendata.html#a4e82bd947801a84916a268cf82220989">ndata</a>
+</li>
 <li>NotMinusOne
 : <a class="el" href="namespacendata.html#af492569fbe650438ef5e58ea150e2a52">ndata</a>
+</li>
+<li>ntransform()
+: <a class="el" href="namespacendata.html#a9006ec4a1724c1746fc224b9c2c78720">ndata</a>
+</li>
+<li>ntransform_parallel()
+: <a class="el" href="namespacendata.html#ace3c9d507d05552a5b4fab0c1f55340e">ndata</a>
+</li>
+</ul>
+
+
+<h3><a class="anchor" id="index_o"></a>- o -</h3><ul>
+<li>overflow_behaviour
+: <a class="el" href="namespacendata_1_1interp.html#aa8b043d5cc1b2a7933a4de84400ecad3">ndata::interp</a>
+</li>
+</ul>
+
+
+<h3><a class="anchor" id="index_p"></a>- p -</h3><ul>
+<li>PARALLEL
+: <a class="el" href="namespacendata.html#a050afa8d6fc646d26dff7c10afdd9c9e">ndata</a>
+</li>
+<li>position_to_ifrac()
+: <a class="el" href="namespacendata_1_1interp.html#a5a110de5c589c44f6010f461673cf275">ndata::interp</a>
+</li>
+</ul>
+
+
+<h3><a class="anchor" id="index_s"></a>- s -</h3><ul>
+<li>SERIAL
+: <a class="el" href="namespacendata.html#ab703250368e95127728322a9f20ebe99">ndata</a>
 </li>
 <li>STATICALLY_SIZED
 : <a class="el" href="namespacendata.html#a4a41afbddf090b71eee06a7f4233b0a2">ndata</a>
 </li>
+<li>STRETCH
+: <a class="el" href="namespacendata_1_1interp.html#aa8b043d5cc1b2a7933a4de84400ecad3a880f2f766c4b92f3f7b868cdba7cd535">ndata::interp</a>
+</li>
+</ul>
+
+
+<h3><a class="anchor" id="index_u"></a>- u -</h3><ul>
 <li>UNINITIALIZED
 : <a class="el" href="namespacendata.html#a0cfbb92591e71bb6587eaaed002b21c5">ndata</a>
+</li>
+</ul>
+
+
+<h3><a class="anchor" id="index_z"></a>- z -</h3><ul>
+<li>ZERO
+: <a class="el" href="namespacendata_1_1interp.html#aa8b043d5cc1b2a7933a4de84400ecad3af3c9128e1770821f0c9f312a4f8c31b5">ndata::interp</a>
 </li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu May 7 2015 15:32:48 for My Project by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu May 7 2015 19:59:57 for Ndata by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

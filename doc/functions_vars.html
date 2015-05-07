@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.6"/>
-<title>My Project: Class Members - Variables</title>
+<title>Ndata: Class Members - Variables</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -22,8 +22,9 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">My Project
+   <div id="projectname">Ndata
    </div>
+   <div id="projectbrief">Header only C++ template library for working with n-dimensional arrays of arbitrary data</div>
   </td>
  </tr>
  </tbody>
@@ -37,7 +38,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
       <li>
@@ -80,7 +80,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Macros</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&#160;</span>Macros</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -94,8 +94,10 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>data_
 : <a class="el" href="structndata_1_1ndatacontainer.html#a29214b62e5842713d77c38faf0b21fd2">ndata::ndatacontainer&lt; ContainerT, T, ndims &gt;</a>
 </li>
-<li>heapStorage
-: <a class="el" href="structndata_1_1vecarray_3_01T_00_01static__size_00_01typename_01std_1_1enable__if_3_07static__si03e54e386f9b0f01f534b5eff2689df9.html#a3b975d22f9bc2811e01167e9ae305759">ndata::vecarray&lt; T, static_size, typename std::enable_if&lt;(static_size==DYNAMICALLY_SIZED)&gt;::type &gt;</a>
+<li>ONESIDEDWIDTH
+: <a class="el" href="structndata_1_1interp_1_1kern__cubic.html#a24871149ca0c603b63eb62614529b85a">ndata::interp::kern_cubic</a>
+, <a class="el" href="structndata_1_1interp_1_1kern__linear.html#a6b9b234e244285e66e1448aa9ca7df52">ndata::interp::kern_linear</a>
+, <a class="el" href="structndata_1_1interp_1_1kern__nearest__neighbor.html#a61dbcfa111edc5f3247c9b32a556e884">ndata::interp::kern_nearest_neighbor</a>
 </li>
 <li>shape_
 : <a class="el" href="structndata_1_1indexer.html#abdc2ab19ff6284362b979a063815f26c">ndata::indexer&lt; ndims &gt;</a>
@@ -104,33 +106,28 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 : <a class="el" href="structndata_1_1vecarray_1_1type.html#ac4c81768b179d802d95fa4e5bdc47779">ndata::vecarray&lt; T, static_size, Enable &gt;::type</a>
 </li>
 <li>start
-: <a class="el" href="structndata_1_1Rng.html#a81c139b372fead1c4c3a9879a93e4665">ndata::Rng</a>
+: <a class="el" href="structndata_1_1range.html#a93fe9934d90078b7b4961da9fd405d3e">ndata::range</a>
 </li>
 <li>start_index_
 : <a class="el" href="structndata_1_1indexer.html#aea9952e7e7578e9ca88f708f032b3843">ndata::indexer&lt; ndims &gt;</a>
 </li>
 <li>STATIC_SIZE_OR_DYNAMIC
 : <a class="el" href="structndata_1_1vecarray_1_1type.html#aa343eac890abfb28e438af6ce7795e9e">ndata::vecarray&lt; T, static_size, Enable &gt;::type</a>
-, <a class="el" href="structndata_1_1vecarray_3_01T_00_01static__size_00_01typename_01std_1_1enable__if_3_07static__si03e54e386f9b0f01f534b5eff2689df9.html#a5247f8a883e27df6af70eb5d6c8be436">ndata::vecarray&lt; T, static_size, typename std::enable_if&lt;(static_size==DYNAMICALLY_SIZED)&gt;::type &gt;</a>
 </li>
 <li>step
-: <a class="el" href="structndata_1_1Rng.html#ac247dbc8a2324a57779f69c3c65f85d1">ndata::Rng</a>
+: <a class="el" href="structndata_1_1range.html#afd97502982aa1f15fb9c4fd3dfe06009">ndata::range</a>
 </li>
 <li>stop
-: <a class="el" href="structndata_1_1Rng.html#a6ac57bbbdd5c54964ce6dc65ef0dc6ce">ndata::Rng</a>
+: <a class="el" href="structndata_1_1range.html#a9492bf2bb4ab08a1cad12d9fa5f7a328">ndata::range</a>
 </li>
 <li>strides_
 : <a class="el" href="structndata_1_1indexer.html#a4bef9f55f5f73002ac1d4a3adbd85c8d">ndata::indexer&lt; ndims &gt;</a>
-</li>
-<li>value
-: <a class="el" href="structndata_1_1helpers_1_1static__max__or__dynamic_3_01val1_01_4.html#a65dce4827e6bda333ed7446a778797c8">ndata::helpers::static_max_or_dynamic&lt; val1 &gt;</a>
-, <a class="el" href="structndata_1_1helpers_1_1static__max__or__dynamic_3_01val1_00_01val2_00_01vals_8_8_8_4.html#a8de80d291f361aeaa9a66bf19e080f1e">ndata::helpers::static_max_or_dynamic&lt; val1, val2, vals...&gt;</a>
 </li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu May 7 2015 15:32:48 for My Project by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu May 7 2015 19:59:57 for Ndata by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

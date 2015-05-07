@@ -1,8 +1,26 @@
 var searchData=
 [
-  ['reshape',['reshape',['../structndata_1_1ndatacontainer.html#a6dd2a0ca08243f9f15447e68ba9be983',1,'ndata::ndatacontainer::reshape()'],['../structndata_1_1indexer.html#a29e1a40ea34315b125f8e138720d2156',1,'ndata::indexer::reshape()']]],
-  ['reverse',['reverse',['../structndata_1_1vecarray_1_1type.html#a69763119bf3e3f004f1875a86499856f',1,'ndata::vecarray::type::reverse()'],['../structndata_1_1vecarray_3_01T_00_01static__size_00_01typename_01std_1_1enable__if_3_07static__si03e54e386f9b0f01f534b5eff2689df9.html#acc67cf7d24188cd36c3bb097443ade55',1,'ndata::vecarray&lt; T, static_size, typename std::enable_if&lt;(static_size==DYNAMICALLY_SIZED)&gt;::type &gt;::reverse()']]],
-  ['reverse_5fnegative_5findex',['reverse_negative_index',['../structndata_1_1indexer.html#a4a2acd3877329ab2fe9dae2893980663',1,'ndata::indexer']]],
-  ['rng',['Rng',['../structndata_1_1Rng.html#aa937ede0a2a8b16462cd2dba3bcdd427',1,'ndata::Rng::Rng()'],['../structndata_1_1Rng.html#a8aaa8e76c9eab57745b9880460f6fef8',1,'ndata::Rng::Rng(long index)'],['../structndata_1_1Rng.html#a274c2482921979ba8854d89411242266',1,'ndata::Rng::Rng(long start, long stop)'],['../structndata_1_1Rng.html#ae380912bd507f79a73b55b5a6eb261df',1,'ndata::Rng::Rng(long start, long stop, long step)']]],
-  ['rng',['Rng',['../structndata_1_1Rng.html',1,'ndata']]]
+  ['interp',['interp',['../namespacendata_1_1interp.html',1,'ndata']]],
+  ['ndata',['ndata',['../namespacendata.html',1,'']]],
+  ['ndata_2ehpp',['ndata.hpp',['../ndata_8hpp.html',1,'']]],
+  ['ndata_5fomp_5fget_5fnum_5fthreads',['NDATA_OMP_GET_NUM_THREADS',['../loops_8hpp.html#a3feca9fb4ad3f2bacd4af4effcfaedcf',1,'loops.hpp']]],
+  ['ndatacontainer',['ndatacontainer',['../structndata_1_1ndatacontainer.html',1,'ndata']]],
+  ['ndatacontainer',['ndatacontainer',['../structndata_1_1ndatacontainer.html#a50626bba1f3f8bcbd763233e8984dc35',1,'ndata::ndatacontainer::ndatacontainer(indexer&lt; ndims &gt; idxr, ContainerT data)'],['../structndata_1_1ndatacontainer.html#aef9fea6f56ce2d31696748619fc17748',1,'ndata::ndatacontainer::ndatacontainer()']]],
+  ['ndatacontainer_2ehpp',['ndatacontainer.hpp',['../ndatacontainer_8hpp.html',1,'']]],
+  ['ndatacontainer_3c_20std_3a_3avector_3c_20t_20_3e_2c_20t_2c_20ndims_20_3e',['ndatacontainer&lt; std::vector&lt; T &gt;, T, ndims &gt;',['../structndata_1_1ndatacontainer.html',1,'ndata']]],
+  ['ndataview',['ndataview',['../namespacendata.html#a9509cde739d951a8ee1272930715d893',1,'ndata']]],
+  ['ndindex',['ndindex',['../structndata_1_1indexer.html#a986540a35c6d283cc8d9d87d15a7914c',1,'ndata::indexer']]],
+  ['ndinterp_5fdebug',['NDINTERP_DEBUG',['../interp_8hpp.html#a3c2889243c887ccca54ff12c827c360f',1,'interp.hpp']]],
+  ['negate',['Negate',['../namespacendata.html#a43a43b9ab791991294570c9e9b300fe6',1,'ndata']]],
+  ['nforeach',['nforeach',['../namespacendata.html#a73a3db99acf62f3fd8b588753d00cc91',1,'ndata::nforeach(std::tuple&lt; Ndatacontainer &amp;...&gt; ndata_tup_refs, FuncT func)'],['../namespacendata.html#a031e5ec8bf08b1be84bebb0fda839181',1,'ndata::nforeach(std::tuple&lt; ndataview&lt; Ts, ndims &gt;...&gt; ndata_tup_refs, FuncT func)']]],
+  ['nforeach_5fbase',['nforeach_base',['../namespacendata.html#aad1d5a03e1dbac9d194e0f60b127130c',1,'ndata']]],
+  ['nforeach_5fparallel',['nforeach_parallel',['../namespacendata.html#ad5cfabf12a9a440ed223189663817284',1,'ndata::nforeach_parallel(std::tuple&lt; Ndatacontainer &amp;...&gt; ndata_tup_refs, FuncT func)'],['../namespacendata.html#a4e82bd947801a84916a268cf82220989',1,'ndata::nforeach_parallel(std::tuple&lt; ndataview&lt; Ts, ndims &gt;...&gt; ndata_tup_refs, FuncT func)']]],
+  ['notminusone',['NotMinusOne',['../namespacendata.html#af492569fbe650438ef5e58ea150e2a52',1,'ndata']]],
+  ['ntransform',['ntransform',['../namespacendata.html#a9006ec4a1724c1746fc224b9c2c78720',1,'ndata']]],
+  ['ntransform_5fparallel',['ntransform_parallel',['../namespacendata.html#ace3c9d507d05552a5b4fab0c1f55340e',1,'ndata']]],
+  ['numtype_5fadapter_5feigen_2ehpp',['numtype_adapter_eigen.hpp',['../numtype__adapter__eigen_8hpp.html',1,'']]],
+  ['numtype_5fadapter_5ffundamental_2ehpp',['numtype_adapter_fundamental.hpp',['../numtype__adapter__fundamental_8hpp.html',1,'']]],
+  ['nvector',['nvector',['../structndata_1_1nvector.html#aa7bd760b3ecff524f20657e654bf8886',1,'ndata::nvector::nvector(indexer&lt; ndims &gt; idxr, T initial_value=T())'],['../structndata_1_1nvector.html#a5be3935db00c27bfbb23aecbd34702c3',1,'ndata::nvector::nvector(indexer&lt; ndims &gt; idxr, UNINITIALIZED)'],['../structndata_1_1nvector.html#aa763778fa31908cf98cb03718d1de306',1,'ndata::nvector::nvector(indexer&lt; ndims &gt; idxr, std::vector&lt; T &gt; data)'],['../structndata_1_1nvector.html#a7867f93824d42178c59a7de4ccf1db19',1,'ndata::nvector::nvector(indexer&lt; ndims &gt; idxr, T_rhs *data)'],['../structndata_1_1nvector.html#a65cb2188e5307832c45f2ee0c64f77f9',1,'ndata::nvector::nvector(ndatacontainer&lt; ContainerT_rhs, T_rhs, ndims &gt; ndv)'],['../structndata_1_1nvector.html#aa29f31d2485743b4b9f567d2f54435f5',1,'ndata::nvector::nvector()']]],
+  ['nvector',['nvector',['../structndata_1_1nvector.html',1,'ndata']]],
+  ['nvector_2ehpp',['nvector.hpp',['../nvector_8hpp.html',1,'']]]
 ];

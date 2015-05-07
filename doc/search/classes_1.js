@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['ndatacontainer',['ndatacontainer',['../structndata_1_1ndatacontainer.html',1,'ndata']]],
-  ['ndatacontainer_3c_20std_3a_3avector_3c_20t_20_3e_2c_20t_2c_20ndims_20_3e',['ndatacontainer&lt; std::vector&lt; T &gt;, T, ndims &gt;',['../structndata_1_1ndatacontainer.html',1,'ndata']]],
-  ['nvector',['nvector',['../structndata_1_1nvector.html',1,'ndata']]]
+  ['kern_5fcubic',['kern_cubic',['../structndata_1_1interp_1_1kern__cubic.html',1,'ndata::interp']]],
+  ['kern_5flinear',['kern_linear',['../structndata_1_1interp_1_1kern__linear.html',1,'ndata::interp']]],
+  ['kern_5fnearest_5fneighbor',['kern_nearest_neighbor',['../structndata_1_1interp_1_1kern__nearest__neighbor.html',1,'ndata::interp']]]
 ];

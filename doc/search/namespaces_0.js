@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['helpers',['helpers',['../namespacendata_1_1helpers.html',1,'ndata']]],
+  ['interp',['interp',['../namespacendata_1_1interp.html',1,'ndata']]],
   ['ndata',['ndata',['../namespacendata.html',1,'']]]
 ];
