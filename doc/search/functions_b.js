@@ -1,0 +1,6 @@
+var searchData=
+[
+  ['size',['size',['../structndata_1_1indexer.html#af13f9b3b72572b3a56cee44eb1b9c1e4',1,'ndata::indexer::size()'],['../structndata_1_1vecarray_1_1type.html#a279804c4a3bb5df02d5371f3af819840',1,'ndata::vecarray::type::size()'],['../structndata_1_1vecarray_3_01T_00_01static__size_00_01typename_01std_1_1enable__if_3_07static__si03e54e386f9b0f01f534b5eff2689df9.html#a2df90c44b1c418140ebbf8574e3c1122',1,'ndata::vecarray&lt; T, static_size, typename std::enable_if&lt;(static_size==DYNAMICALLY_SIZED)&gt;::type &gt;::size()']]],
+  ['slice',['slice',['../structndata_1_1ndatacontainer.html#ab2e313ca5c4ca596dcd61744b35ec4ba',1,'ndata::ndatacontainer']]],
+  ['slice_5frec',['slice_rec',['../structndata_1_1indexer.html#a7defbf404c6377d018b6f47c7436255a',1,'ndata::indexer::slice_rec(size_t start_ind, helpers::SliceAcc&lt; ndimslices &gt; slices, IntegerType index, SliceIndex...slice_or_index)'],['../structndata_1_1indexer.html#a8a56eaee88c448719669e8a880caaf48',1,'ndata::indexer::slice_rec(size_t start_ind, helpers::SliceAcc&lt; ndimslices &gt; slices, Rng range, SliceIndex...slice_or_index)'],['../structndata_1_1indexer.html#ade11c6b42bb478d00a709aa1fff74b6f',1,'ndata::indexer::slice_rec(size_t start_ind, helpers::SliceAcc&lt; ndimslices &gt; slices)']]]
+];
