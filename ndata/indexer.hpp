@@ -24,7 +24,7 @@ static const long END = -1;
 
 
 /**
- * @brief A index-range object to used for slicing arrays
+ * @brief An index-range object to used for slicing arrays
  */
 struct range {
     long start;
