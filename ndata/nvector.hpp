@@ -40,7 +40,9 @@ struct nvector: ndatacontainer<std::vector<T>, T, ndims>  {
     { }
 
     /**
-     * @brief construct from an indexer and initial value to which the elements of the vector are initialized
+     * @brief construct from an indexer and leave data uninitialized (note: for now the internal std::vector will
+     *  default initialize the internal data anyway). The extra UNINITIALIZED parameter is here mostly to disambiguate
+     *  from the other constructor taking an ndatacontainer (which is implicitly convertible to an indexer due to inheritance).
      * @param idxr
      * @param data
      */
@@ -117,13 +119,35 @@ make_nvector(indexer<ndims> idxr, std::vector<T> data) {
 }
 
 
-//make new nvector from ndatacontainer
-template<typename T, long ndims>
+/**
+ * @brief make new nvector from ndatacontainer
+ */
+template<typename ContainerT, typename T, long ndims>
 auto //nvector<T, somedim>
-make_nvector(ndatacontainer<std::vector<T>, T, ndims> idxr) {
+make_nvector(ndatacontainer<ContainerT, T, ndims> idxr) {
     nvector<T, ndims> ret (idxr);
     return ret;
 }
+
+/**
+ * @brief Make a 1D nvector from a std::vector
+ */
+template<typename T>
+nvector<T, 1>
+make_nvector(std::vector<T> vec) {
+    return make_nvector(make_indexer(vec.size()), vec);
+}
+
+/**
+ * @brief Make a 0D nvector containing only one value. Useful when used with nforeach
+ *  and broadcasting to perform array reductions.
+ */
+template<typename T>
+nvector<T, 0>
+make_nvector(T val) {
+    return make_nvector(indexer<0>(), val);
+}
+
 
 }
 
