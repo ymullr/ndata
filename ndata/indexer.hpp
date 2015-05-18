@@ -20,7 +20,8 @@ namespace ndata {
  * 
  * This is a convenience alias
  */
-static const long END = -1;
+constexpr
+long END = -1;
 
 
 /**
@@ -57,6 +58,9 @@ struct range {
     { }
 };
 
+struct newdimT {};
+constexpr newdimT NEWDIM = newdimT();
+
 /**
  * @brief Helper function allowing the user to create an indexer, dimensionality is infered
  * from the number of arguments.
@@ -66,16 +70,6 @@ auto
 make_indexer(long size_0, LongT ... size_n) {
     return indexer<sizeof...(size_n)+1>(size_0, size_n...);
 }
-
-///**
-// * Helper function allowing the user to create an indexer, create indexer from its members
-// */
-//template <size_t ndims>
-//auto
-//make_indexer(vecarray<size_t, ndims> shape, vecarray<long, ndims> strides, size_t start_index) {
-//    return indexer<ndims>(start_index, shape, strides);
-//}
-
 
 namespace helpers {
 
@@ -95,15 +89,6 @@ namespace helpers {
 
 }
 
-//template<long ndims>
-//void
-//check_shape(vecarray<long, ndims> shape) {
-//    for (size_t i = 0; i < shape.size(); ++i) {
-//        assert(shape[i]>=1);
-//    }
-//}
-
-
 /**
  * @brief An indexer object constructed with a given shape can compute the "flat" index
  *  for an element in a contiguous memory array from a set of indexes along each dimension.
@@ -111,6 +96,9 @@ namespace helpers {
 template<long ndims>
 struct indexer {
 
+    /**
+     * @brief Initialize from size along each dimension.
+     */
     template<typename... LongT>
     explicit
     indexer(long shape0, LongT... shape):
@@ -134,8 +122,12 @@ struct indexer {
         strides_ = calc_strides_from_shape(shape_);
     }
 
-    //initialize from shape with default strides
-    //you can also pass a vector or array instead, it will autoconvert
+    /**
+     * @brief Initialize from shape with default strides
+     * @param shape The shape of the indexed data (the size along along each dimension).
+     *  An std::vector, an std::array or an std::initialization_list may be passed instead of a vecarray,
+     *  as vecarray is implicitly constructible from either of these.
+     */
     indexer(vecarray<long, ndims> shape):
         start_index_(0),
         shape_(shape),
@@ -144,7 +136,9 @@ struct indexer {
         //check_shape(shape_);
     }
 
-    //construct from members
+    /**
+     * @brief construct from members
+     */
     indexer(size_t start_index, vecarray<long, ndims> shape, vecarray<long, ndims> strides):
         start_index_(start_index),
         shape_(shape),
@@ -159,7 +153,7 @@ struct indexer {
 
 
     /**
-     * ndindex may here be passed as a vecarray (custom type), but also work with an 
+     * ndindex may here be passed as a vecarray (custom type), but also work with an
      * a std::array or a std::vector (when the number of dimensions is
      * known at compile time), or an std::vector when the number of dimensions
      * is known at runtime. 
@@ -218,7 +212,8 @@ struct indexer {
 
 
     /**
-     * index_or_range may be a long or range
+     * @brief Returns an indexer to a slice of the indexed data.
+     * @param index_or_range May be a size_t index, a long "reversible index" or the NEWDIM constant.
      */
     template <typename... IndexOrRangeT>
     auto
@@ -413,7 +408,9 @@ struct indexer {
         return slice_rec<idim+1, ndimslices>(start_ind, slices, slice_or_index...);
     }
 
-    //full slice {start, stop, step}
+    /**
+     * A full slice is given {start, stop, step}
+     */
     template <size_t idim, long ndimslices, typename... SliceIndex>
     auto
     slice_rec(
@@ -443,6 +440,32 @@ struct indexer {
         return slice_rec<idim+1, ndimslices+1>(start_ind, slices.append(full_slice), slice_or_index...); 
     }
 
+    /**
+     * A newdimT object is given. An new dimension with one element is added to the slice.
+     */
+    template <size_t idim, long ndimslices, typename... SliceIndex>
+    auto
+    slice_rec(
+            size_t start_ind,
+            helpers::SliceAcc<ndimslices> slices,
+            newdimT,
+            SliceIndex... slice_or_index
+            ) //-> decltype(slice_rec<idim+1, ndimsslices>(size_t, SlicesT<ndimslices>, SliceIndex...))
+    {
+        long new_stride = 0; //shouldn't matter since only one item
+
+        helpers::ShapeStridePair full_slice = std::make_pair(
+            1,
+            new_stride
+        );
+
+        //DOES increment ndimsslice
+        //DOESNT increment idim
+        //start_ind is untouched
+        return slice_rec<idim, ndimslices+1>(start_ind, slices.append(full_slice), slice_or_index...);
+    }
+
+
     //termination
     template <size_t idim, long ndimslices>
     std::pair<size_t, helpers::SliceAcc<ndimslices>>
@@ -453,7 +476,9 @@ struct indexer {
             ""
         );
 
-        static_assert(ndims == -1 or ndimslices<=ndims, "");
+        //not true if newdim added
+        //static_assert(ndims == -1 or ndimslices<=ndims, "");
+        static_assert(ndims == -1 or ndimslices>=0, "");
 
         return make_pair(start_ind, slices);
     }

@@ -4,7 +4,7 @@
 #include <memory>
 
 //TODO test dynamic ndarrays
-//TODO test assign and parallel ntransform
+//TODO test array with dimension 0 (slice, etc)
 
 using namespace std;
 using namespace ndata;
@@ -56,28 +56,19 @@ struct TestSuite {
 
         size_t N0=2, N1=5;
 
-        indexer<2> ndi_u (N0, N1);
+        indexer<2> ind (N0, N1);
 
-        vector<float> u (ndi_u.size());
-
-        for (size_t i = 0; i < u.size(); ++i) {
-            u[i] = i;
-        }
-
-        //ndindexer<2> ndi_fullslice1 = ndi_u.slice(array<long, 3> {0, long(N0), 1}, array<long, 3> {0, long(N1), 1});
-        
-        indexer<2> ndi_fullslice1 = ndi_u.index_slice(range(0, long(N0), 1), range(0, long(N1), 1));
-
-        indexer<2> ndi_fullslice2 = ndi_u.index_slice(
+        //"full" slice with diferent syntaxes
+        indexer<2> ind_fullslice1 = ind.index_slice(range(0, long(N0), 1), range(0, long(N1), 1));
+        indexer<2> ind_fullslice2 = ind.index_slice(
                 range(0, N0),
                 range(0, N1, 1)
                 );
+        indexer<2> ind_fullslice3 = ind.index_slice(range(0, N0), range(0, ndata::END));//END is = -1
 
-        indexer<2> ndi_fullslice3 = ndi_u.index_slice(range(0, N0), range(0, ndata::END));//END is = -1
 
         bool fs1ok, fs2ok, fs3ok;
-
-        fs1ok= fs2ok= fs3ok = true;
+        fs1ok = fs2ok = fs3ok = true;
 
         string fs1_msg;
         string fs2_msg;
@@ -88,13 +79,14 @@ struct TestSuite {
                 // manual 2D indexing
                 size_t indval = i0*N1+i1;
 
-                size_t i_fs1 = ndi_fullslice1.index(i0, i1); 
-                size_t i_fs2 = ndi_fullslice2.index(i0, i1); 
-                size_t i_fs3 = ndi_fullslice3.index(i0, i1); 
+                size_t i_fs1 = ind_fullslice1.index(i0, i1);
+                size_t i_fs2 = ind_fullslice2.index(i0, i1);
+                size_t i_fs3 = ind_fullslice3.index(i0, i1);
 
-                fs1ok = i_fs1 == indval;
-                fs2ok = i_fs2 == indval;
-                fs3ok = i_fs3 == indval;
+
+                fs1ok = fs1ok and i_fs1 == indval;
+                fs2ok = fs2ok and i_fs2 == indval;
+                fs3ok = fs3ok and i_fs3 == indval;
 
                 fs1_msg.append(MakeString() << i_fs1 << ", ");
                 fs2_msg.append(MakeString() << i_fs2 << ", ");
@@ -103,7 +95,6 @@ struct TestSuite {
                 ret_msg.append(MakeString() << indval << ", ");
 
 
-                success_bool = success_bool and fs1ok and fs2ok and fs3ok;
             }
 
             ret_msg.append("\n");
@@ -115,6 +106,24 @@ struct TestSuite {
         ret_msg.append(fs2_msg);
         ret_msg.append("\n\n");
         ret_msg.append(fs3_msg);
+        ret_msg.append("\n\n");
+
+        bool newdim_slice_ok = true;
+
+        indexer<1> ind2 (5);
+
+        //insert a new dimension with a single item
+        //useful with broadcasting
+        indexer<2> ind2_slice_newdim = ind2.index_slice(range(), NEWDIM);
+
+        for (size_t i = 0; i < ind2.size(); ++i) {
+            size_t i_slice_newdim =  ind2_slice_newdim.index(i, 0);
+            newdim_slice_ok = newdim_slice_ok and i_slice_newdim == i;
+            ret_msg.append(MakeString() << i_slice_newdim << "\n");
+        }
+
+        success_bool = fs1ok and fs2ok and fs3ok and newdim_slice_ok;
+
 
         RETURN_TESTRESULT(success_bool, ret_msg);
     };
@@ -145,7 +154,8 @@ struct TestSuite {
 
         size_t Nx=3, Ny=5;
 
-        nvector<long, 2> u (make_indexer(Nx, Ny), {0});
+        nvector<long, 2> u (make_indexer(Nx, Ny), 0l);
+        nvector<long, 2> u_unini (make_indexer(Nx, Ny), ndata::UNINITIALIZED);
 
         for (size_t i = 0; i < u.size(); ++i) {
             u[i] = i;
@@ -251,7 +261,7 @@ struct TestSuite {
         //zero initialized
         auto u = make_nvector<long>(make_indexer(2, 5));
 
-        auto uview = u.to_view();
+        auto uview = u.as_view();
 
         for (size_t ix = 0; ix < 2; ++ix) {
             for (size_t iy = 0; iy < 5; ++iy) {

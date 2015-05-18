@@ -23,9 +23,10 @@ using namespace std;
         acc_message.append("success\n"); \
     } else { \
         acc_message.append("FAILURE"); \
+        /* add message from test to acc_message*/ \
+        acc_message.append(messages_TMP); \
+        acc_message.append("\n"); \
     } \
-    acc_message.append("\n"); \
-    acc_message.append(messages_TMP); \
     acc_message.append("\n"); \
     \
 

@@ -19,6 +19,7 @@ namespace helpers {
     template<long N> using SliceAcc = vecarray<ShapeStridePair, N>;
 
 
+    //struct used to implement "type level function"
     template <typename T, typename ... Ts>
     struct static_check_valid_indice_types<T, Ts...>{
         static constexpr bool value =
@@ -33,31 +34,6 @@ namespace helpers {
         static constexpr bool value = std::is_integral<T>::value;
     };
 
-    //template <typename Indexer, typename... Indexers>
-    //auto // vecarray<Indexer, N>
-    //broadcast(Indexers... others) {
-    //    constexpr size_t arrsize = sizeof...(others);
-
-    //    vecarray<Indexer, arrsize> arr_args = array_from_argpack(vecarray<Indexer, 0>(), others...);
-
-    //    vecarray<Indexer, arrsize> ret;
-
-    //    for (size_t i = 0; i < ret.size(); ++i) {
-    //        vecarray<Indexer, arrsize> reord;
-    //        reord[0] = arr_args[i];
-    //        size_t io = 1;
-    //        for (size_t i2 = 0; i2 < arrsize; ++i2) {
-    //            if (io != i) {
-    //                reord[io] = arr_args[i2];
-    //                io++;
-    //            }
-    //        }
-    //        ret[i] = broadcast_left_list(reord);
-    //    }
-
-    //    return ret;
-    //}
-
     //termination
     template <typename Indexer>
     auto
@@ -66,7 +42,9 @@ namespace helpers {
         return ind;
     }
 
-    //broadcasts first element of the tuple on the other elements in the tuple
+    /**
+     * @brief broadcasts v1 on all elements of the tuple t (all must have compatible dimensions)
+     */
     template <typename Indexer, typename ... Indexers>
     auto
     broadcast_left(Indexer v1, std::tuple<Indexers...> t) {
@@ -98,24 +76,6 @@ namespace helpers {
                     new_shape.STATIC_SIZE_OR_DYNAMIC ==  decltype(shape_v2)::STATIC_SIZE_OR_DYNAMIC,
                     ""
                     );
-
-        //static_assert(
-        //            new_shape.STATIC_SIZE_OR_DYNAMIC == std::max(
-        //                decltype(shape_v1)::STATIC_SIZE_OR_DYNAMIC,
-        //                decltype(shape_v2)::STATIC_SIZE_OR_DYNAMIC
-        //                )
-        //            or
-        //            (
-        //                (
-        //                    decltype(shape_v1)::STATIC_SIZE_OR_DYNAMIC == DYNAMICALLY_SIZED
-        //                    or
-        //                    decltype(shape_v2)::STATIC_SIZE_OR_DYNAMIC == DYNAMICALLY_SIZED
-        //                )
-        //                and
-        //                new_shape.STATIC_SIZE_OR_DYNAMIC == DYNAMICALLY_SIZED
-        //            ),
-        //            ""
-        //            );
 
         vecarray<long, new_shape.STATIC_SIZE_OR_DYNAMIC>
             new_strides (new_shape.dynsize());
@@ -163,54 +123,10 @@ namespace helpers {
                     );
     }
 
-
-    ////recursion termination, when toproc is empty
-    //template <
-    //          typename... IndexersAcc,
-    //          typename... IndexersFull
-    //        >
-    //auto //std::tuple<IndexersFull...>
-    //broadcast_rec(
-    //        //the accumulated result
-    //        std::tuple<IndexersAcc...> acc,
-    //        //this is the pack from which elements to be processed are taken, function returns when empty
-    //        std::tuple<> toproc
-    //    )
-    //{
-    //    toproc = toproc; //silence warnings
-    //    return acc;
-    //}
-
-    //template <
-    //          typename... IndexersAcc,
-    //          typename... IndexersToProcess
-    //        >
-    //auto //std::tuple<IndexersFull...>
-    //broadcast_rec(
-    //        //the accumulated result
-    //        std::tuple<IndexersAcc...> acc,
-    //        //this is the pack from which elements to be processed are taken, function returns when empty
-    //        std::tuple<IndexersToProcess...> toproc
-    //        ) {
-    //    auto proc_head = tuple_utilities::head(toproc);
-    //    auto proc_tail = tuple_utilities::tail(toproc);
-
-    //    auto processed_indexer =
-    //            broadcast_left(
-    //                proc_head,
-    //                full_head,
-    //                full_tail
-    //                );
-    //    return broadcast_rec(
-    //        //new acc
-    //        std::tuple_cat(
-    //            acc,
-    //            make_tuple(processed_indexer)
-    //        ),
-    //        proc_tail
-    //    );
-    //}
-
+    /**
+     * @brief Broadcasts all elements of "all" on the target "target" and returns them.
+     *  Fails if dimensions are not compatible.
+     */
     template <
             long ndims,
             typename ... Indexers
@@ -275,7 +191,7 @@ namespace helpers {
     {
         auto tupind_views = tuple_utilities::tuple_transform(
                     [] (auto& tupelt) {
-                        return tupelt.to_view();
+                        return tupelt.as_view();
                     },
                     tup_ind
                 );

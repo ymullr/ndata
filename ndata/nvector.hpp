@@ -7,7 +7,8 @@
 
 namespace ndata {
 
-enum UNINITIALIZED { };
+struct UNINITIALIZED_T { };
+constexpr UNINITIALIZED_T UNINITIALIZED = UNINITIALIZED_T();
 
 //constexpr enum ValueInitialization UNINITIALIZED = ValueInitialization::UNINITIALIZED;
 
@@ -41,14 +42,14 @@ struct nvector: ndatacontainer<std::vector<T>, T, ndims>  {
 
     /**
      * @brief construct from an indexer and leave data uninitialized (note: for now the internal std::vector will
-     *  default initialize the internal data anyway). The extra UNINITIALIZED parameter is here mostly to disambiguate
+     *  default initialize the internal data anyway). The extra UNINITIALIZED_T parameter is here mostly to disambiguate
      *  from the other constructor taking an ndatacontainer (which is implicitly convertible to an indexer due to inheritance).
-     * @param idxr
-     * @param data
+     * @param idxr An indexer instance
+     * @param UNINITIALIZED The only valid value for this parameter is the ndata::UNINITIALIZED constant
      */
     nvector(
             indexer<ndims> idxr,
-            UNINITIALIZED
+            UNINITIALIZED_T
             ):
         ndatacontainer<std::vector<T>, T, ndims>(idxr.get_shape(), std::vector<T>(idxr.size()))
     { }

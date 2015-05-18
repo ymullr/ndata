@@ -107,7 +107,7 @@ namespace tuple_utilities {
     //tuple zip implementation from from http://stackoverflow.com/a/11322096
     template <typename ...A, typename ...B,
               std::size_t ...S>
-    auto zip_helper(std::tuple<A...> t1, std::tuple<B...> t2, std::index_sequence<S...> s)
+    auto zip_helper(std::tuple<A...> t1, std::tuple<B...> t2, std::index_sequence<S...>)
     -> decltype(std::make_tuple(std::make_tuple(std::get<S>(t1),std::get<S>(t2))...))
     {
         return std::make_tuple( std::make_tuple( std::get<S>(t1), std::get<S>(t2) )...);

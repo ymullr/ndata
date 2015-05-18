@@ -70,7 +70,9 @@ struct ndatacontainer: indexer<ndims> {
     }
 
     /**
-     * Returns a view
+     * Returns a view on a slice of the ndata.
+     *
+     * @copydoc indexer::index_slice(IndexOrRangeT)
      */
     template <typename... IndexOrRangeT>
     auto
@@ -123,7 +125,7 @@ struct ndatacontainer: indexer<ndims> {
 
         nforeach_base<loop_type>(
                     std::tuple_cat(
-                        std::make_tuple(this->to_view()),
+                        std::make_tuple(this->as_view()),
                         ndata_tuple_bcviews
                         ),
                     [func] (T& this_val, auto ... rhs_vals) {
@@ -133,34 +135,37 @@ struct ndatacontainer: indexer<ndims> {
     }
 
 
+    /**
+     * @brief Same as assign_transform but defaults to parallel execution. Provided for convenience.
+     */
     template <typename... Ndatacontainer, typename FuncT>
     void
     assign_transform_parallel(std::tuple<Ndatacontainer...> ndata_tup, FuncT func)  {
         assign_transform<PARALLEL>(ndata_tup, func);
     }
 
-    //operator ndataview<T, ndims>() {
-    //    //use slice method of the parent class and use it to own_data this.data_
-    //    //and return a new slice
-    //    return ndataview<T, ndims>(*this, &data_[0]);
-    //}
 
-    //convenience function to call default conversion without specifying template parameters
-    auto to_view() {
+    /**
+     * Convenience function to call default conversion without specifying template parameters
+     */
+    auto as_view() {
         return ndataview<T, ndims>(*this, &data_[0]);
     }
 
-    //void fill(T val) {
-    //    for (size_t i = 0; i < this->size(); ++i) {
-    //        operator[](i) = val;
-    //    }
-    //}
+    /**
+     * @brief Mostly useful to explicitly pass an indexer to a function taking either an indexer
+     *  or an ndatacontainer.
+     * @return The indexer parent class of this ndatacontainer.
+     */
+    indexer<ndims>
+    as_indexer() {
+        return *this;
+    }
+
+    //TODO reshape overload like numpy
 
     /**
-     * Used by broadcast
-     *
-     * TODO
-     *
+     * Reshape with new shape and new strides (mostly used for broadcasting)
      */
     template<long new_ndims>
     ndataview<T, new_ndims>

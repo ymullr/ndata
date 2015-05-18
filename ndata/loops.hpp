@@ -87,12 +87,12 @@ namespace ndata {
                 );
 
                 if (loop_type == SERIAL) {
-                    for (size_t i = 0; i < shape[0]; ++i) {
+                    for (size_t i = 0; i < size_t(shape[0]); ++i) {
                         loop_inner_block(i);
                     }
                 } else {
 #pragma omp parallel for schedule(static)
-                    for (size_t i = 0; i < shape[0]; ++i) {
+                    for (size_t i = 0; i < size_t(shape[0]); ++i) {
                         loop_inner_block(i);
                     }
                 }
@@ -117,11 +117,11 @@ namespace ndata {
             do_it(
                     std::tuple<Ts*...> tup_ndata_ptrs, //pointers to data
                     FuncT func,
-                    vecarray<long, 0> shape, //no remaining dimensions (last reached)
+                    vecarray<long, 0> , //shape, no remaining dimensions (last reached)
                     std::tuple<
                     VecarrayLong... //no remaining dimensions (last reached)
                     >
-                    arr_strides
+                    //arr_strides
                     )
             {
                 //static_assert(idim==ndims, "");
@@ -259,7 +259,7 @@ namespace ndata {
 
         nforeach_base<loop_type>(
                     std::tuple_cat(
-                        std::make_tuple(ret.to_view()),
+                        std::make_tuple(ret.as_view()),
                         ndata_tuple_bcviews
                         )
                     ,
