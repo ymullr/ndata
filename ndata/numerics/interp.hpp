@@ -43,7 +43,8 @@ NumT clamp(NumT x, NumT min, NumT max)
 enum overflow_behaviour {
     ZERO,
     STRETCH,
-    CYCLIC
+    CYCLIC,
+    THROW
 };
 
 /**
@@ -106,6 +107,7 @@ struct kern_cubic {
     static constexpr long ONESIDEDWIDTH = 2; //kernel width from zero to upper bound
 };
 
+//TODO Lanczos kernel
 
 template<class KernT, long ndims, class ContainerT, class T>
 struct interpolate_inner {
@@ -241,6 +243,10 @@ T interpolate (
 
                 assert(i_starts[i] >= 0 and i_stops[i] <= long(shape[i])); //this is not true for other overflow behaviours
                 break;
+            case THROW:
+                if (i_starts[i] < 0 or i_stops[i] >= long(shape[i])) {
+                    throw(std::out_of_range(""));
+                }
             default:
                 //nothing
                 break;
@@ -287,6 +293,9 @@ T interpolate (
                     iUThisDim = clamp(long(iUThisDim), 0l, long(shape[idim])-1l);
                     break;
                 case ZERO:
+                    //nothing to do
+                    break;
+                case THROW:
                     //nothing to do
                     break;
                 default:
