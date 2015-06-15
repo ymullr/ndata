@@ -11,7 +11,7 @@
 #include <math.h>
 #include <cassert>
 #include "ndata.hpp"
-#include "ndata/numerics/numtype_adapter_fundamental.hpp"
+#include "ndata/algorithm/numtype_adapter_fundamental.hpp"
 
 namespace ndata {
 namespace interp {

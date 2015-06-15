@@ -1,7 +1,7 @@
 #ifndef NUMTYPE_ADAPTERS_EIGEN_HPP_G9DJMXVS
 #define NUMTYPE_ADAPTERS_EIGEN_HPP_G9DJMXVS
 
-#include <numerics/numtype_adapters_fundamental.hpp>
+#include <algorithm/numtype_adapters_fundamental.hpp>
 
 namespace ndata {
 namespace helpers {

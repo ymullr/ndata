@@ -1,4 +1,4 @@
-#include "ndata/numerics/interp.hpp"
+#include "ndata/algorithm/interp.hpp"
 #include "ndata/indexer.hpp"
 
 #include <iostream>
@@ -7,6 +7,8 @@
 #include <tuple>
 
 #include <ndata/debug_helpers.hpp>
+
+//TODO: test boundary values
 
 using namespace ndata;
 using namespace ndata::interp;
