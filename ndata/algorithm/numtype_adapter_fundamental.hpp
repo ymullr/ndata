@@ -12,13 +12,13 @@ template<typename T, typename Enable = void>
 struct numtype_adapter {
 
     static_assert(std::is_arithmetic<T>::value == false, "");
-    static_assert(
-            std::is_base_of<
-                Eigen::EigenBase<T>,
-                T
-            >::value == false,
-            "is base"
-        );
+    //static_assert(
+    //        std::is_base_of<
+    //            Eigen::EigenBase<T>,
+    //            T
+    //        >::value == false,
+    //        "is base"
+    //    );
     //static_assert(
     //        false,
     //        "Numerical type unsupported. Did you include a relevant numtype adapter definition?"

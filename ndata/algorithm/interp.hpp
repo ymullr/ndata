@@ -12,6 +12,7 @@
 #include <cassert>
 #include "ndata.hpp"
 #include "ndata/algorithm/numtype_adapter_fundamental.hpp"
+#include "ndata/algorithm/sequences.hpp"
 
 namespace ndata {
 namespace interp {
@@ -114,17 +115,82 @@ struct kern_cubic {
 // that means the user would be able to specify along which dimensions the interpolation happens
 //TODO overflow_behavior as tuple for static dispatch
 
-template<class KernT, long ndims, class ContainerT, class T>
+template<class KernT, long ndims, long ndims_fold, class ContainerT, class T>
 struct interpolate_inner {
 
     static
-    T do_it(
+    nvector<T, ndims-ndims_fold>
+    do_it(
             ndatacontainer<ContainerT, T, ndims> u,
-            vecarray<float, ndims> index_frac
+            vecarray<float, ndims_fold> index_frac,
+            vecarray<size_t, ndims_fold> axis
             )
     {
-        static_assert(ndims > 1, "Dynamic case not implemented");
-        
+        static_assert(ndims != DYNAMICALLY_SIZED, "Dynamic case not implemented");
+        static_assert(ndims >= ndims_fold or ndims_fold == DYNAMICALLY_SIZED or ndims == DYNAMICALLY_SIZED,
+                      "The number of fractional indices must not exceed the number of dimensions");
+        static_assert(ndims_fold > 0 or ndims_fold == DYNAMICALLY_SIZED, "");
+
+        auto conv_coeffs_shape = u.get_shape();
+
+        //conv_coeffs_shape is going to be broadcasted along all axis but the one on which the interpolation is performed
+        for (int i = 0; i < conv_coeffs_shape.size(); ++i) {
+            if(i!=axis.back()) {
+                conv_coeffs_shape[i]=1;
+            }
+        }
+
+        //TODO refactor slice_alt so that it does not require pairs
+        nvector<float> conv_coeffs.slice_alt(make_).assign_transform(
+                    make_tuple(
+                        numrange(0l, u.get_shape().back())
+                    ),
+                [=] (long ix) {
+                    float dx = index_frac.back() - float(ix);
+                    return KernT::kern(dx);
+                }
+        );
+
+        auto new_shape = u.get_shape();
+        new_shape[axis.back()] = 1; //array is going to be reduced (by summation) along this axis
+
+        //zero initialized
+        nvector<float. new_shape.STATIC_SIZE_OR_DYNAMIC>
+                u_new (new_shape, 0.f);
+
+        //perform reduction through broadcasting with nforeach
+        nforeach(
+            tie(u_new, u, conv_coeffs),
+            [=] (auto & vu_new, auto vu, auto vcc) {
+                vu_new += vu * vcc;
+            });
+
+        vecarray<std::pair<size_t, range>, index_frac.drop_back().STATIC_SIZE_OR_DYNAMIC>
+                ranges (index_frac.drop_back().dynsize());
+
+        //prepare vecarrays of ranges and indices for the reduced u array
+        //we fold the array by performing the interpolation on the last dimension contained in axis
+
+        size_t i_r = 0;
+        for (size_t i = 0; i < ranges.size(); ++i) {
+            if(i!=axis.back()) {
+                ranges[i_r] = make_pair(i, range());
+                i_r++;
+            }
+        }
+        auto indices = make_vecarray(
+            std::make_pair(axis.back(), index_frac.back())
+        );
+
+        auto u_slice = u.slice_alt(
+                    );
+
+        nvector<T, ndims-1> ures = ntransform(
+                    make_tuple(
+                        u.slice_alt())
+                    )
+
+        /*
         //u_new loses the.back dimension compared to u
         //the.back dimension is the one on which the interpolation is performed
         nvector<T, ndims-1> u_new (u.get_shape().drop_back(), 0);
@@ -163,6 +229,7 @@ struct interpolate_inner {
         //recurse with one less dimension
         //will terminate when ndims = 1 (see partially specialized template under)
         return interpolate_inner<KernT, ndims-1, std::vector<T>, T>::do_it(u_new, index_frac.drop_back());
+        */
     }
 };
 
@@ -202,20 +269,22 @@ struct interpolate_inner<KernT, 1, ContainerT, T> {
  * Interpolate one value among a regularly sampled grid of data. The position must be passed as a
  * fraction of an index on each dimension.
  */
-template<class KernT, long ndims, typename ContainerT, typename T>
-T interpolate (
+template<class KernT, long ndims, long ndims_fold, typename ContainerT, typename T>
+nvector<T, ndims-ndims_fold>
+interpolate (
         //flattened array of VectorT
         //TODO Note on VectorT packing/padding/casting
         ndatacontainer<ContainerT, T, ndims> u,
         //sampling is "normalized" by delta so it is expressed in terms of a fraction of
         //the sourceField indices instead of a real position
         //[ndims]
-        vecarray<float, ndims> index_frac,
+        vecarray<float, ndims_fold> index_frac,
         //[from 1 to ndims]
         vecarray<overflow_behaviour, ndims> overflow_behaviours
         )
 {
     auto shape = u.get_shape();
+
 
     assert(
             index_frac.size() == shape.size()
@@ -347,7 +416,7 @@ T interpolate (
 
     assert(index_frac.size() == unew_shape.size() );
 
-    return interpolate_inner<KernT, ndims, std::vector<T>, T>::do_it(
+    return interpolate_inner<KernT>::do_it(
             unew,
             index_frac
     );

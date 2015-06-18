@@ -5,7 +5,7 @@ namespace ndata {
 
 
 template<typename NumT>
-nvector<NumT, 1> num_range(NumT start, NumT stop, NumT step=1) {
+nvector<NumT, 1> numrange(NumT start, NumT stop, NumT step=1) {
 
     auto comp = [step] (NumT v, NumT boundary) {
         if (step < 0) {

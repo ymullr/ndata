@@ -371,8 +371,8 @@ struct TestSuite {
 
             //test on derivatives
             //only test away from cyclic boundaries
-            if(     xfrac >= KernT::ONESIDEDWIDTH+2
-                    and xfrac <= (Nn-1)-KernT::ONESIDEDWIDTH
+            if(     xfrac >= KernT::ONE_SIDED_WIDTH+2
+                    and xfrac <= (Nn-1)-KernT::ONE_SIDED_WIDTH
                     ) {
 
 
