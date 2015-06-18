@@ -44,7 +44,8 @@ enum overflow_behaviour {
     ZERO,
     STRETCH,
     CYCLIC,
-    THROW
+    THROW,
+    ASSERT
 };
 
 /**
@@ -52,11 +53,11 @@ enum overflow_behaviour {
  */
 struct kern_linear {
     float kern(float x) {
-        assert(fabs(x)<=ONESIDEDWIDTH);
+        assert(fabs(x)<=ONE_SIDED_WIDTH);
         return float(1)-fabs(x);
     };
 
-    static constexpr long ONESIDEDWIDTH = 1; //from zero (included) to upper bound
+    static constexpr long ONE_SIDED_WIDTH = 1; //from zero (included) to upper bound
 };
 
 //triangular kernel reproducing linear interpolation
@@ -66,11 +67,11 @@ struct kern_linear {
 struct kern_nearest_neighbor {
 
     float kern(float x) {
-        assert(fabs(x)<=ONESIDEDWIDTH);
+        assert(fabs(x)<=ONE_SIDED_WIDTH);
         return (x >= -0.5 and x < 0.5)? 1 : 0;
     };
 
-    static constexpr long ONESIDEDWIDTH = 1; //from zero (included) to upper bound
+    static constexpr long ONE_SIDED_WIDTH = 1; //from zero (included) to upper bound
 };
 
 
@@ -83,7 +84,7 @@ struct kern_nearest_neighbor {
 struct kern_cubic {
     float kern(float x) {
 
-        assert(fabs(x)<=ONESIDEDWIDTH);
+        assert(fabs(x)<=ONE_SIDED_WIDTH);
 
         float dx = fabs(x);
         float dx2 = dx*dx;
@@ -104,10 +105,14 @@ struct kern_cubic {
         return convCoeff;
     };
 
-    static constexpr long ONESIDEDWIDTH = 2; //kernel width from zero to upper bound
+    static constexpr long ONE_SIDED_WIDTH = 2; //kernel width from zero to upper bound
 };
 
 //TODO Lanczos kernel
+
+//TODO make interpolate able to perform array to array interpolation while reusing convolution kernels (once non variadic .slice overload is done)
+// that means the user would be able to specify along which dimensions the interpolation happens
+//TODO overflow_behavior as tuple for static dispatch
 
 template<class KernT, long ndims, class ContainerT, class T>
 struct interpolate_inner {
@@ -228,10 +233,17 @@ T interpolate (
             index_frac[i] = clamp(index_frac[i], float(0), float(shape[i])-1);
         }
 
-        long kernWidth = KernT::ONESIDEDWIDTH*2;
+        //long kernWidth = KernT::ONE_SIDED_WIDTH*2;
+        //handle edge case at the boundary (due to floor)
+        //if (index_frac[i] == shape[i]-KernT::ONE_SIDED_WIDTH) {
+        //    i_starts[i] = index_frac[i]-long(KernT::ONE_SIDED_WIDTH);
+        //} else { //general case
+        //    i_starts[i] = floor(index_frac[i])-long(KernT::ONE_SIDED_WIDTH)+1;
+        //}
+        //i_stops[i] = i_starts[i] + kernWidth;
 
-        i_starts[i] = floor(index_frac[i])-long(KernT::ONESIDEDWIDTH)+1;
-        i_stops[i] = i_starts[i] + kernWidth;
+        i_starts[i] = floor(index_frac[i])-long(KernT::ONE_SIDED_WIDTH)+1;
+        i_stops[i] = ceil(index_frac[i])+long(KernT::ONE_SIDED_WIDTH);
 
         switch (ob) {
             case ZERO:
@@ -241,12 +253,22 @@ T interpolate (
                 //early return in case the intersect btw the kernel and the field is empty
                 if(i_starts[i] >= i_stops[i]) return helpers::numtype_adapter<T>::ZERO;
 
+                //also make sure we got floating points error/rounding right
                 assert(i_starts[i] >= 0 and i_stops[i] <= long(shape[i])); //this is not true for other overflow behaviours
                 break;
             case THROW:
-                if (i_starts[i] < 0 or i_stops[i] >= long(shape[i])) {
+                //if (i_starts[i] < 0 or i_stops[i] > long(shape[i]+1)) {
+                if (index_frac[i] < 0 or index_frac[i] > long(shape[i]-1)) {
                     throw(std::out_of_range(""));
                 }
+                assert(not (i_starts[i] < 0 or i_stops[i] > long(shape[i])));
+                break;
+            case ASSERT:
+                assert(not (index_frac[i] < 0 or index_frac[i] > long(shape[i]-1)));
+
+                //also make sure we also got floating points error/rounding right
+                assert(not (i_starts[i] < 0 or i_stops[i] > long(shape[i])));
+                break;
             default:
                 //nothing
                 break;
@@ -298,6 +320,9 @@ T interpolate (
                 case THROW:
                     //nothing to do
                     break;
+                case ASSERT:
+                    //nothing to do
+                    break;
                 default:
                     abort();//shouldn't happen
                     break;
@@ -337,7 +362,7 @@ template<class KernT, long ndims, typename ContainerT, class T>
 T interpolate (
         ndatacontainer<ContainerT, T, ndims> u,
         vecarray<float, ndims> index_frac,
-        overflow_behaviour overflowBehaviour = overflow_behaviour::STRETCH
+        overflow_behaviour overflowBehaviour = overflow_behaviour::THROW
         ) {
     vecarray<overflow_behaviour, ndims> overflow_behaviours (index_frac.dynsize());
     overflow_behaviours.fill(overflowBehaviour);
@@ -353,7 +378,7 @@ template<class KernT, typename ContainerT, class T>
 T interpolate (
         ndatacontainer<ContainerT, T, 1> u,
         float index_frac,
-        overflow_behaviour overflowBehaviour = overflow_behaviour::STRETCH
+        overflow_behaviour overflowBehaviour = overflow_behaviour::THROW
         ) {
     return interpolate<KernT>(
         u,
@@ -362,6 +387,10 @@ T interpolate (
         );
 }
 
+
+/**
+ * nD case
+ */
 template<long ndims>
 vecarray<float, ndims> position_to_ifrac(
         vecarray<float, ndims> position,
@@ -381,6 +410,23 @@ vecarray<float, ndims> position_to_ifrac(
     }
 
     return index_frac;
+}
+
+
+/**
+ * 1D case
+ */
+float position_to_ifrac(
+        float position,
+        float origin,
+        float step
+        )
+{
+    return position_to_ifrac(
+                make_vecarray(position),
+                make_vecarray(origin),
+                make_vecarray(step)
+                )[0];
 }
 
 }//end namespace interp

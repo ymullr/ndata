@@ -58,7 +58,7 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::typ
 
     typedef T type_T;
 
-    std::array<T, static_size> stackStorage;
+    std::array<T, static_size> stack_storage;
 
     explicit
     vecarray(long dynamic_size, T init_val = T()) {
@@ -67,19 +67,19 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::typ
         //data members with content of the vector
         //imitates the behaviour of dataializer lists
         for (size_t i = 0; i < static_size; ++i) {
-            stackStorage[i] = init_val;
+            stack_storage[i] = init_val;
         }
     }
 
     vecarray(std::array<T, static_size> iniArr):
-        stackStorage(iniArr) {
+        stack_storage(iniArr) {
     }
 
     vecarray(std::vector<T> ini) {
         //static_assert(static_size == 0, "This constructor always produce a dynamic vecarray");
         assert(ini.size() == static_size);
         for (size_t i = 0; i < ini.size(); ++i) {
-            stackStorage[i]=ini[i];
+            stack_storage[i]=ini[i];
         }
     }
 
@@ -91,7 +91,7 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::typ
 
         size_t i = 0;
         for (T val: iniArr) {
-            stackStorage[i] = val;
+            stack_storage[i] = val;
             i++;
         }
     }
@@ -110,7 +110,7 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::typ
 
     T& operator[](size_t index) {
         assert(index<size());
-        return stackStorage[index];
+        return stack_storage[index];
     }
 
     void fill(T val) {
@@ -126,7 +126,7 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::typ
         for (size_t i = 0; i < static_size; ++i) {
             long rev_ind = static_size-1-i;
             assert(rev_ind > 0);
-            new_vecarray[rev_ind] = stackStorage[i];
+            new_vecarray[rev_ind] = stack_storage[i];
         }
 
         return new_vecarray;
@@ -219,37 +219,37 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size == DYNAMICA
 
     static constexpr long STATIC_SIZE_OR_DYNAMIC = DYNAMICALLY_SIZED;
 
-    std::vector<T> heapStorage;
+    std::vector<T> heap_storage;
 
     vecarray(long dynamic_size) {
-        heapStorage = std::vector<T>(dynamic_size);
+        heap_storage = std::vector<T>(dynamic_size);
         assert(dynamic_size>=0);
     }
 
     vecarray(long dynamic_size, T init_val = T()) {
 
-        heapStorage = std::vector<T>(dynamic_size);
+        heap_storage = std::vector<T>(dynamic_size);
 
         assert(dynamic_size>=0);
 
         //data members with content of the vector
         //imitates the behaviour of dataializer lists
         for (size_t i = 0; i < dynamic_size; ++i) {
-            heapStorage[i] = init_val;
+            heap_storage[i] = init_val;
         }
     }
 
     vecarray(std::vector<T> ini) {
-        heapStorage=ini;
+        heap_storage=ini;
     }
 
-    vecarray(std::array<T, static_size> iniArr): heapStorage(iniArr.begin(), iniArr.end()) { }
+    vecarray(std::array<T, static_size> iniArr): heap_storage(iniArr.begin(), iniArr.end()) { }
 
     //overloaded to avoid ambiguity btw vector and array
     vecarray(std::initializer_list<T> iniArr) {
         size_t i = 0;
         for (T val: iniArr) {
-            heapStorage[i] = val;
+            heap_storage[i] = val;
             i++;
         }
     }
@@ -258,14 +258,14 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size == DYNAMICA
     vecarray() {};
 
     size_t size() {
-        return heapStorage.size();
+        return heap_storage.size();
     }
 
-    long dynsize () { return heapStorage.size();}
+    long dynsize () { return heap_storage.size();}
 
     T& operator[](size_t index) {
         assert(index<size());
-        return heapStorage[index];
+        return heap_storage[index];
     }
 
     void fill(T val) {

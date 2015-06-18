@@ -144,49 +144,6 @@ namespace ndata {
     void
     nforeach_base(std::tuple<ndataview<Ts, ndims>...> ndata_views, FuncT func)  {
 
-        ////let's get the first
-        //auto& idxr = std::get<0>(ndata_views);
-
-        //if (loop_type == SERIAL or NDATA_OMP_GET_NUM_THREADS() == 1) {
-
-        //    auto ndindex = idxr.ndindex(0);
-
-        //    for (size_t i = 0; i < idxr.size(); ++i) {
-        //        //TODO auto infer tuple<T&...> and get rid of pointers in apply signature (aliasing?)
-        //        //transform tuple of Ndatacontainer to tuple of refs to scalar values for current ndindex
-        //        auto tuple_params_scalar = tuple_utilities::tuple_transform([ndindex] (auto & A) {
-        //            return &A(ndindex); //        }, ndata_views);
-
-        //        tuple_utilities::apply(func, tuple_params_scalar);
-
-        //        idxr.increment_ndindex(ndindex);
-        //    }
-
-        //} else {
-
-        //#pragma omp parallel for schedule(static)
-        //    for (size_t i_start=0; i_start<idxr.size(); i_start+= idxr.size()/NDATA_OMP_GET_NUM_THREADS()) {
-
-        //        //our multidimensional index
-        //        auto ndindex = idxr.ndindex(i_start);
-
-        //        for (size_t i = 0; i < idxr.size()/NDATA_OMP_GET_NUM_THREADS(); ++i) {
-        //                //TODO
-        //                //transform tuple of Ndatacontainer to tuple of refs to scalar values for current ndindex
-        //                //infer ref types tuple<T&...> and get rid of raw pointers in apply signature (also : what of issues with pointer aliasing?)
-        //                //here auto is std::tuple<T*...>
-        //                //problem is T& decay to T with auto
-        //                auto tuple_params_scalar = tuple_utilities::tuple_transform([ndindex] (auto & A) {
-        //                    return &A(ndindex);
-        //                }, ndata_views);
-
-        //                tuple_utilities::apply(func, tuple_params_scalar);
-
-        //                idxr.increment_ndindex(ndindex);
-        //         }
-        //    }
-        //}
-
         //get pointers to first element of data
         std::tuple<Ts*...> tup_ndata_ptrs = tuple_utilities::tuple_transform(
                     [] (auto ndv) {return ndv.data_+ndv.get_start_index();},
@@ -277,6 +234,10 @@ namespace ndata {
     ntransform_parallel(std::tuple<Ndatacontainer...> ndata_tup, FuncT func)  {
         ntransform<Tret, PARALLEL>(ndata_tup, func);
     }
+
+
+
+    //TODO concatenate
 
 }
 
