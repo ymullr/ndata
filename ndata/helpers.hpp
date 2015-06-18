@@ -13,11 +13,14 @@ namespace ndata {
 namespace helpers {
 
 
-    using ShapeStridePair = std::pair<long, long>;
+    using shape_stride_pair = std::pair<long, long>;
 
     // ( shape[i], strides[i] )
-    template<long N> using SliceAcc = vecarray<ShapeStridePair, N>;
+    template<long N> using SliceAcc = vecarray<shape_stride_pair, N>;
 
+    template <typename ... Ts>
+    struct static_check_valid_indice_types {
+    };
 
     //struct used to implement "type level function"
     template <typename T, typename ... Ts>
@@ -101,7 +104,7 @@ namespace helpers {
                     new_strides[i_new] = strides_v1[i_v1];
                     //new_strides_v2[i_new] = 0;
                 } else {
-                    throw(std::domain_error("Dimension size must match or be equal to 1"));
+                    throw(std::domain_error("Dimension sizes must match or be equal to 1"));
                 }
 
             } else if (i_v2 >= v2.get_shape().size()) {
@@ -158,8 +161,6 @@ namespace helpers {
         //        decltype(Indexers::shape_)::STATIC_SIZE_OR_DYNAMIC...>::value>
         auto
             indexer_target = broadcast_left(
-                //tuple_utilities::head(tup_ind),
-                //tuple_utilities::tail(tup_ind)
                 h_t.first,
                 h_t.second
                 );

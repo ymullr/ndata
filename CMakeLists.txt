@@ -51,6 +51,11 @@ add_executable(
         ./tests/interp_test.cpp
         )
 
+add_executable(
+        vecarray_test
+        ./tests/vecarray_test.cpp
+        )
+
 #add_executable(
 #    debug_test
 #    ./tests/debug_test.cpp

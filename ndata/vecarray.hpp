@@ -11,6 +11,25 @@
 
 namespace ndata {
 
+namespace helpers {
+
+    auto init_vec_from_original_minus_dropped_item = [] (auto original, auto & new_vec, auto indices) -> void {
+        size_t iret = 0;
+        for (size_t i = 0; i < original.size(); ++i) {
+            bool dropped = false;
+            for (size_t i_dropped = 0; i_dropped < indices.size(); ++i_dropped) {
+                if(i == indices[i_dropped]) {
+                    dropped = true;
+                }
+            }
+            if(not dropped) {
+                new_vec[iret] = original[i];
+                ++iret;
+            }
+        }
+        assert(iret==new_vec.size());
+    };
+}
 
 //base template
 template<class T, long static_size, class Enable=void>
@@ -64,7 +83,7 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::typ
         }
     }
 
-    //overloaded to avoid ambiguity btw vector and array
+    //overloaded to avoid ambiguity with vector and array constructors
     vecarray(std::initializer_list<T> iniArr)
     {
         assert(iniArr.size() == static_size);// "Size of dataializer list doesn't match");
@@ -128,6 +147,29 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::typ
         new_vecarray[static_size] = val;
 
         return new_vecarray;
+    }
+
+    template <long n_elts>
+    auto
+    drop(vecarray<size_t, n_elts> droplist)
+            -> vecarray<
+               T,
+               (n_elts == DYNAMICALLY_SIZED)? DYNAMICALLY_SIZED: static_size-n_elts
+               >
+    {
+        long dynsize = (n_elts == DYNAMICALLY_SIZED)? static_size-droplist.size() : STATICALLY_SIZED;
+
+        vecarray<
+            T,
+            (n_elts == DYNAMICALLY_SIZED)? DYNAMICALLY_SIZED: static_size-n_elts
+        > ret (dynsize);
+
+        static_assert(n_elts == DYNAMICALLY_SIZED or n_elts <= static_size, "to many elements to drop");
+        assert(droplist.size() <= size());
+
+
+        helpers::init_vec_from_original_minus_dropped_item(*this, ret, droplist);
+        return ret;
     }
 
     /**
@@ -264,6 +306,26 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size == DYNAMICA
 
         return new_vecarray;
     }
+
+    template <long n_elts>
+    auto
+    drop(vecarray<size_t, n_elts> droplist)
+            -> vecarray<
+               T,
+               (n_elts == DYNAMICALLY_SIZED)? DYNAMICALLY_SIZED: static_size-n_elts
+               >
+    {
+        long dynsize = (n_elts == DYNAMICALLY_SIZED)? static_size-droplist.size() : STATICALLY_SIZED;
+
+        vecarray<
+            T,
+            (n_elts == DYNAMICALLY_SIZED)? DYNAMICALLY_SIZED: static_size-n_elts
+        > ret (dynsize);
+
+        helpers::init_vec_from_original_minus_dropped_item(*this, ret, droplist);
+        return ret;
+    }
+
 
     /**
      * returns all elements of the vecarray but the last

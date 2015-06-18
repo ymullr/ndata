@@ -4,6 +4,9 @@
 namespace ndata {
 namespace helpers {
 
+    /**
+     * Compile time "function" with recursive templated struct
+     */
     template <long ... vals>
     struct static_max_or_dynamic {
     };
@@ -23,6 +26,25 @@ namespace helpers {
     struct static_max_or_dynamic<val1> {
         static constexpr long value = val1;
     };
+
+
+    /**
+     * Compile time "function" with recursive templated struct
+     */
+    template <long ... vals>
+    struct is_any_dynamically_sized {
+    };
+
+    template <long val1, long ... vals>
+    struct is_any_dynamically_sized<val1, vals...> {
+        static constexpr bool value = is_any_dynamically_sized<val1>::value or is_any_dynamically_sized<vals...>::value;
+    };
+
+    template <long val1>
+    struct is_any_dynamically_sized<val1> {
+        static constexpr bool value = val1 == DYNAMICALLY_SIZED;
+    };
+
 
     //make vecarray like biggest with overloads to return a static if both operands are static,
     //or a dynamic one if any or both operands are dynamic
@@ -50,8 +72,9 @@ namespace helpers {
     };
 
 
-    //make vecarray like biggest with overloads to return a static if both operands are static,
+    //make vecarray like biggest with overloads to return a static vecarray if both operands are static,
     //or a dynamic one if any or both operands are dynamic
+    //specialization 1
     template<
         long StatSize1,
         long StatSize2
@@ -72,8 +95,7 @@ namespace helpers {
     };
 
 
-    //make vecarray like biggest with overloads to return a static if both operands are static,
-    //or a dynamic one if any or both operands are dynamic
+    //specialization 2
     template<
         long StatSize1,
         long StatSize2
@@ -93,8 +115,7 @@ namespace helpers {
         return make_vecarray_like_biggest_dyn(v1, v2);
     };
 
-    //make vecarray like biggest with overloads to return a static if both operands are static,
-    //or a dynamic one if any or both operands are dynamic
+    //specialization 3
     template<
         long StatSize1,
         long StatSize2
@@ -114,10 +135,6 @@ namespace helpers {
         return make_vecarray_like_biggest_dyn(v1, v2);
     };
 
-
-    template <typename ... Ts>
-    struct static_check_valid_indice_types {
-    };
 
 } //end namespace helpers
 } //end namespace ndata

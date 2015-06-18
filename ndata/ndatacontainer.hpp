@@ -72,16 +72,49 @@ struct ndatacontainer: indexer<ndims> {
     /**
      * Returns a view on a slice of the ndata.
      *
-     * @copydoc indexer::index_slice(IndexOrRangeT)
+     * @copydoc indexer::slice_indexer(IndexOrRangeT)
      */
     template <typename... IndexOrRangeT>
     auto
     slice(IndexOrRangeT ... index_or_range) {
         return  make_ndatacontainer<T*, T>(
-                    this->index_slice(index_or_range...),
-                    &data_[0]
-                );
+            this->slice_indexer(index_or_range...),
+            &data_[0]
+        );
     }
+
+    /**
+     * @brief Gives a view on a slice of the ndata. Alternative version, with vecarrays instead of variadic arguments.
+     * @return ndataview
+     * @copydoc indexer::slice_indexer(vecarray<std::pair<long, range>, nranges>, vecarray<std::pair<long, long>, nindices>)
+     */
+    template <long nranges, long nindices = 0>
+    auto
+    slice_alt(
+            vecarray<
+                std::pair<size_t, range>, //idim, range.
+                nranges
+                >
+            ranges,
+            vecarray<
+                std::pair<size_t, long>, //idim, indice
+                nindices
+                >
+            indices = vecarray<std::pair<size_t, long>, 0> (ndata::STATICALLY_SIZED)
+        ) -> ndatacontainer<
+                T*,
+                T,
+                helpers::is_any_dynamically_sized<nranges, nindices, ndims>::value?
+                    DYNAMICALLY_SIZED :
+                    nranges
+             >
+    {
+        return  make_ndatacontainer<T*, T>(
+            this->slice_indexer_alt(ranges, indices),
+            &data_[0]
+        );
+    }
+
 
     template <typename ... Long>
     T&
@@ -134,7 +167,6 @@ struct ndatacontainer: indexer<ndims> {
             );
     }
 
-
     /**
      * @brief Same as assign_transform but defaults to parallel execution. Provided for convenience.
      */
@@ -143,7 +175,6 @@ struct ndatacontainer: indexer<ndims> {
     assign_transform_parallel(std::tuple<Ndatacontainer...> ndata_tup, FuncT func)  {
         assign_transform<PARALLEL>(ndata_tup, func);
     }
-
 
     /**
      * Convenience function to call default conversion without specifying template parameters

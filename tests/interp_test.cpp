@@ -28,14 +28,14 @@ struct TestSuite {
     KernT kern;
 
     static
-    TestResult constant_field_3D() {
+    test_result constant_field_3D() {
  
         indexer<3> uind (Nn, Nn, Nn);
         const float init_val = 1;
         nvector<float, 3> u (uind, init_val);
         float start_ifrac = -1.9;
 
-        DECLARE_TESTRESULT(allCorrect, output);
+        DECLARE_TEST(allCorrect, output);
 
         for (float i = start_ifrac; i < Nn*3; i+=0.5) {
 
@@ -57,7 +57,7 @@ struct TestSuite {
 
 
     static
-    TestResult constant_field_1D() {
+    test_result constant_field_1D() {
 
         const float init_val = 1;
 
@@ -65,7 +65,7 @@ struct TestSuite {
 
         float start_ifrac = -1.9;
 
-        DECLARE_TESTRESULT(allCorrect, output);
+        DECLARE_TEST(allCorrect, output);
 
         for (float i = start_ifrac; i < Nn*3; i+=0.5) {
 
@@ -88,13 +88,13 @@ struct TestSuite {
     }
 
     static
-    TestResult zero_boundary_1D() {
+    test_result zero_boundary_1D() {
 
         const float init_val = 1;
         nvector<float, 1> u (make_indexer(Nn), init_val);
         float start_ifrac = -1.9;
 
-        DECLARE_TESTRESULT(success_bool, output);
+        DECLARE_TEST(success_bool, output);
 
         for (float i = start_ifrac; i < Nn*3; i+=0.5) {
 
@@ -119,7 +119,7 @@ struct TestSuite {
     }
 
     static
-    TestResult increasing_field_1D(overflow_behaviour ob=overflow_behaviour::STRETCH) {
+    test_result increasing_field_1D(overflow_behaviour ob=overflow_behaviour::STRETCH) {
   
         nvector<float, 1> u (make_indexer(Nn), 0);
         float increment = 1;
@@ -132,7 +132,7 @@ struct TestSuite {
 
         vector<float> output (0);
 
-        DECLARE_TESTRESULT(increasing, retMsg);
+        DECLARE_TEST(increasing, retMsg);
 
         float previousVal;
 
@@ -159,7 +159,7 @@ struct TestSuite {
     }
 
     static
-    TestResult increasing_field_3D() {
+    test_result increasing_field_3D() {
   
         nvector<float, 3> u (make_indexer(Nn, Nn, Nn), 0);
 
@@ -172,7 +172,7 @@ struct TestSuite {
 
         vector<float> output (0);
 
-        DECLARE_TESTRESULT(increasing, retMsg);
+        DECLARE_TEST(increasing, retMsg);
 
         float previousVal;
 
@@ -200,7 +200,7 @@ struct TestSuite {
 
 
     static
-    TestResult simple_equalities_1D() {
+    test_result simple_equalities_1D() {
   
         size_t Nn = 8;
 
@@ -214,7 +214,7 @@ struct TestSuite {
 
         vector<float> output (0);
 
-        DECLARE_TESTRESULT(bool_equal, retMsg);
+        DECLARE_TEST(bool_equal, retMsg);
 
         for (size_t i = 2; i < Nn-2; ++i) {
 
@@ -252,7 +252,7 @@ struct TestSuite {
     }
 
     static
-    TestResult cyclic_equal_3D() {
+    test_result cyclic_equal_3D() {
   
         size_t Nn = 10;
 
@@ -270,7 +270,7 @@ struct TestSuite {
         }
 
 
-        DECLARE_TESTRESULT(cycle_equal, retMsg);
+        DECLARE_TEST(cycle_equal, retMsg);
 
         const size_t ntraversals = 4;
         const size_t nsteps = Nn*4;
@@ -324,7 +324,7 @@ struct TestSuite {
 
     template<size_t ndims>
     static
-    TestResult stable_derivative_NDNC() {
+    test_result stable_derivative_NDNC() {
   
         size_t Nn = 10;
 
@@ -350,7 +350,7 @@ struct TestSuite {
         nvector<float, 1> values (make_indexer(Nn*4), 0);
 
 
-        DECLARE_TESTRESULT(aggreg_equal, retMsg);
+        DECLARE_TEST(aggreg_equal, retMsg);
 
         bool increasing = true, stable_derivative = true;
 
@@ -404,26 +404,26 @@ struct TestSuite {
     }
 
     static
-    TestResult run_all_tests() {
+    test_result run_all_tests() {
 
-        DECLARE_TESTRESULT(success_bool, msg);
+        DECLARE_TEST(success_bool, msg);
 
-        TEST(constant_field_1D()            , success_bool, msg);
-        TEST(zero_boundary_1D()             , success_bool, msg);
-        TEST(increasing_field_1D()          , success_bool, msg);
-        TEST(increasing_field_1D(overflow_behaviour::CYCLIC)
+        RUN_TEST(constant_field_1D()            , success_bool, msg);
+        RUN_TEST(zero_boundary_1D()             , success_bool, msg);
+        RUN_TEST(increasing_field_1D()          , success_bool, msg);
+        RUN_TEST(increasing_field_1D(overflow_behaviour::CYCLIC)
                 , success_bool, msg);
-        TEST(simple_equalities_1D()         , success_bool, msg);
-        TEST(constant_field_3D()            , success_bool, msg);
-        TEST(increasing_field_3D()          , success_bool, msg);
-        TEST(cyclic_equal_3D()              , success_bool, msg);
+        RUN_TEST(simple_equalities_1D()         , success_bool, msg);
+        RUN_TEST(constant_field_3D()            , success_bool, msg);
+        RUN_TEST(increasing_field_3D()          , success_bool, msg);
+        RUN_TEST(cyclic_equal_3D()              , success_bool, msg);
 
-        //yeah.. macros dosnt like multiple template arguments...
-        //wrapping it in a closure
+        //yeah.. macros dont like multiple template arguments (sad)
+        //wrapping the call in a lambda as a workaround
         auto stable_derivative_2D = [] () {return stable_derivative_NDNC<2>();};
-        TEST(stable_derivative_2D()       , success_bool, msg);
+        RUN_TEST(stable_derivative_2D()       , success_bool, msg);
         auto stable_derivative_3D = [] () {return stable_derivative_NDNC<3>();};
-        TEST(stable_derivative_3D()       , success_bool, msg);
+        RUN_TEST(stable_derivative_3D()       , success_bool, msg);
 
 
         RETURN_TESTRESULT(success_bool, msg);
@@ -432,14 +432,14 @@ struct TestSuite {
 
 //specialization disabling some tests with nearest neighbor
 template<>
-TestResult TestSuite<kern_nearest_neighbor>::run_all_tests() {
-    DECLARE_TESTRESULT(success_bool, msg);
+test_result TestSuite<kern_nearest_neighbor>::run_all_tests() {
+    DECLARE_TEST(success_bool, msg);
 
-    TEST(constant_field_1D() , success_bool, msg);
-    TEST(constant_field_3D() , success_bool, msg);
-    TEST(zero_boundary_1D()  , success_bool, msg);
-    TEST(increasing_field_3D()          , success_bool, msg);
-    TEST(cyclic_equal_3D()              , success_bool, msg);
+    RUN_TEST(constant_field_1D() , success_bool, msg);
+    RUN_TEST(constant_field_3D() , success_bool, msg);
+    RUN_TEST(zero_boundary_1D()  , success_bool, msg);
+    RUN_TEST(increasing_field_3D()          , success_bool, msg);
+    RUN_TEST(cyclic_equal_3D()              , success_bool, msg);
 
     RETURN_TESTRESULT(success_bool, msg);
 }
@@ -447,11 +447,11 @@ TestResult TestSuite<kern_nearest_neighbor>::run_all_tests() {
 
 int main(int argc, char *argv[])
 {
-    DECLARE_TESTRESULT(success_bool, msg);
+    DECLARE_TEST(success_bool, msg);
 
-    TEST(TestSuite<kern_nearest_neighbor>::run_all_tests(), success_bool, msg);
-    TEST(TestSuite<kern_linear>::run_all_tests()         , success_bool, msg);
-    TEST(TestSuite<kern_cubic>::run_all_tests()          , success_bool, msg);
+    RUN_TEST(TestSuite<kern_nearest_neighbor>::run_all_tests(), success_bool, msg);
+    RUN_TEST(TestSuite<kern_linear>::run_all_tests()         , success_bool, msg);
+    RUN_TEST(TestSuite<kern_cubic>::run_all_tests()          , success_bool, msg);
 
     cout<<endl<<msg<<endl;
 

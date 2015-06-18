@@ -78,7 +78,7 @@ namespace helpers {
      * tuple : size_t start_index, vecarray<array<long, 2>, ndims_slice> slices):
      */
     template <long ndimslices>
-    indexer<ndimslices> make_indexer_from_slices_helper(std::pair<size_t, SliceAcc<ndimslices>> pr);
+    indexer<ndimslices> make_indexer_from_slices(std::pair<size_t, SliceAcc<ndimslices>> pr);
 
     //downcasting helper
     template<long ndims>
@@ -86,6 +86,22 @@ namespace helpers {
     make_indexer(indexer<ndims> idx) {
         return idx;
     }
+
+    /*
+    enum rin_type {
+        is_range,
+        is_index,
+        is_newdim
+    };
+
+    struct range_or_index_or_newdim {
+        rin_type type_;
+        union content {
+            std::pair<size_t, range>,
+            std::pair
+        };
+    };
+    */
 
 }
 
@@ -210,14 +226,20 @@ struct indexer {
         return pr.first;
     }
 
-
+    //TODO note on size_t/long indices as doxygen variable
     /**
      * @brief Returns an indexer to a slice of the indexed data.
-     * @param index_or_range May be a size_t index, a long "reversible index" or the NEWDIM constant.
+     *
+     * Note that straight indices may be passed as size_t or a long. the size_t overload may be slightly
+     * faster, but the long overload provides extra functionality by dealing the negative indices
+     * (which indicate an offset to the end of the array).
+     *
+     * @param index_or_range May be a size_t index, a long "reversible index"
+     *  (like the constant ndata::END or -1), the ndata::NEWDIM constant, or an ndata::range.
      */
     template <typename... IndexOrRangeT>
     auto
-    index_slice(IndexOrRangeT ... index_or_range) {
+    slice_indexer(IndexOrRangeT ... index_or_range) {
         //type = std::pair<size_t start_index, helpers::SliceAcc<STATIC_SIZE_OR_DYNAMIC>>
         auto pr = slice_rec<0, 0>(
             start_index_,
@@ -225,24 +247,135 @@ struct indexer {
             index_or_range...
         );
 
-        return  helpers::make_indexer_from_slices_helper(pr);
+        return  helpers::make_indexer_from_slices(pr);
     }
 
-    //template<typename... LongT >
-    //size_t index(size_t i0, LongT... in){
-    //    static_assert(
-    //        ndims != DYNAMICALLY_SIZED,
-    //        "This overload is only available when the number of dimensions"
-    //        " is known at compile time"
-    //        );
-    //    static_assert(
-    //        ndims == sizeof...(in)+1,
-    //        "Number of parameters doesn't match the number of dimensions."
-    //    );
+    /**
+     * @brief Returns an indexer to a slice of the indexed data. This overload is more verbose to call
+     *  but more amenable to writing dimensionality agnostic functions by virtue of taking ranges and
+     *  indices and the dmension to which they apply as pairs in vecarrays.
+     * @param ranges A vecarray of std::pair containing the dimension indice and the actual indice range.
+     *  Technically idim should be unsigned but using long here might be less bug prone.
+     * @param indices A vecarray of std::pair containing the dimension indice and an index ay be a size_t index, a long "reversible index"
+     *  (like the constant ndata::END or -1), the ndata::NEWDIM constant, or an ndata::range.
+     */
+    template <long nranges, long nindices = 0>
+    auto
+    slice_indexer_alt(
+            vecarray<
+                std::pair<size_t, range>, //idim, range.
+                nranges
+                >
+            ranges,
+            vecarray<
+                std::pair<size_t, long>, //idim, indice
+                nindices
+                >
+            indices = vecarray<std::pair<size_t, long>, 0> (ndata::STATICALLY_SIZED)
+        ) -> indexer<
+                helpers::is_any_dynamically_sized<nranges, nindices, ndims>::value?
+                    DYNAMICALLY_SIZED :
+                    nranges
+             >
+    {
+        static_assert(
+            helpers::is_any_dynamically_sized<nranges, nindices, ndims>::value
+         or nranges == ndims-nindices,
+            "Statically known number of dimensions does not match"
+        );
 
-    //    return index_rec<0>(start_index_, i0, in...);
-    //}
+        constexpr long RET_STATIC_SIZE =
+            helpers::is_any_dynamically_sized<nranges, nindices>::value?
+                DYNAMICALLY_SIZED:
+                nranges;
 
+#ifndef DNDEBUG
+        assert(ranges.size() == shape_.size()-indices.size());
+
+        for (size_t ir = 0; ir < ranges.size(); ++ir) {
+            for (size_t i_ind = 0; i_ind < indices.size(); ++i_ind) {
+                //make sure that no dimensions is found in ranges and in indices
+                assert(ranges[ir].first != indices[i_ind].first);
+                //make sure dimension index doesn't exceed the number of dimensions
+                assert(
+                           ranges[ir].first < shape_.size()
+                       and indices[i_ind].first < shape_.size()
+                      );
+            }
+        }
+
+
+        for (size_t i1 = 0; i1 < ranges.size(); ++i1) {
+
+            long idim = ranges[i1].first;
+            assert(idim >= 0 && idim < long(shape_.size()));
+
+            for (size_t i2 = 0; i2 < ranges.size(); ++i2) {
+                if (i1 != i2) {
+                    //check uniqueness of dimension number in ranges
+                    assert(ranges[i1].first != ranges[i2].first);
+                }
+            }
+        }
+
+        for (size_t i1 = 0; i1 < indices.size(); ++i1) {
+
+            long idim = indices[i1].first;
+            long ind = indices[i1].second;
+            assert(idim >= 0 && idim < long(shape_.size()));
+            assert((ind >= 0)? ind < long(shape_[idim]) : ind >= -long(shape_[idim]));
+
+            for (size_t i2 = 0; i2 < indices.size(); ++i2) {
+                if (i1 != i2) {
+                    //check uniqueness of dimension number in indices
+                    assert(indices[i1].first != indices[i2].first);
+                }
+            }
+        }
+#endif
+
+        size_t ret_start_index = start_index_;
+
+        //this could have been a vecarray of size_t, however unsigned are bug prone (underflow)
+        //so a long type is a safer choice
+        auto ret_shape_predrop = shape_;
+        auto ret_strides_predrop = strides_;
+
+        //updating temporary shape with new ranges
+        for (size_t i = 0; i < ranges.size(); ++i) {
+            size_t idim;
+            range rng;
+            std::tie(idim, rng) = ranges[i];
+
+            assert(rng.step!=0);
+           //TODO check index
+            ret_start_index += strides_[idim] * reverse_negative_index(idim, rng.start);
+
+            assert(ret_start_index < unsliced_size());
+
+            ret_shape_predrop[idim] = (reverse_negative_index(idim, rng.stop)
+                                      -reverse_negative_index(idim, rng.start))
+                                      /rng.step;
+            ret_strides_predrop[idim] = strides_[idim]*rng.step;
+        }
+
+        //dropping indexed elements from shape and stride
+        vecarray<size_t, indices.STATIC_SIZE_OR_DYNAMIC> droplist (indices.dynsize());
+
+        for (size_t i_ind = 0; i_ind < indices.size(); ++i_ind) {
+            size_t idim;
+            long ind;
+            std::tie(idim, ind) = indices[i_ind];
+
+            ret_start_index += ind * strides_[idim];
+            droplist[i_ind] = idim;
+        }
+
+        vecarray<long, RET_STATIC_SIZE> ret_shape = ret_shape_predrop.drop(droplist);
+        vecarray<long, RET_STATIC_SIZE> ret_strides = ret_strides_predrop.drop(droplist);
+
+        return indexer<RET_STATIC_SIZE>(ret_start_index, ret_shape, ret_strides);
+    }
 
     size_t get_start_index() {
         return start_index_;
@@ -287,7 +420,7 @@ struct indexer {
      * //all dimensional indices are 0 initialized
      * vector<size_t> ndi (3, 0); //will also work with a std::array or vecarray
      *
-     * for (size_t i = 0; i < ndarray.size(); ++i) * {
+     * for (size_t i = 0; i < ndarray.size(); ++i) {
      *
      *     //here ndindex.index(ndi) == i
      *
@@ -324,7 +457,7 @@ struct indexer {
     }
 
     /**
-     * Probably quite slow, use the increment_ndindex function for more speed
+     * Probably quite slow
      *
      * Should be implemented with some modulo ops
      */
@@ -340,7 +473,7 @@ struct indexer {
         return ndindex;
     }
 
-    //TODO fortran_order, swap_dimensions, add empty dimension
+    //TODO fortran_order, swap_dimensions
 
     /**
      * used by broadcast
@@ -356,6 +489,8 @@ struct indexer {
     size_t start_index_;
 
     //kept for bound checking
+    //this could have been a vecarray of size_t, however unsigned are bug prone (underflow)
+    //so a long type is a safer choice
     vecarray<long, ndims> shape_;
 
     vecarray<long, ndims> strides_;
@@ -379,6 +514,12 @@ struct indexer {
 
         return ret;
     }
+
+    // FIXME: A note: the slice_rec family of functions is redundant with the the vecarray based
+    // slice_indexer implementation. Maybe it should go away at some point, and the variadic slice_indexer implementation
+    // should rely on the vecarray based one instead. However it seems more info (namely the ordering
+    // of ranges and indices and newdims) is known at compile time with the recursive slice_rec implementation.
+    // It is unclear if this brings any real benefit speed or safety-wise, but this should be cleared before removal.
 
     /**
      * An actual index is given instead of a slice, only one element is thus
@@ -430,7 +571,7 @@ struct indexer {
 
         long new_stride = strides_[idim]*range.step;
 
-        helpers::ShapeStridePair full_slice = std::make_pair(
+        helpers::shape_stride_pair full_slice = std::make_pair(
             labs(reverse_negative_index(idim, range.stop) - reverse_negative_index(idim, range.start))
                 /labs(range.step),
             new_stride
@@ -454,7 +595,7 @@ struct indexer {
     {
         long new_stride = 0; //shouldn't matter since only one item
 
-        helpers::ShapeStridePair full_slice = std::make_pair(
+        helpers::shape_stride_pair full_slice = std::make_pair(
             1,
             new_stride
         );
@@ -517,13 +658,13 @@ namespace helpers {
      * tuple : size_t start_index, vecarray<array<long, 2>, ndims_slice> slices):
      */
     template <long ndimslices>
-    indexer<ndimslices> make_indexer_from_slices_helper(std::pair<size_t, SliceAcc<ndimslices>> pr) {
+    indexer<ndimslices> make_indexer_from_slices(std::pair<size_t, SliceAcc<ndimslices>> pr) {
 
         vecarray<long, ndimslices> shape (pr.second.dynsize());
         vecarray<long, ndimslices> strides (pr.second.dynsize());
 
         for (size_t i = 0; i < pr.second.size(); ++i) {
-            ShapeStridePair sh_st_p = pr.second[i];
+            shape_stride_pair sh_st_p = pr.second[i];
             shape[i] = sh_st_p.first;
             strides[i] = sh_st_p.second;
         }
