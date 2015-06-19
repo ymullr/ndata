@@ -253,7 +253,7 @@ struct interpolate_inner<KernT, ndims, 0, ContainerT, T> {
  * Interpolate one value among a regularly sampled grid of data. The position must be passed as a
  * fraction of an index on each dimension.
  */
-template<class KernT, long ndims, long ndims_fold, typename ContainerT, typename T, overflow_behaviour ... OverflowBehaviour>
+template<class KernT, long ndims, long ndims_fold, typename ContainerT, typename T>//, overflow_behaviour ... OverflowBehaviour>
 nvector<T, ndims-ndims_fold>
 interpolate (
         ndatacontainer<ContainerT, T, ndims> u,
@@ -300,18 +300,20 @@ interpolate (
 
         switch (ob) {
             case ZERO:
-                i_starts[i] = std::max(0l, i_starts[i]);
+                //i_starts[i] = std::max(0l, i_starts[i]);
+                i_starts[i] = clamp(i_starts[i], 0l, long(shape[i]));
                 i_stops[i] = std::min(i_stops[i], long(shape[i]));
 
                 //early return in case the intersect btw the kernel and the field is empty
+                /*
                 if(i_starts[i] >= i_stops[i]) {
                     auto ret_shape = u.get_shape().drop(axis);
                     nvector<T, ndims-ndims_fold> ret (ret_shape, helpers::numtype_adapter<T>::ZERO);
                     return ret;
-                }
+                }*/
 
                 //also make sure we got floating points error/rounding right
-                assert(i_starts[i] >= 0 and i_stops[i] <= long(shape[i])); //this is not true for other overflow behaviours
+                assert(i_starts[i] >= 0 and i_stops[i] <= long(shape[i])+1); //this is not true for other overflow behaviours
                 break;
             case THROW:
                 //if (i_starts[i] < 0 or i_stops[i] > long(shape[i]+1)) {
@@ -332,7 +334,7 @@ interpolate (
         }
 
         //at least one value in each dimension
-        assert(i_starts[i] < i_stops[i]);
+        //assert(i_starts[i] < i_stops[i]);
     }
 
     //now extracting the hypercube from u where the kernel is non-zero

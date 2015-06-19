@@ -103,6 +103,12 @@ namespace helpers {
     };
     */
 
+    template <long ndims>
+    void check_shape(vecarray<long, ndims> shape) {
+        for (size_t i = 0; i < shape.size(); ++i) {
+            assert(shape[i] >= 0);
+        }
+    }
 }
 
 /**
@@ -134,7 +140,8 @@ struct indexer {
         assert(shape0>=0);
 
         //vecarray size 0 for dynamic version is going to be a problem
-        //check_shape(shape_);
+        helpers::check_shape(shape_);
+
         strides_ = calc_strides_from_shape(shape_);
     }
 
@@ -149,7 +156,7 @@ struct indexer {
         shape_(shape),
         strides_(calc_strides_from_shape(shape))
     {
-        //check_shape(shape_);
+        helpers::check_shape(shape_);
     }
 
     /**
@@ -160,7 +167,7 @@ struct indexer {
         shape_(shape),
         strides_(strides)
     {
-        //check_shape(shape_);
+        helpers::check_shape(shape_);
     };
 
 
@@ -351,8 +358,8 @@ struct indexer {
            //TODO check index
             ret_start_index += strides_[idim] * reverse_negative_index(idim, rng.start);
 
-            assert(ret_start_index < unsliced_size());
-
+            assert(ret_start_index < unsliced_size() or unsliced_size() == 0); //special case unsliced_size() == 0 for 0D vectors
+            assert(unsliced_size() != 0 or size() ==0);
             ret_shape_predrop[idim] = (reverse_negative_index(idim, rng.stop)
                                       -reverse_negative_index(idim, rng.start))
                                       /rng.step;
