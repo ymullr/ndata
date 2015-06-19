@@ -7,7 +7,7 @@
 using namespace std;
 
 //comment/uncomment to control printing behavior of the test macro
-//#define PRINT_TESTRESULT_EVEN_ON_SUCCESS
+#define PRINT_TESTRESULT_EVEN_ON_SUCCESS
 
 #ifdef PRINT_TESTRESULT_EVEN_ON_SUCCESS
 #define MAYBE_APPEND_MESSAGE_ON_FAILURE(target, toappend)

@@ -138,12 +138,11 @@ struct TestSuite {
 
         //Also test indexer_slice_alt method
         indexer<2> ndsli_v2 = ndi.slice_indexer_alt(
-                    make_vecarray(
-                        std::make_pair(0ul, range(0, 2)),
-                        std::make_pair(2ul, range())
-                        ),
-                    make_vecarray(std::make_pair(1ul,2l))
-                    );
+                    make_vecarray(range(0, 2), range()),
+                    make_vecarray(0ul, 2ul),
+                    make_vecarray(2l),
+                    make_vecarray(1ul)
+                );
 
         DECLARE_TEST(success, msg);
 
@@ -334,9 +333,10 @@ struct TestSuite {
         ndataview<float, 2> u2_slice =  u2.slice(range(0, Nx), range());
         ndataview<float, 2> u2_slice_alt =  u2.slice_alt(
                     make_vecarray(
-                        make_pair(0ul, range(0, Nx)),
-                        make_pair(1ul, range())
-                        )
+                        range(0, Nx),
+                        range()
+                        ),
+                    make_vecarray(0ul,1ul)
                     );
 
 

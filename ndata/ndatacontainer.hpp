@@ -91,26 +91,24 @@ struct ndatacontainer: indexer<ndims> {
     template <long nranges, long nindices = 0>
     auto
     slice_alt(
-            vecarray<
-                std::pair<size_t, range>, //idim, range.
-                nranges
-                >
-            ranges,
-            vecarray<
-                std::pair<size_t, long>, //idim, indice
-                nindices
-                >
-            indices = vecarray<std::pair<size_t, long>, 0> (ndata::STATICALLY_SIZED)
+            vecarray<range, nranges>
+                ranges,
+            vecarray<size_t, nranges>
+                axis_ranges,
+            vecarray<long, nindices>
+                indices = vecarray<long, 0> (ndata::STATICALLY_SIZED),
+            vecarray<size_t, nindices>
+                axis_indices = vecarray<size_t, 0> (ndata::STATICALLY_SIZED)
         ) -> ndatacontainer<
                 T*,
                 T,
-                helpers::is_any_dynamically_sized<nranges, nindices, ndims>::value?
+                (nranges == DYNAMICALLY_SIZED)?
                     DYNAMICALLY_SIZED :
                     nranges
              >
     {
         return  make_ndatacontainer<T*, T>(
-            this->slice_indexer_alt(ranges, indices),
+            this->slice_indexer_alt(ranges, axis_ranges, indices, axis_indices),
             &data_[0]
         );
     }

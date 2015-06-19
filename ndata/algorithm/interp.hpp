@@ -39,15 +39,38 @@ NumT clamp(NumT x, NumT min, NumT max)
 //-----------------------------------------------------------------------------
 //	CONSTANTS
 //-----------------------------------------------------------------------------
+/*
+namespace overflow_behaviour {
+    struct zero {
 
+    };
 
-enum overflow_behaviour {
+    struct stretch {
+
+    };
+
+    struct cyclic {
+
+    };
+
+    struct throw_ {
+
+    };
+
+    struct assert_ {
+
+    };
+}
+*/
+
+enum overflow_behaviour: int {
     ZERO,
     STRETCH,
     CYCLIC,
     THROW,
     ASSERT
 };
+
 
 /**
  * Linear interpolation kernel
@@ -131,23 +154,46 @@ struct interpolate_inner {
                       "The number of fractional indices must not exceed the number of dimensions");
         static_assert(ndims_fold > 0 or ndims_fold == DYNAMICALLY_SIZED, "");
 
+
+        //prepare vecarrays of ranges and indices for the reduced u array
+        //we fold the array by performing the interpolation on the last dimension contained in axis
+
         auto conv_coeffs_shape = u.get_shape();
 
-        //conv_coeffs_shape is going to be broadcasted along all axis but the one on which the interpolation is performed
-        for (int i = 0; i < conv_coeffs_shape.size(); ++i) {
+        //conv_coeffs_shape is in effect 1D array which is going to be broadcasted along all axis (where shape[i]=1)
+        //but the one on which the interpolation is performed
+        //exemple shape (1, 1, u.get_shape()[axis.back()], 1, 1 ...)
+        for (size_t i = 0; i < conv_coeffs_shape.size(); ++i) {
             if(i!=axis.back()) {
                 conv_coeffs_shape[i]=1;
             }
         }
 
-        //TODO refactor slice_alt so that it does not require pairs
-        nvector<float> conv_coeffs.slice_alt(make_).assign_transform(
-                    make_tuple(
-                        numrange(0l, u.get_shape().back())
-                    ),
-                [=] (long ix) {
-                    float dx = index_frac.back() - float(ix);
-                    return KernT::kern(dx);
+        nvector<float, conv_coeffs_shape.STATIC_SIZE_OR_DYNAMIC>
+            conv_coeffs (conv_coeffs_shape);
+
+        vecarray<long, ndims-1>
+                indices_ (STATICALLY_SIZED, 0ul);
+
+        //all axes but the folded-on dimension
+        std::vector<size_t> all_axes_but_the_folded_one_vec = numrange(0ul, u.get_shape().size()).data_;
+        all_axes_but_the_folded_one_vec.erase(
+                    all_axes_but_the_folded_one_vec.begin()+axis.back()
+                    );
+
+        vecarray<size_t, ndims-1> all_axes_but_the_folded_one (all_axes_but_the_folded_one_vec);
+
+        conv_coeffs.slice_alt(
+                    make_vecarray(range()),
+                    make_vecarray(axis.back()),
+                    indices_, //all 0, there's only one element along those dimensions anyway so we are in fact assigning to the whole conv_coeffs array
+                    all_axes_but_the_folded_one
+                ).assign_transform(
+                    std::make_tuple(numrange(u.get_shape()[axis.back()])),
+                [&index_frac] (long ix) {
+                    float dx = float(ix) - index_frac.back();
+                    KernT kern;
+                    return kern.kern(dx);
                 }
         );
 
@@ -155,113 +201,51 @@ struct interpolate_inner {
         new_shape[axis.back()] = 1; //array is going to be reduced (by summation) along this axis
 
         //zero initialized
-        nvector<float. new_shape.STATIC_SIZE_OR_DYNAMIC>
+        nvector<float, new_shape.STATIC_SIZE_OR_DYNAMIC>
                 u_new (new_shape, 0.f);
 
         //perform reduction through broadcasting with nforeach
         nforeach(
-            tie(u_new, u, conv_coeffs),
+            std::tie(u_new, u, conv_coeffs),
             [=] (auto & vu_new, auto vu, auto vcc) {
                 vu_new += vu * vcc;
             });
 
-        vecarray<std::pair<size_t, range>, index_frac.drop_back().STATIC_SIZE_OR_DYNAMIC>
-                ranges (index_frac.drop_back().dynsize());
-
-        //prepare vecarrays of ranges and indices for the reduced u array
-        //we fold the array by performing the interpolation on the last dimension contained in axis
-
-        size_t i_r = 0;
-        for (size_t i = 0; i < ranges.size(); ++i) {
-            if(i!=axis.back()) {
-                ranges[i_r] = make_pair(i, range());
-                i_r++;
+        auto new_axis_predrop = axis.drop_back();
+        auto new_axis = new_axis_predrop;
+        //decrement axis values to account for the folded axis if necessary
+        for (size_t i = 0; i < new_axis.size(); ++i) {
+            if(new_axis[i]>axis.back()) {
+                new_axis[i] -= 1;
             }
         }
-        auto indices = make_vecarray(
-            std::make_pair(axis.back(), index_frac.back())
-        );
 
-        auto u_slice = u.slice_alt(
+
+        return interpolate_inner<KernT, ndims-1, ndims_fold-1, T*, T>::do_it(
+                    u_new.slice_alt(
+                        vecarray<range, ndims-1>(STATICALLY_SIZED, range()),
+                        all_axes_but_the_folded_one,
+                        make_vecarray(0l),
+                        make_vecarray(axis.back())
+                        ),
+                        index_frac.drop_back(),
+                        axis.drop_back()
                     );
-
-        nvector<T, ndims-1> ures = ntransform(
-                    make_tuple(
-                        u.slice_alt())
-                    )
-
-        /*
-        //u_new loses the.back dimension compared to u
-        //the.back dimension is the one on which the interpolation is performed
-        nvector<T, ndims-1> u_new (u.get_shape().drop_back(), 0);
-
-        auto ndi_unew = u_new.ndindex(0);
-
-        //iterating on all the values of the new array u_new
-        //also means iterating on all dimensions (but the last) of the old array
-        //that is we iterate on all the 1D columns of the old array
-        //
-        //iunew_flat is the flattened multidimensional index (with VectorT stride)
-        for (size_t iunew_flat = 0; iunew_flat < u_new.size(); ++iunew_flat) {
-
-            //setting the matching flatened multidimensional index from the
-            //start of the current column in the old u array
-            //size_t iu0 = 0;
-            auto ndi_u = ndi_unew.append(0);
-
-            //get a slice from u matching the missing dimension of u_new
-            nvector<T, 1> u_col (make_indexer(u.get_shape().back()), 0);
-            for (size_t iCol = 0; iCol < u_col.size(); ++iCol) {
-                u_col(iCol) = u(ndi_u); //no stride in uOld either since we grab the.back dimension
-                ndi_u.back()++;
-            }
-
-            //update u_new
-            //recursive call, this one doesn't have subrecursion since ndims == 1
-            u_new(ndi_unew) = interpolate_inner<KernT, 1, ContainerT, T>::do_it(
-                u_col,
-                make_vecarray(index_frac.back())
-            );
-
-            u_new.increment_ndindex(ndi_unew);
-        }
-
-        //recurse with one less dimension
-        //will terminate when ndims = 1 (see partially specialized template under)
-        return interpolate_inner<KernT, ndims-1, std::vector<T>, T>::do_it(u_new, index_frac.drop_back());
-        */
     }
 };
 
-template <class KernT, typename ContainerT, typename T>
-struct interpolate_inner<KernT, 1, ContainerT, T> {
+template <class KernT, long ndims, typename ContainerT, typename T>
+struct interpolate_inner<KernT, ndims, 0, ContainerT, T> {
 
     static 
-    T
+    nvector<T, ndims>
     do_it(
-            ndatacontainer<ContainerT, T, 1> u,
-            vecarray<float, 1> index_frac
+            ndatacontainer<ContainerT, T, ndims> u,
+            vecarray<float, 0>,//index_frac,
+            vecarray<size_t, 0>// axis
             )
     {
-        assert(
-                u.get_shape().size() == 1
-            and index_frac.size() == 1
-              );
-
-        //termination condition
-        //interpolate in 1D
-        //... easy
-        KernT kern;
-
-        T ret = helpers::numtype_adapter<T>::ZERO;
-
-        for (long i = 0; i < u.get_shape()[0]; ++i) {
-            float x = float(i)-index_frac[0];
-            float convCoeff = kern.kern(x);
-            ret +=  convCoeff * u[i];
-        }
-
-        return ret;
+        return make_nvector(u);
     }
 };
 
@@ -269,18 +253,18 @@ struct interpolate_inner<KernT, 1, ContainerT, T> {
  * Interpolate one value among a regularly sampled grid of data. The position must be passed as a
  * fraction of an index on each dimension.
  */
-template<class KernT, long ndims, long ndims_fold, typename ContainerT, typename T>
+template<class KernT, long ndims, long ndims_fold, typename ContainerT, typename T, overflow_behaviour ... OverflowBehaviour>
 nvector<T, ndims-ndims_fold>
 interpolate (
-        //flattened array of VectorT
-        //TODO Note on VectorT packing/padding/casting
         ndatacontainer<ContainerT, T, ndims> u,
         //sampling is "normalized" by delta so it is expressed in terms of a fraction of
         //the sourceField indices instead of a real position
         //[ndims]
         vecarray<float, ndims_fold> index_frac,
+        vecarray<size_t, ndims_fold> axis,
         //[from 1 to ndims]
         vecarray<overflow_behaviour, ndims> overflow_behaviours
+        //std::tuple<OverflowBehaviour...> overflow_behaviours
         )
 {
     auto shape = u.get_shape();
@@ -320,7 +304,11 @@ interpolate (
                 i_stops[i] = std::min(i_stops[i], long(shape[i]));
 
                 //early return in case the intersect btw the kernel and the field is empty
-                if(i_starts[i] >= i_stops[i]) return helpers::numtype_adapter<T>::ZERO;
+                if(i_starts[i] >= i_stops[i]) {
+                    auto ret_shape = u.get_shape().drop(axis);
+                    nvector<T, ndims-ndims_fold> ret (ret_shape, helpers::numtype_adapter<T>::ZERO);
+                    return ret;
+                }
 
                 //also make sure we got floating points error/rounding right
                 assert(i_starts[i] >= 0 and i_stops[i] <= long(shape[i])); //this is not true for other overflow behaviours
@@ -416,9 +404,10 @@ interpolate (
 
     assert(index_frac.size() == unew_shape.size() );
 
-    return interpolate_inner<KernT>::do_it(
+    return interpolate_inner<KernT, ndims, ndims_fold, ContainerT, T>::do_it(
             unew,
-            index_frac
+            index_frac,
+            axis
     );
 }
 
@@ -426,7 +415,7 @@ interpolate (
 //	NOW A BUNCH OF OVERLOADS FOR DEALING WITH SIMPLER CASES
 //-----------------------------------------------------------------------------
 
-//Only one overflow_behaviour specified for all dimensions
+//Perform on all axes, one overflow_behaviour specified for all dimensions
 template<class KernT, long ndims, typename ContainerT, class T>
 T interpolate (
         ndatacontainer<ContainerT, T, ndims> u,
@@ -438,9 +427,27 @@ T interpolate (
     return interpolate<KernT>(
         u,
         index_frac,
+        vecarray<size_t, ndims>(numrange(size_t(ndims)).data_),
         overflow_behaviours
-        );
+        ).data_[0];//unwrap the scalar from the dim 0 nvector
 }
+
+
+//Perform on all axes
+template<class KernT, long ndims, typename ContainerT, class T>
+T interpolate (
+        ndatacontainer<ContainerT, T, ndims> u,
+        vecarray<float, ndims> index_frac,
+        vecarray<overflow_behaviour, ndims> overflow_behaviours
+        ) {
+    return interpolate<KernT>(
+        u,
+        index_frac,
+        vecarray<size_t, ndims>(numrange(size_t(ndims)).data_),
+        overflow_behaviours
+        ).data_[0];//unwrap the scalar from the dim 0 nvector;
+}
+
 
 //one dimensional case
 template<class KernT, typename ContainerT, class T>

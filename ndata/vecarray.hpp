@@ -50,6 +50,9 @@ constexpr long DYNAMICALLY_SIZED = -1;
 //special value to pass as dynamic_size parameter to vecarray constructor when a dynamic vecarray is wanted
 constexpr long STATICALLY_SIZED = -2;
 
+//TODO: maybe have vecarray hold a member dealing with static/dynamic size info, that can be passed around
+//to build new vecarrays instead of the current STATIC_SIZE_... + dynsize() stuff
+
 //specialization static vecarray
 template<class T, long static_size>
 struct vecarray<T, static_size, typename std::enable_if<(static_size >= 0)>::type> {
@@ -254,7 +257,7 @@ struct vecarray<T, static_size, typename std::enable_if<(static_size == DYNAMICA
         }
     }
 
-    //empty dataializer for later assignment
+    //empty initializer for later assignment
     vecarray() {};
 
     size_t size() {

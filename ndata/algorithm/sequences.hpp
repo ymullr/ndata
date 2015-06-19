@@ -22,6 +22,12 @@ nvector<NumT, 1> numrange(NumT start, NumT stop, NumT step=1) {
     return make_nvector(ret_vec);
 }
 
+
+template<typename NumT>
+nvector<NumT, 1> numrange(NumT stop) {
+    return numrange(NumT(0), stop);
+}
+
 template<typename NumT>
 nvector<NumT, 1> linspace(NumT start, NumT stop, size_t size) {
 

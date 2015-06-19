@@ -262,18 +262,16 @@ struct indexer {
     template <long nranges, long nindices = 0>
     auto
     slice_indexer_alt(
-            vecarray<
-                std::pair<size_t, range>, //idim, range.
-                nranges
-                >
-            ranges,
-            vecarray<
-                std::pair<size_t, long>, //idim, indice
-                nindices
-                >
-            indices = vecarray<std::pair<size_t, long>, 0> (ndata::STATICALLY_SIZED)
+            vecarray<range, nranges>
+                ranges,
+            vecarray<size_t, nranges>
+                axis_ranges,
+            vecarray<long, nindices>
+                indices = vecarray<long, 0> (ndata::STATICALLY_SIZED),
+            vecarray<size_t, nindices>
+                axis_indices = vecarray<size_t, 0> (ndata::STATICALLY_SIZED)
         ) -> indexer<
-                helpers::is_any_dynamically_sized<nranges, nindices, ndims>::value?
+                (nranges == DYNAMICALLY_SIZED)?
                     DYNAMICALLY_SIZED :
                     nranges
              >
@@ -291,15 +289,18 @@ struct indexer {
 
 #ifndef DNDEBUG
         assert(ranges.size() == shape_.size()-indices.size());
+        assert(ranges.size() == axis_ranges.size());
+        assert(indices.size() == axis_indices.size());
+        assert(indices.size() + ranges.size() == shape_.size());
 
         for (size_t ir = 0; ir < ranges.size(); ++ir) {
             for (size_t i_ind = 0; i_ind < indices.size(); ++i_ind) {
                 //make sure that no dimensions is found in ranges and in indices
-                assert(ranges[ir].first != indices[i_ind].first);
+                assert(axis_ranges[ir] != axis_indices[i_ind]);
                 //make sure dimension index doesn't exceed the number of dimensions
                 assert(
-                           ranges[ir].first < shape_.size()
-                       and indices[i_ind].first < shape_.size()
+                           axis_ranges[ir] < shape_.size()
+                       and axis_indices[i_ind] < shape_.size()
                       );
             }
         }
@@ -307,28 +308,28 @@ struct indexer {
 
         for (size_t i1 = 0; i1 < ranges.size(); ++i1) {
 
-            long idim = ranges[i1].first;
+            long idim = axis_ranges[i1];
             assert(idim >= 0 && idim < long(shape_.size()));
 
             for (size_t i2 = 0; i2 < ranges.size(); ++i2) {
                 if (i1 != i2) {
                     //check uniqueness of dimension number in ranges
-                    assert(ranges[i1].first != ranges[i2].first);
+                    assert(axis_ranges[i1]!= axis_ranges[i2]);
                 }
             }
         }
 
         for (size_t i1 = 0; i1 < indices.size(); ++i1) {
 
-            long idim = indices[i1].first;
-            long ind = indices[i1].second;
+            long idim = axis_indices[i1];
+            long ind = indices[i1];
             assert(idim >= 0 && idim < long(shape_.size()));
             assert((ind >= 0)? ind < long(shape_[idim]) : ind >= -long(shape_[idim]));
 
             for (size_t i2 = 0; i2 < indices.size(); ++i2) {
                 if (i1 != i2) {
                     //check uniqueness of dimension number in indices
-                    assert(indices[i1].first != indices[i2].first);
+                    assert(axis_indices[i1] != axis_indices[i2]);
                 }
             }
         }
@@ -343,9 +344,8 @@ struct indexer {
 
         //updating temporary shape with new ranges
         for (size_t i = 0; i < ranges.size(); ++i) {
-            size_t idim;
-            range rng;
-            std::tie(idim, rng) = ranges[i];
+            size_t idim = axis_ranges[i];
+            range rng = ranges[i];
 
             assert(rng.step!=0);
            //TODO check index
@@ -363,9 +363,8 @@ struct indexer {
         vecarray<size_t, indices.STATIC_SIZE_OR_DYNAMIC> droplist (indices.dynsize());
 
         for (size_t i_ind = 0; i_ind < indices.size(); ++i_ind) {
-            size_t idim;
-            long ind;
-            std::tie(idim, ind) = indices[i_ind];
+            size_t idim = axis_indices[i_ind];
+            long ind = indices[i_ind];
 
             ret_start_index += ind * strides_[idim];
             droplist[i_ind] = idim;
