@@ -39,38 +39,253 @@ NumT clamp(NumT x, NumT min, NumT max)
 //-----------------------------------------------------------------------------
 //	CONSTANTS
 //-----------------------------------------------------------------------------
-/*
+
 namespace overflow_behaviour {
+
     struct zero {
+        static
+        void handle_istart_istop(long & i_start, long & i_stop, size_t size, float) {
+
+            i_start = clamp(i_start, 0l, long(size));
+            i_stop = std::min(i_stop, long(size));
+
+            //also make sure we got floating points error/rounding right
+            assert(i_start >= 0 and i_stop <= long(size)+1); //this is not true for other overflow behaviours
+            return;
+        }
+
+        static
+        void handle_overflow(long &, size_t) {
+            //do nothing
+            return;
+        }
 
     };
 
     struct stretch {
+        static
+        void handle_istart_istop(long &, long &, size_t, float) {
+            //nothing
+            return;
+        }
 
+        static
+        void handle_overflow(long & i_uold, size_t size) {
+            i_uold = clamp(long(i_uold), 0l, long(size)-1l);
+        }
     };
 
     struct cyclic {
+        static
+        void handle_istart_istop(long &, long &, size_t, float) {
+            //nothing
+            return;
+        }
 
+        static
+        void handle_overflow(long & i_uold, size_t size) {
+                i_uold = i_uold%long(size);
+                if(i_uold < 0) {
+                    i_uold += size;
+                }
+        }
     };
 
     struct throw_ {
+        static
+        void handle_istart_istop(long & i_start, long & i_stop, size_t size, float index_frac) {
+            if (index_frac < 0 or index_frac > long(size-1)) {
+                throw(std::out_of_range(""));
+            }
+            assert(not (i_start < 0 or i_stop > long(size)));
+            return;
+        }
+
+        static
+        void handle_overflow(long &, size_t) {
+            //do nothing
+            return;
+        }
 
     };
 
     struct assert_ {
+        static
+        void handle_istart_istop(long & i_start, long & i_stop, size_t size, float index_frac) {
+            assert(not (index_frac < 0 or index_frac > long(size-1)));
 
+            //also make sure we also got floating points error/rounding right
+            assert(not (i_start < 0 or i_stop > long(size)));
+            return;
+        }
+
+        static
+        void handle_overflow(long &, size_t) {
+            //do nothing
+            return;
+        }
     };
 }
-*/
 
-enum overflow_behaviour: int {
-    ZERO,
-    STRETCH,
-    CYCLIC,
-    THROW,
-    ASSERT
-};
+namespace helpers {
 
+    template <long ndims>
+    struct run_overflow_handlers {
+
+        template <typename ... OverflowBehaviour>
+        static
+        void
+        do_it(
+            std::tuple<OverflowBehaviour ...> overflow_behaviours,
+            long * i_starts, //total hack
+            long * i_stops,
+            vecarray<long, ndims> shape,
+            vecarray<float, ndims> index_frac
+            )
+        {
+            static_assert(
+                std::tuple_size<decltype(overflow_behaviours)>() == ndims,
+                "Number of overflow behaviours in the tupledoesn't match the number of dimensions that need to be interpolated"
+                );
+            auto tup_ht = tuple_utilities::split_ht(std::move(overflow_behaviours));
+
+            tup_ht.first.handle_istart_istop(*i_starts, *i_stops, shape[0], index_frac[0]);
+            run_overflow_handlers<ndims-1>::do_it(
+                tup_ht.second,
+                i_starts++,
+                i_stops++,
+                shape.drop_front(),
+                index_frac.drop_front()
+                );
+            return;
+        }
+    };
+
+
+    template <>
+    struct run_overflow_handlers<0> {
+
+        template <typename ... OverflowBehaviour>
+        static
+        void do_it(
+            std::tuple<OverflowBehaviour ...> overflow_behaviours,
+            long * i_starts,
+            long * i_stops,
+            vecarray<long, 0> shape,
+            vecarray<float, 0> index_frac
+            )
+        {
+            static_assert(
+                std::tuple_size<decltype(overflow_behaviours)>() == 0,
+                ""
+                );
+            return;
+        }
+    };
+
+
+    /**
+     * Process the copying the correct slice of u_old in u_new. It is necessary to use recursion
+     * to deal with cyclic overflow behaviour appropriately.
+     */
+    template <long ndims_fold, long ndims_rest, typename T>
+    struct copy_values_from_uold_to_unew {
+        template <typename ... OverflowBehaviours>
+        static
+        void
+        do_it(
+            std::tuple<OverflowBehaviours...> overflow_behaviours,
+            vecarray<size_t, ndims_fold> axis_foldable,
+            vecarray<size_t, ndims_rest> axis_rest,
+            vecarray<long, ndims_fold> i_starts,
+            vecarray<long, ndims_fold> i_stops, //useless?
+            ndataview<T, ndims_fold+ndims_rest> u_slice,
+            ndataview<T, ndims_fold+ndims_rest> u_new_slice
+        )
+        {
+            static_assert(std::tuple_size<decltype(overflow_behaviours)>() == ndims_fold, "");
+            auto tup_overfl_behav_ht = tuple_utilities::split_ht(std::move(overflow_behaviours));
+
+            vecarray<size_t, ndims_rest+ndims_fold-1> axis_ranges (STATICALLY_SIZED);
+            for (size_t i = 0; i < ndims_fold-1; ++i) {
+                axis_ranges[i] = axis_foldable[i+1];
+            }
+            for (size_t i = 0; i < ndims_rest; ++i) {
+                axis_ranges[ndims_fold-1+i] = axis_rest[i];
+            }
+
+            size_t current_axis = axis_foldable[0];
+            long current_axis_size = u_new_slice.get_shape()[current_axis];
+
+            //adjust axis numbers for the subslices
+            for (size_t iax = 1; iax < axis_foldable.size(); ++iax) {
+                if(axis_foldable[iax] > current_axis) {
+                    axis_foldable[iax]--;
+                }
+            }
+
+            for (size_t iax = 0; iax < axis_rest.size(); ++iax) {
+                if(axis_rest[iax] > current_axis) {
+                    axis_rest[iax]--;
+                }
+            }
+
+            for (size_t i = 0; i < current_axis_size ; ++i) {
+
+                long u_old_index = i_starts[0]+i;
+
+                tup_overfl_behav_ht.first.handle_overflow(u_old_index, current_axis_size);
+
+                auto u_subslice = u_slice.slice_alt(
+                            vecarray<range, ndims_rest+ndims_fold-1>(STATICALLY_SIZED, range()),
+                            axis_ranges,
+                            make_vecarray(u_old_index),
+                            make_vecarray(current_axis)
+                            );
+                auto u_new_subslice = u_new_slice.slice_alt(
+                            vecarray<range, ndims_rest+ndims_fold-1>(STATICALLY_SIZED, range()),
+                            axis_ranges,
+                            make_vecarray(long(i)),
+                            make_vecarray(current_axis)
+                            );
+
+                //recurse
+                copy_values_from_uold_to_unew<ndims_fold-1, ndims_rest, T>::do_it(
+                            tup_overfl_behav_ht.second,
+                            axis_foldable.drop_front(),
+                            axis_rest,
+                            i_starts.drop_front(),
+                            i_stops.drop_front(),
+                            u_subslice,
+                            u_new_subslice
+                            );
+
+            }
+        }
+    };
+
+    template <long ndims_rest, typename T>
+    struct copy_values_from_uold_to_unew<0, ndims_rest, T> {
+        template <typename ... OverflowBehaviours>
+        static
+        void
+        do_it(
+            std::tuple<> overflow_behaviours,
+            vecarray<size_t, 0> axis_foldable,
+            vecarray<size_t, ndims_rest> axis_rest,
+            vecarray<long, 0> i_starts,
+            vecarray<long, 0> i_stops,
+            ndataview<T, ndims_rest> u_slice,
+            ndataview<T, ndims_rest> u_new_slice
+        )
+        {
+            u_new_slice.assign(u_slice);
+            return;
+        }
+    };
+
+
+}
 
 /**
  * Linear interpolation kernel
@@ -183,18 +398,20 @@ struct interpolate_inner {
 
         vecarray<size_t, ndims-1> all_axes_but_the_folded_one (all_axes_but_the_folded_one_vec);
 
+        //all indices_[i] are 0, as there's only one element along those dimensions anyway
+        //so we are in fact assigning to the whole conv_coeffs array
         conv_coeffs.slice_alt(
-                    make_vecarray(range()),
-                    make_vecarray(axis.back()),
-                    indices_, //all 0, there's only one element along those dimensions anyway so we are in fact assigning to the whole conv_coeffs array
-                    all_axes_but_the_folded_one
-                ).assign_transform(
-                    std::make_tuple(numrange(u.get_shape()[axis.back()])),
-                [&index_frac] (long ix) {
-                    float dx = float(ix) - index_frac.back();
-                    KernT kern;
-                    return kern.kern(dx);
-                }
+                make_vecarray(range()),
+                make_vecarray(axis.back()),
+                indices_,
+                all_axes_but_the_folded_one
+            ).assign_transform(
+                std::make_tuple(numrange(u.get_shape()[axis.back()])),
+            [&index_frac] (long ix) {
+                float dx = float(ix) - index_frac.back();
+                KernT kern;
+                return kern.kern(dx);
+            }
         );
 
         auto new_shape = u.get_shape();
@@ -222,15 +439,15 @@ struct interpolate_inner {
 
 
         return interpolate_inner<KernT, ndims-1, ndims_fold-1, T*, T>::do_it(
-                    u_new.slice_alt(
-                        vecarray<range, ndims-1>(STATICALLY_SIZED, range()),
-                        all_axes_but_the_folded_one,
-                        make_vecarray(0l),
-                        make_vecarray(axis.back())
-                        ),
-                        index_frac.drop_back(),
-                        axis.drop_back()
-                    );
+            u_new.slice_alt(
+                vecarray<range, ndims-1>(STATICALLY_SIZED, range()),
+                all_axes_but_the_folded_one,
+                make_vecarray(0l),
+                make_vecarray(axis.back())
+                ),
+                index_frac.drop_back(),
+                axis.drop_back()
+            );
     }
 };
 
@@ -249,11 +466,12 @@ struct interpolate_inner<KernT, ndims, 0, ContainerT, T> {
     }
 };
 
+
 /**
  * Interpolate one value among a regularly sampled grid of data. The position must be passed as a
  * fraction of an index on each dimension.
  */
-template<class KernT, long ndims, long ndims_fold, typename ContainerT, typename T>//, overflow_behaviour ... OverflowBehaviour>
+template<class KernT, long ndims, long ndims_fold, typename ContainerT, typename T, typename ... OverflowBehaviours>
 nvector<T, ndims-ndims_fold>
 interpolate (
         ndatacontainer<ContainerT, T, ndims> u,
@@ -263,96 +481,123 @@ interpolate (
         vecarray<float, ndims_fold> index_frac,
         vecarray<size_t, ndims_fold> axis,
         //[from 1 to ndims]
-        vecarray<overflow_behaviour, ndims> overflow_behaviours
+        std::tuple<OverflowBehaviours...> overflow_behaviours
         //std::tuple<OverflowBehaviour...> overflow_behaviours
         )
 {
-    auto shape = u.get_shape();
+    vecarray<long, ndims_fold> shape (axis.dynsize());
 
+    for (size_t i = 0; i < axis.size(); ++i) {
+        shape[i] = u.get_shape()[axis[i]];
+    }
 
-    assert(
-            index_frac.size() == shape.size()
-        and overflow_behaviours.size() == shape.size()
+    static_assert(
+        sizeof...(OverflowBehaviours) == ndims_fold,
+        "The number of elements in the overflow_behaviours tuple doesn't match the number of interpolation axes"
         );
 
-    vecarray<long, ndims> i_starts, i_stops;
-    i_starts = i_stops = vecarray<long, ndims>(shape.dynsize());
+    vecarray<long, ndims_fold> i_starts, i_stops;
+    i_starts = i_stops = vecarray<long, ndims_fold>(axis.dynsize());
 
     for (size_t i = 0; i < shape.size(); ++i) {
-
-        overflow_behaviour ob = overflow_behaviours[i];
-
-        if (ob == overflow_behaviour::STRETCH) {
-            index_frac[i] = clamp(index_frac[i], float(0), float(shape[i])-1);
-        }
-
-        //long kernWidth = KernT::ONE_SIDED_WIDTH*2;
-        //handle edge case at the boundary (due to floor)
-        //if (index_frac[i] == shape[i]-KernT::ONE_SIDED_WIDTH) {
-        //    i_starts[i] = index_frac[i]-long(KernT::ONE_SIDED_WIDTH);
-        //} else { //general case
-        //    i_starts[i] = floor(index_frac[i])-long(KernT::ONE_SIDED_WIDTH)+1;
-        //}
-        //i_stops[i] = i_starts[i] + kernWidth;
-
         i_starts[i] = floor(index_frac[i])-long(KernT::ONE_SIDED_WIDTH)+1;
         i_stops[i] = ceil(index_frac[i])+long(KernT::ONE_SIDED_WIDTH);
+    }
 
-        switch (ob) {
-            case ZERO:
-                //i_starts[i] = std::max(0l, i_starts[i]);
-                i_starts[i] = clamp(i_starts[i], 0l, long(shape[i]));
-                i_stops[i] = std::min(i_stops[i], long(shape[i]));
+    //depending on the overflow behaviour, i_starts and i_stops may be processed by appropriate handlers at this point
+    //(mostly to do some clamping and bound checking)
+    helpers::run_overflow_handlers<ndims_fold>::do_it(
+            overflow_behaviours,
+            &i_starts[0],
+            &i_stops[0],
+            shape,
+            index_frac
+            );
 
-                //early return in case the intersect btw the kernel and the field is empty
-                /*
-                if(i_starts[i] >= i_stops[i]) {
-                    auto ret_shape = u.get_shape().drop(axis);
-                    nvector<T, ndims-ndims_fold> ret (ret_shape, helpers::numtype_adapter<T>::ZERO);
-                    return ret;
-                }*/
+    for (size_t i = 0; i < shape.size(); ++i) {
+        //zero or one value for each dimension
+        assert(i_starts[i] <= i_stops[i]);
+    }
 
-                //also make sure we got floating points error/rounding right
-                assert(i_starts[i] >= 0 and i_stops[i] <= long(shape[i])+1); //this is not true for other overflow behaviours
-                break;
-            case THROW:
-                //if (i_starts[i] < 0 or i_stops[i] > long(shape[i]+1)) {
-                if (index_frac[i] < 0 or index_frac[i] > long(shape[i]-1)) {
-                    throw(std::out_of_range(""));
-                }
-                assert(not (i_starts[i] < 0 or i_stops[i] > long(shape[i])));
-                break;
-            case ASSERT:
-                assert(not (index_frac[i] < 0 or index_frac[i] > long(shape[i]-1)));
+    //now extracting the hypercube from u where the interpolation kernel is non-zero
+    //however there's a twist: for the cyclic overflow behaviour we need to be able to "wrap around" during slice,
+    //so in fact we still need to iterate all the elements of the reachable dimension and apply the wrap around
 
-                //also make sure we also got floating points error/rounding right
-                assert(not (i_starts[i] < 0 or i_stops[i] > long(shape[i])));
-                break;
-            default:
-                //nothing
-                break;
+    //find out the shape of the sliced hypercube
+    vecarray<long, ndims> unew_shape (u.get_shape().dynsize());
+    for (size_t idim = 0; idim < ndims; ++idim) {
+        bool found = false;
+        long i_axis;
+        for (size_t iax = 0; iax < axis.size(); ++iax) {
+            if(idim == axis[iax]) {
+                found = true;
+                i_axis = iax;
+            }
+        }
+        if(found == true) {
+            unew_shape[idim] = i_stops[i_axis] - i_starts[i_axis];
+        } else {
+            unew_shape[idim] = u.get_shape()[idim];
+        }
+    }
+
+    nvector<T, ndims> unew (unew_shape, ndata::helpers::numtype_adapter<T>::ZERO);
+
+    //vecarray<size_t, ndims> ndi_unew = unew.ndindex(0);
+    /*
+    //1D broadcastable indice_ranges in each foldable dimension
+    vecarray<
+            nvector<T, ndims>,
+            ndims_fold
+            >
+            indice_ranges (u.get_shape().dynsize);
+
+    for (size_t i = 0; i < indice_ranges.size(); ++i) {
+        vecarray<long, ndims> indice_range_shape (u.get_shape().dynsize());
+        for (size_t i_shape = 0; i_shape < indice_range_shape.size(); ++i_shape) {
+            if(i_shape == axis[i]) {
+                indice_range_shape[i_shape] = numrange(u.get_shape()[axis[i]]);
+            } else {
+                indice_range_shape[i_shape] = 1;
+            }
         }
 
-        //at least one value in each dimension
-        //assert(i_starts[i] < i_stops[i]);
+        indice_ranges[i] = nvector<T, ndims>();
+    }
+    */
+
+
+    vecarray<size_t, ndims-ndims_fold> axis_rest (STATICALLY_SIZED);
+    size_t i_rest = 0;
+    for (size_t i = 0; i < u.get_shape().size(); ++i) {
+        bool found_in_axis = false;
+        for (size_t i_fold = 0; i_fold < axis.size(); ++i_fold) {
+            if(i == axis[i_fold]) {
+                found_in_axis = true;
+                break;
+            }
+        }
+        if(not found_in_axis) {
+            axis_rest[i_rest] = i;
+            i_rest++;
+        }
     }
 
-    //now extracting the hypercube from u where the kernel is non-zero
-
-    vecarray<long, ndims> unew_shape = shape;
-
-    for (size_t idim = 0; idim < ndims; ++idim) {
-        unew_shape[idim] = i_stops[idim] - i_starts[idim];
-    }
-
-    nvector<T, ndims> unew (unew_shape, helpers::numtype_adapter<T>::ZERO);
-
-    vecarray<size_t, ndims> ndi_unew = unew.ndindex(0);
+    helpers::copy_values_from_uold_to_unew<ndims_fold, ndims-ndims_fold, T>::do_it(
+            overflow_behaviours,
+            axis,
+            axis_rest,
+            i_starts,
+            i_stops,
+            u.as_view(),
+            unew.as_view()
+            );
 
     //iterating on all the values of the new array u_new
     //and their matching values from the old array
     //
     //i is the flattened index in unew
+    /*
     for (size_t i = 0; i < unew.size(); ++i) {
 
         //compute the multidimensional index for the current value in the old u array
@@ -398,6 +643,7 @@ interpolate (
         //needed to locate matching values in the old u array
         unew.increment_ndindex(ndi_unew);
     }
+    */
 
     //adjust indexfrac for new reduced array size
     for (size_t i = 0; i < index_frac.size(); ++i) {
@@ -418,29 +664,26 @@ interpolate (
 //-----------------------------------------------------------------------------
 
 //Perform on all axes, one overflow_behaviour specified for all dimensions
-template<class KernT, long ndims, typename ContainerT, class T>
+template<class KernT, typename OverflowBehaviour = overflow_behaviour::throw_, long ndims, typename ContainerT, class T>
 T interpolate (
         ndatacontainer<ContainerT, T, ndims> u,
-        vecarray<float, ndims> index_frac,
-        overflow_behaviour overflowBehaviour = overflow_behaviour::THROW
+        vecarray<float, ndims> index_frac
         ) {
-    vecarray<overflow_behaviour, ndims> overflow_behaviours (index_frac.dynsize());
-    overflow_behaviours.fill(overflowBehaviour);
     return interpolate<KernT>(
         u,
         index_frac,
         vecarray<size_t, ndims>(numrange(size_t(ndims)).data_),
-        overflow_behaviours
+        tuple_utilities::make_uniform_tuple<ndims>(OverflowBehaviour())
         ).data_[0];//unwrap the scalar from the dim 0 nvector
 }
 
 
 //Perform on all axes
-template<class KernT, long ndims, typename ContainerT, class T>
+template<class KernT, long ndims, typename ContainerT, class T, typename ... OverflowBehaviours>
 T interpolate (
         ndatacontainer<ContainerT, T, ndims> u,
         vecarray<float, ndims> index_frac,
-        vecarray<overflow_behaviour, ndims> overflow_behaviours
+        std::tuple<OverflowBehaviours...> overflow_behaviours
         ) {
     return interpolate<KernT>(
         u,
@@ -452,16 +695,15 @@ T interpolate (
 
 
 //one dimensional case
-template<class KernT, typename ContainerT, class T>
+template<class KernT, typename OverflowBehaviour = overflow_behaviour::throw_, typename ContainerT, class T>
 T interpolate (
         ndatacontainer<ContainerT, T, 1> u,
-        float index_frac,
-        overflow_behaviour overflowBehaviour = overflow_behaviour::THROW
+        float index_frac
         ) {
     return interpolate<KernT>(
         u,
         vecarray<float, 1>({index_frac}),
-        vecarray<overflow_behaviour, 1>({overflowBehaviour})
+        std::make_tuple(OverflowBehaviour())
         );
 }
 

@@ -8,8 +8,6 @@
 
 #include <ndata/debug_helpers.hpp>
 
-//TODO: test boundary values
-
 using namespace ndata;
 using namespace ndata::interp;
 
@@ -39,10 +37,9 @@ struct TestSuite {
 
         for (float i = start_ifrac; i < Nn*3; i+=0.5) {
 
-            float out = interpolate<KernT>(
+            float out = interpolate<KernT, overflow_behaviour::stretch>(
                     u,
-                    {2, i, 2},
-                    overflow_behaviour::STRETCH
+                    {2, i, 2}
                     );
 
             output.append(MakeString()<<out<<", ");
@@ -71,10 +68,9 @@ struct TestSuite {
 
             float i_frac = i; 
 
-            float out = interpolate<KernT>(
+            float out = interpolate<KernT, overflow_behaviour::stretch>(
                 u,
-                i_frac,
-                overflow_behaviour::STRETCH
+                i_frac
             );
 
             output.append(MakeString()<< out<<", ");
@@ -100,10 +96,9 @@ struct TestSuite {
 
             float i_frac = i;  
 
-            float out = interpolate<KernT>(
+            float out = interpolate<KernT, interp::overflow_behaviour::zero>(
                 u,
-                i_frac,
-                overflow_behaviour::ZERO
+                i_frac
             );
 
             if(
@@ -118,8 +113,9 @@ struct TestSuite {
         RETURN_TESTRESULT(success_bool, output);
     }
 
+    template<typename OverflowBehaviour = overflow_behaviour::stretch>
     static
-    test_result increasing_field_1D(overflow_behaviour ob=overflow_behaviour::STRETCH) {
+    test_result increasing_field_1D() {
   
         nvector<float, 1> u (make_indexer(Nn), 0);
         float increment = 1;
@@ -140,11 +136,9 @@ struct TestSuite {
 
             float i_frac = i ;
 
-            float out = interpolate<KernT>(
+            float out = interpolate<KernT, OverflowBehaviour>(
                     u,
-                    i_frac,
-                    ob
-                    //OverflowBehaviourT
+                    i_frac
                     );
 
             retMsg.append(MakeString() << out << ", "); 
@@ -180,10 +174,9 @@ struct TestSuite {
 
             float i_frac = i ;
 
-            float out = interpolate<KernT>(
+            float out = interpolate<KernT, interp::overflow_behaviour::stretch>(
                     u,
-                    {i_frac, i_frac, i_frac},
-                    overflow_behaviour::STRETCH
+                    {i_frac, i_frac, i_frac}
                     );
 
             retMsg.append(MakeString() << out << ", "); 
@@ -220,17 +213,15 @@ struct TestSuite {
 
             float i_frac = i; 
 
-            float val = interpolate<KernT>(
+            float val = interpolate<KernT, interp::overflow_behaviour::stretch>(
                     u,
-                    i_frac,
-                    overflow_behaviour::STRETCH
+                    i_frac
                     );
 
 
-            float valhalf = interpolate<KernT>(
+            float valhalf = interpolate<KernT, interp::overflow_behaviour::stretch>(
                     u,
-                    i_frac+0.5,
-                    overflow_behaviour::STRETCH
+                    i_frac+0.5
                     );
 
             retMsg.append(MakeString() << val << ", " << valhalf << ", "); 
@@ -288,10 +279,10 @@ struct TestSuite {
                 float val = interpolate<KernT>(
                     u,
                     make_vecarray(xfrac, 4.5f, 4.5f),
-                    make_vecarray(
-                        overflow_behaviour::CYCLIC,
-                        overflow_behaviour::CYCLIC,
-                        overflow_behaviour::CYCLIC
+                    std::make_tuple(
+                        interp::overflow_behaviour::cyclic(),
+                        interp::overflow_behaviour::cyclic(),
+                        interp::overflow_behaviour::cyclic()
                     )
                 );
 
@@ -330,8 +321,16 @@ struct TestSuite {
 
         indexer<ndims> vecindexr (vecarray<long, ndims>(STATICALLY_SIZED, Nn));
 
-        vecarray<overflow_behaviour, ndims> ovfl (STATICALLY_SIZED, overflow_behaviour::CYCLIC);
-        ovfl.back()=overflow_behaviour::STRETCH;
+        //vecarray<overflow_behaviour, ndims> ovfl (STATICALLY_SIZED, overflow_behaviour::CYCLIC);
+        //ovfl.back()=overflow_behaviour::STRETCH;
+
+        //a tuple of length ndims filled with interp::overflow_behaviour::cyclic,
+        //except for the last item which is an instance of
+        //interp::overflow_behaviour::stretch
+        auto ovfl = std::tuple_cat(
+                    tuple_utilities::make_uniform_tuple<ndims-1>(interp::overflow_behaviour::cyclic()),
+                    std::make_tuple(interp::overflow_behaviour::stretch())
+                    );
 
         nvector<float, ndims> u (vecindexr, 0.f);
 
@@ -403,6 +402,9 @@ struct TestSuite {
         RETURN_TESTRESULT(aggreg_equal, retMsg);
     }
 
+    //TODO test resampling with axis option
+    //also with axis numbers in decreasing order
+
     static
     test_result run_all_tests() {
 
@@ -411,14 +413,14 @@ struct TestSuite {
         RUN_TEST(constant_field_1D()            , success_bool, msg);
         RUN_TEST(zero_boundary_1D()             , success_bool, msg);
         RUN_TEST(increasing_field_1D()          , success_bool, msg);
-        RUN_TEST(increasing_field_1D(overflow_behaviour::CYCLIC)
+        RUN_TEST(increasing_field_1D<overflow_behaviour::cyclic>()
                 , success_bool, msg);
         RUN_TEST(simple_equalities_1D()         , success_bool, msg);
         RUN_TEST(constant_field_3D()            , success_bool, msg);
         RUN_TEST(increasing_field_3D()          , success_bool, msg);
         RUN_TEST(cyclic_equal_3D()              , success_bool, msg);
 
-        //yeah.. macros dont like multiple template arguments (sad)
+        //Macros dont like multiple template arguments (sad)
         //wrapping the call in a lambda as a workaround
         auto stable_derivative_2D = [] () {return stable_derivative_NDNC<2>();};
         RUN_TEST(stable_derivative_2D()       , success_bool, msg);

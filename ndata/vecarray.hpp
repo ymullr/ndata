@@ -405,6 +405,22 @@ make_vecarray(T val1, Ts ... valn) {
     return ret;
 }
 
+/*
+template <typename T, long 0>
+auto//tuple<T, T ...>
+vecarray_to_tuple(vecarray<T, 0> va) {
+
+template <typename T, long static_size>
+auto//tuple<T, T ...>
+vecarray_to_tuple(vecarray<T, static_size> va) {
+
+    auto rec_func = [=] (auto tup_acc, auto va_) {
+        std::tuple_cat(tup_acc, std::make_tuple(va_[0]))
+    }
+
+}
+*/
+
 } //end namespace
 
 

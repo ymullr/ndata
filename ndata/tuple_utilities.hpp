@@ -121,6 +121,42 @@ namespace tuple_utilities {
         return zip_helper( t1, t2, std::make_index_sequence<sizeof...(A)>() );
     }
 
+    namespace helpers {
+        template <typename T, size_t nelts_rest>
+        struct make_uniform_tuple_impl {
+
+            template <typename ... Ts>
+            static
+            auto do_it(std::tuple<Ts...> tup_acc, T item) {
+
+                return make_uniform_tuple_impl<T, nelts_rest-1>::do_it(std::tuple_cat(tup_acc, std::make_tuple(item)), item);
+            }
+        };
+
+        //termination
+        template <typename T>
+        struct make_uniform_tuple_impl<T, 0> {
+
+            template <typename ... Ts>
+            static
+            auto do_it(std::tuple<Ts...> tup_acc, T) {
+                return tup_acc;
+            }
+        };
+
+    }
+
+    template <size_t nelts, typename T>
+    auto make_uniform_tuple(T item) {
+
+        auto tup = helpers::make_uniform_tuple_impl<T, nelts>::do_it(std::make_tuple(), item);
+        static_assert(
+            std::tuple_size<decltype(tup)>() == nelts,
+            ""
+            );
+        return tup;
+    }
+
 }
 
 #endif /* end of include guard: TUPLE_UTILITY_HPP_KC5LBUVV */ 
