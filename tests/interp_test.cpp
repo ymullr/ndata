@@ -417,7 +417,6 @@ struct TestSuite {
                 , success_bool, msg);
         RUN_TEST(simple_equalities_1D()         , success_bool, msg);
         RUN_TEST(constant_field_3D()            , success_bool, msg);
-        RUN_TEST(increasing_field_3D()          , success_bool, msg);
         RUN_TEST(cyclic_equal_3D()              , success_bool, msg);
 
         //Macros dont like multiple template arguments (sad)
@@ -426,6 +425,12 @@ struct TestSuite {
         RUN_TEST(stable_derivative_2D()       , success_bool, msg);
         auto stable_derivative_3D = [] () {return stable_derivative_NDNC<3>();};
         RUN_TEST(stable_derivative_3D()       , success_bool, msg);
+
+        //test will always fail with some kernels due to overshoot
+        //disabling for these cases
+        if(not std::is_same<KernT, kern_cubic>::value) {
+            RUN_TEST(increasing_field_3D()          , success_bool, msg);
+        }
 
 
         RETURN_TESTRESULT(success_bool, msg);

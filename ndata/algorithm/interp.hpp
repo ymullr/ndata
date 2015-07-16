@@ -169,10 +169,10 @@ namespace helpers {
         static
         void do_it(
             std::tuple<OverflowBehaviour ...> overflow_behaviours,
-            long * i_starts,
-            long * i_stops,
-            vecarray<long, 0> shape,
-            vecarray<float, 0> index_frac
+            long *,// i_starts,
+            long *,// i_stops,
+            vecarray<long, 0>,// shape,
+            vecarray<float, 0>// index_frac
             )
         {
             static_assert(
@@ -188,72 +188,74 @@ namespace helpers {
      * Process the copying the correct slice of u_old in u_new. It is necessary to use recursion
      * to deal with cyclic overflow behaviour appropriately.
      */
-    template <long ndims_fold, long ndims_rest, typename T>
+    template <long ndims_fold, long ndims_to_keep, typename T>
     struct copy_values_from_uold_to_unew {
         template <typename ... OverflowBehaviours>
         static
         void
         do_it(
             std::tuple<OverflowBehaviours...> overflow_behaviours,
-            vecarray<size_t, ndims_fold> axis_foldable,
-            vecarray<size_t, ndims_rest> axis_rest,
+            vecarray<size_t, ndims_fold> axis_to_fold,
+            vecarray<size_t, ndims_to_keep> axis_to_keep,
             vecarray<long, ndims_fold> i_starts,
             vecarray<long, ndims_fold> i_stops, //useless?
-            ndataview<T, ndims_fold+ndims_rest> u_slice,
-            ndataview<T, ndims_fold+ndims_rest> u_new_slice
+            ndataview<T, ndims_fold+ndims_to_keep> u_slice,
+            ndataview<T, ndims_fold+ndims_to_keep> u_new_slice
         )
         {
             static_assert(std::tuple_size<decltype(overflow_behaviours)>() == ndims_fold, "");
             auto tup_overfl_behav_ht = tuple_utilities::split_ht(std::move(overflow_behaviours));
 
-            vecarray<size_t, ndims_rest+ndims_fold-1> axis_ranges (STATICALLY_SIZED);
+            vecarray<size_t, ndims_to_keep+ndims_fold-1> axis_ranges (STATICALLY_SIZED);
             for (size_t i = 0; i < ndims_fold-1; ++i) {
-                axis_ranges[i] = axis_foldable[i+1];
+                axis_ranges[i] = axis_to_fold[i+1];
             }
-            for (size_t i = 0; i < ndims_rest; ++i) {
-                axis_ranges[ndims_fold-1+i] = axis_rest[i];
+            for (size_t i = 0; i < ndims_to_keep; ++i) {
+                axis_ranges[ndims_fold-1+i] = axis_to_keep[i];
             }
 
-            size_t current_axis = axis_foldable[0];
-            long current_axis_size = u_new_slice.get_shape()[current_axis];
+            size_t current_axis = axis_to_fold[0];
 
             //adjust axis numbers for the subslices
-            for (size_t iax = 1; iax < axis_foldable.size(); ++iax) {
-                if(axis_foldable[iax] > current_axis) {
-                    axis_foldable[iax]--;
+            for (size_t iax = 1; iax < axis_to_fold.size(); ++iax) {
+                if(axis_to_fold[iax] > current_axis) {
+                    axis_to_fold[iax]--;
                 }
             }
 
-            for (size_t iax = 0; iax < axis_rest.size(); ++iax) {
-                if(axis_rest[iax] > current_axis) {
-                    axis_rest[iax]--;
+            for (size_t iax = 0; iax < axis_to_keep.size(); ++iax) {
+                if(axis_to_keep[iax] > current_axis) {
+                    axis_to_keep[iax]--;
                 }
             }
 
-            for (size_t i = 0; i < current_axis_size ; ++i) {
+            long current_axis_size = u_new_slice.get_shape()[current_axis];
+            //recurse with one less dimension on the subslices associated
+            //with each element of the current dimension
+            for (long i = 0; i < current_axis_size ; ++i) {
 
                 long u_old_index = i_starts[0]+i;
 
-                tup_overfl_behav_ht.first.handle_overflow(u_old_index, current_axis_size);
+                tup_overfl_behav_ht.first.handle_overflow(u_old_index, u_slice.get_shape()[current_axis]);
 
                 auto u_subslice = u_slice.slice_alt(
-                            vecarray<range, ndims_rest+ndims_fold-1>(STATICALLY_SIZED, range()),
+                            vecarray<range, ndims_to_keep+ndims_fold-1>(STATICALLY_SIZED, range()),
                             axis_ranges,
                             make_vecarray(u_old_index),
                             make_vecarray(current_axis)
                             );
                 auto u_new_subslice = u_new_slice.slice_alt(
-                            vecarray<range, ndims_rest+ndims_fold-1>(STATICALLY_SIZED, range()),
+                            vecarray<range, ndims_to_keep+ndims_fold-1>(STATICALLY_SIZED, range()),
                             axis_ranges,
                             make_vecarray(long(i)),
                             make_vecarray(current_axis)
                             );
 
-                //recurse
-                copy_values_from_uold_to_unew<ndims_fold-1, ndims_rest, T>::do_it(
+                //recursive call
+                copy_values_from_uold_to_unew<ndims_fold-1, ndims_to_keep, T>::do_it(
                             tup_overfl_behav_ht.second,
-                            axis_foldable.drop_front(),
-                            axis_rest,
+                            axis_to_fold.drop_front(),
+                            axis_to_keep,
                             i_starts.drop_front(),
                             i_stops.drop_front(),
                             u_subslice,
@@ -264,19 +266,19 @@ namespace helpers {
         }
     };
 
-    template <long ndims_rest, typename T>
-    struct copy_values_from_uold_to_unew<0, ndims_rest, T> {
+    template <long ndims_to_keep, typename T>
+    struct copy_values_from_uold_to_unew<0, ndims_to_keep, T> {
         template <typename ... OverflowBehaviours>
         static
         void
         do_it(
-            std::tuple<> overflow_behaviours,
-            vecarray<size_t, 0> axis_foldable,
-            vecarray<size_t, ndims_rest> axis_rest,
-            vecarray<long, 0> i_starts,
-            vecarray<long, 0> i_stops,
-            ndataview<T, ndims_rest> u_slice,
-            ndataview<T, ndims_rest> u_new_slice
+            std::tuple<>,// overflow_behaviours,
+            vecarray<size_t, 0>,// axis_to_fold,
+            vecarray<size_t, ndims_to_keep>,// axis_to_keep,
+            vecarray<long, 0>,// i_starts,
+            vecarray<long, 0>,// i_stops,
+            ndataview<T, ndims_to_keep> u_slice,
+            ndataview<T, ndims_to_keep> u_new_slice
         )
         {
             u_new_slice.assign(u_slice);
@@ -342,16 +344,12 @@ struct kern_cubic {
         }
 
         return convCoeff;
-    };
+    }
 
     static constexpr long ONE_SIDED_WIDTH = 2; //kernel width from zero to upper bound
 };
 
 //TODO Lanczos kernel
-
-//TODO make interpolate able to perform array to array interpolation while reusing convolution kernels (once non variadic .slice overload is done)
-// that means the user would be able to specify along which dimensions the interpolation happens
-//TODO overflow_behavior as tuple for static dispatch
 
 template<class KernT, long ndims, long ndims_fold, class ContainerT, class T>
 struct interpolate_inner {
@@ -567,7 +565,7 @@ interpolate (
     */
 
 
-    vecarray<size_t, ndims-ndims_fold> axis_rest (STATICALLY_SIZED);
+    vecarray<size_t, ndims-ndims_fold> axis_to_keep (STATICALLY_SIZED);
     size_t i_rest = 0;
     for (size_t i = 0; i < u.get_shape().size(); ++i) {
         bool found_in_axis = false;
@@ -578,25 +576,22 @@ interpolate (
             }
         }
         if(not found_in_axis) {
-            axis_rest[i_rest] = i;
+            axis_to_keep[i_rest] = i;
             i_rest++;
         }
     }
 
+    //filling all the values of the new (reduced) array u_new from the values of the old u
     helpers::copy_values_from_uold_to_unew<ndims_fold, ndims-ndims_fold, T>::do_it(
             overflow_behaviours,
             axis,
-            axis_rest,
+            axis_to_keep,
             i_starts,
             i_stops,
             u.as_view(),
             unew.as_view()
             );
 
-    //iterating on all the values of the new array u_new
-    //and their matching values from the old array
-    //
-    //i is the flattened index in unew
     /*
     for (size_t i = 0; i < unew.size(); ++i) {
 
