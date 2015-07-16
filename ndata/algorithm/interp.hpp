@@ -349,7 +349,32 @@ struct kern_cubic {
     static constexpr long ONE_SIDED_WIDTH = 2; //kernel width from zero to upper bound
 };
 
-//TODO Lanczos kernel
+template <size_t a>
+struct kern_lanczos {
+
+private:
+    static constexpr float PI = acos(-1);
+
+public:
+    float kern(float x) {
+
+        assert(fabs(x)<=ONE_SIDED_WIDTH);
+
+        if (x == 0) {
+            return 1;
+        } else if (fabs(x) == a) {
+            return 0;
+        }
+
+        assert(fabs(x)<a);
+
+        return float(a)*sin(PI*x)*sin(PI*x/float(a))/(x*x*PI*PI);
+    }
+
+    static constexpr long ONE_SIDED_WIDTH = a; //kernel width from zero to upper bound
+};
+
+
 
 template<class KernT, long ndims, long ndims_fold, class ContainerT, class T>
 struct interpolate_inner {
@@ -541,30 +566,6 @@ interpolate (
 
     nvector<T, ndims> unew (unew_shape, ndata::helpers::numtype_adapter<T>::ZERO);
 
-    //vecarray<size_t, ndims> ndi_unew = unew.ndindex(0);
-    /*
-    //1D broadcastable indice_ranges in each foldable dimension
-    vecarray<
-            nvector<T, ndims>,
-            ndims_fold
-            >
-            indice_ranges (u.get_shape().dynsize);
-
-    for (size_t i = 0; i < indice_ranges.size(); ++i) {
-        vecarray<long, ndims> indice_range_shape (u.get_shape().dynsize());
-        for (size_t i_shape = 0; i_shape < indice_range_shape.size(); ++i_shape) {
-            if(i_shape == axis[i]) {
-                indice_range_shape[i_shape] = numrange(u.get_shape()[axis[i]]);
-            } else {
-                indice_range_shape[i_shape] = 1;
-            }
-        }
-
-        indice_ranges[i] = nvector<T, ndims>();
-    }
-    */
-
-
     vecarray<size_t, ndims-ndims_fold> axis_to_keep (STATICALLY_SIZED);
     size_t i_rest = 0;
     for (size_t i = 0; i < u.get_shape().size(); ++i) {
@@ -591,54 +592,6 @@ interpolate (
             u.as_view(),
             unew.as_view()
             );
-
-    /*
-    for (size_t i = 0; i < unew.size(); ++i) {
-
-        //compute the multidimensional index for the current value in the old u array
-        //ndi_uold is the multidimensional index in u, which corresponds to i in unew
-        //the overflowBehaviour logic comes here in play
-        vecarray<size_t, ndims> ndi_uold (unew_shape.dynsize());
-
-        for (size_t idim = 0; idim < ndims; ++idim) {
-            long iUThisDim=(i_starts[idim]+long(ndi_unew[idim]));
-
-            switch (overflow_behaviours[idim]) {
-                case CYCLIC:
-                    iUThisDim = iUThisDim%shape[idim];
-                    if(iUThisDim < 0) {
-                        iUThisDim += shape[idim];
-                    }
-                    break;
-                case STRETCH:
-                    iUThisDim = clamp(long(iUThisDim), 0l, long(shape[idim])-1l);
-                    break;
-                case ZERO:
-                    //nothing to do
-                    break;
-                case THROW:
-                    //nothing to do
-                    break;
-                case ASSERT:
-                    //nothing to do
-                    break;
-                default:
-                    abort();//shouldn't happen
-                    break;
-            }
-
-            assert(iUThisDim < long(shape[idim]));
-            assert(iUThisDim >= 0);
-            ndi_uold[idim] = size_t(iUThisDim);
-        }
-
-        unew(ndi_unew) = u(ndi_uold); //no stride in uOld either since we grab the last dimension
-
-        //update the multidimensional index to match the flat one for the next iteration
-        //needed to locate matching values in the old u array
-        unew.increment_ndindex(ndi_unew);
-    }
-    */
 
     //adjust indexfrac for new reduced array size
     for (size_t i = 0; i < index_frac.size(); ++i) {

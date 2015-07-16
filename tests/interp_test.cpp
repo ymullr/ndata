@@ -428,7 +428,10 @@ struct TestSuite {
 
         //test will always fail with some kernels due to overshoot
         //disabling for these cases
-        if(not std::is_same<KernT, kern_cubic>::value) {
+        if(
+                not std::is_same<KernT, kern_cubic>::value
+                and not std::is_same<KernT, kern_lanczos<2>>::value
+                ) {
             RUN_TEST(increasing_field_3D()          , success_bool, msg);
         }
 
@@ -457,8 +460,9 @@ int main(int argc, char *argv[])
     DECLARE_TEST(success_bool, msg);
 
     RUN_TEST(TestSuite<kern_nearest_neighbor>::run_all_tests(), success_bool, msg);
-    RUN_TEST(TestSuite<kern_linear>::run_all_tests()         , success_bool, msg);
-    RUN_TEST(TestSuite<kern_cubic>::run_all_tests()          , success_bool, msg);
+    RUN_TEST(TestSuite<kern_linear>::run_all_tests()          , success_bool, msg);
+    RUN_TEST(TestSuite<kern_cubic>::run_all_tests()           , success_bool, msg);
+    RUN_TEST(TestSuite<kern_lanczos<2>>::run_all_tests()           , success_bool, msg);
 
     cout<<endl<<msg<<endl;
 
