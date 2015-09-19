@@ -56,6 +56,11 @@ add_executable(
         ./tests/vecarray_test.cpp
         )
 
+add_executable(
+        csv_out_demo
+        ./tests/csv_out_demo.cpp
+        )
+
 #add_executable(
 #    debug_test
 #    ./tests/debug_test.cpp

@@ -6,6 +6,7 @@ namespace ndata {
 
 template<typename NumT>
 nvector<NumT, 1> numrange(NumT start, NumT stop, NumT step=1) {
+    assert(step != 0);
 
     auto comp = [step] (NumT v, NumT boundary) {
         if (step < 0) {
@@ -16,7 +17,7 @@ nvector<NumT, 1> numrange(NumT start, NumT stop, NumT step=1) {
 
     std::vector<NumT> ret_vec (0);
 
-    for (int i = start; comp(i,stop); i+=step) {
+    for (NumT i = start; comp(i,stop); i+=step) {
         ret_vec.push_back(i);
     }
     return make_nvector(ret_vec);

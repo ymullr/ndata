@@ -97,6 +97,7 @@ namespace overflow_behaviour {
             if (index_frac < 0 or index_frac > long(size-1)) {
                 throw(std::out_of_range(""));
             }
+            //TODO informative message about kernel width and throwing behaviour
             assert(not (i_start < 0 or i_stop > long(size)));
             return;
         }
@@ -349,7 +350,9 @@ struct kern_cubic {
     static constexpr long ONE_SIDED_WIDTH = 2; //kernel width from zero to upper bound
 };
 
-template <size_t a>
+/// \brief Lanczos's kernel. The parameter a defines the width of the kernel 
+//      and the number of side lobes.
+template <size_t a = 2>
 struct kern_lanczos {
 
 private:
