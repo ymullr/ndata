@@ -385,7 +385,7 @@ struct interpolate_inner {
     static
     nvector<T, ndims-ndims_fold>
     do_it(
-            ndatacontainer<ContainerT, T, ndims> u,
+            ndataview<T, ndims> u,
             vecarray<float, ndims_fold> index_frac,
             vecarray<size_t, ndims_fold> axis
             )
@@ -483,7 +483,7 @@ struct interpolate_inner<KernT, ndims, 0, ContainerT, T> {
     static 
     nvector<T, ndims>
     do_it(
-            ndatacontainer<ContainerT, T, ndims> u,
+            ndataview<T, ndims> u,
             vecarray<float, 0>,//index_frac,
             vecarray<size_t, 0>// axis
             )
@@ -603,8 +603,8 @@ interpolate (
 
     assert(index_frac.size() == unew_shape.size() );
 
-    return interpolate_inner<KernT, ndims, ndims_fold, ContainerT, T>::do_it(
-            unew,
+    return interpolate_inner<KernT, ndims, ndims_fold, T*, T>::do_it(
+            unew.as_view(),
             index_frac,
             axis
     );

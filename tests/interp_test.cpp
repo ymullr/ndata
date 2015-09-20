@@ -220,9 +220,9 @@ struct TestSuite {
 
 
             float valhalf = interpolate<KernT, interp::overflow_behaviour::stretch>(
-                    u,
-                    i_frac+0.5
-                    );
+                u,
+                i_frac+0.5
+            );
 
             retMsg.append(MakeString() << val << ", " << valhalf << ", "); 
 
